@@ -38,6 +38,10 @@ start:
   mov ax, 03
   mov bx, 12d
   call  dibujasprite16
+
+  mov ax, 08
+  mov bx, 6d
+  call  borrasprite16
   
 
   call esperatecla
@@ -176,7 +180,70 @@ dibujasprite16:
   loop .looprenglon2
 
   ret
-  
+
+borrasprite16:
+
+  ; Parametros:
+  ; AX = Coordenada Y
+  ; BX = Coordenada X
+
+
+  ; 0.- Respaldar cosas que deberíamos consevar
+
+  ; 1.- Seleccionar banco de memoria
+
+  mov cx, MEMCGAEVEN
+  mov es, cx
+  mov cx, ax  ; Copiar / respaldar coordenada Y
+  shr ax, 1 ; Descartar el bit de selección de banco
+
+  ; Multiplicar
+  mov dl, 80d
+  mul dl    ; multiplicar por ancho de pantalla en bytes
+  add ax, bx  ; Desplazamiento del byte que vamos a manipular
+  mov di, ax
+
+  ; En caso de que coordenada Y sea impar, comenzar a dibujar sprite desde
+  ; la segunda fila de pixeles del mapa de bits en coordenada par de pantalla.
+  test cx, 00000001b
+  jz .espar
+  add di, 80d
+  .espar pushf
+
+  mov cx, 8  ; Primero dibujamos 8 renglones (en renglones par de patalla)
+  xor ax, ax  ; Registro AX en ceros
+
+  .looprenglon:
+
+  stosw
+  stosw
+
+  add di, 76d ; Agregar suficientes bytes para que sea siguiente renglon
+  loop .looprenglon
+
+  ; Después dibujamos otros 8 renglones de sprite, ahora en renglones impar de pantalla
+
+  mov cx, MEMCGAODD ; Dibujar en renglones impar de pantalla CGA 4 Col
+  mov es, cx
+
+  sub di, 640d  ; Retroceder hasta posicion inicial en pantalla ? (pero ahora en renglon impar)
+
+  popf ; ¿Necesario?
+  jz .espar2
+  sub di, 80d
+  .espar2
+
+  mov cx, 8
+
+  .looprenglon2:
+
+  stosw
+  stosw
+
+  add di, 76d ; Agregar suficientes bytes para que sea siguiente renglon
+  loop .looprenglon2
+
+  ret
 
 
 esperatecla:
