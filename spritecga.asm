@@ -23,8 +23,20 @@ start:
   mov ax, 0
   miloop:
 
+  mov ax, 00
+  mov bx, 00
+  call  dibujasprite16
+
+  mov ax, 01
+  mov bx, 04
+  call  dibujasprite16
+
   mov ax, 02
-  mov bx, 05
+  mov bx, 08d
+  call  dibujasprite16
+
+  mov ax, 03
+  mov bx, 12d
   call  dibujasprite16
   
 
@@ -101,20 +113,15 @@ dibujasprite16:
   ; Parametros:
   ; AX = Coordenada Y
   ; BX = Coordenada X
-  ; CX = Mapa de bits
+  ; DX = Mapa de bits
 
   ; 0.- Respaldar cosas que deberíamos consevar
-  push bp
 
   ; 1.- Seleccionar banco de memoria
 
-  mov dx, MEMCGAEVEN
-  test ax, 0000000000000001b
-  jz .ponbanco
-  mov dx, MEMCGAODD
-
-  .ponbanco:
-  mov es, dx
+  mov cx, MEMCGAEVEN
+  mov es, cx
+  mov cx, ax  ; Copiar / respaldar coordenada Y
   shr ax, 1 ; Descartar el bit de selección de banco
 
   ; Multiplicar
@@ -124,20 +131,50 @@ dibujasprite16:
   mov di, ax
   mov si, spritepelota  ; Cargar direccion de mapa de bits
 
-  mov cx, 16  ; 16 renglones
+  ; En caso de que coordenada Y sea impar, comenzar a dibujar sprite desde
+  ; la segunda fila de pixeles del mapa de bits en coordenada par de pantalla.
+  test cx, 00000001b
+  jz .espar
+  add si, 4
+  add di, 80d
+  .espar pushf
+
+  mov cx, 8  ; Primero dibujamos 8 renglones (en renglones par de patalla)
 
   .looprenglon:
-  push cx
 
-  mov cx, 2  ; Tamaño de palabras (16 bits) a copiar
-  cld
-  rep movsw
+  movsw
+  movsw
 
-  pop cx
   add di, 76d ; Agregar suficientes bytes para que sea siguiente renglon
+  add si, 4 ; Saltar renglones de ssprite.mapa de bits
   loop .looprenglon
 
-  pop bp
+  ; Después dibujamos otros 8 renglones de sprite, ahora en renglones impar de pantalla
+
+  mov cx, MEMCGAODD ; Dibujar en renglones impar de pantalla CGA 4 Col
+  mov es, cx
+
+  sub di, 640d  ; Retroceder hasta posicion inicial en pantalla ? (pero ahora en renglon impar)
+  sub si, 60d   ; retrocedemos hasta posicion inicial de sprite ?
+
+  popf ; ¿Necesario?
+  jz .espar2
+  sub si, 8
+  sub di, 80d
+  .espar2
+
+  mov cx, 8
+
+  .looprenglon2:
+
+  movsw
+  movsw
+
+  add di, 76d ; Agregar suficientes bytes para que sea siguiente renglon
+  add si, 4 ; Saltar renglones de ssprite.mapa de bits
+  loop .looprenglon2
+
   ret
   
 
@@ -160,8 +197,8 @@ section .data
   align   8,db 0
 
   spritepelota:
-  db 00000000b, 00000000b, 00000000b, 00000000b
-  db 00000000b, 00101010b, 10101010b, 00000000b
+  db 01100100b, 00000000b, 00000000b, 00000000b
+  db 00010000b, 00101010b, 10101010b, 00000000b
   db 00000000b, 10101010b, 10101010b, 10000000b
   db 00000010b, 10101010b, 10111011b, 10100000b
   db 00001010b, 10101010b, 10101110b, 10101000b
