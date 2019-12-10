@@ -9,6 +9,12 @@
   %define MEMCGAEVEN 0xB800
   %define MEMCGAODD 0xBA00
 
+  %define KB_ESC 01
+  %define KB_UP 48h
+  %define KB_DOWN 50h
+  %define KB_LEFT 4Bh
+  %define KB_RIGHT 4Dh
+
   org 100h 
  
 section .text 
@@ -19,35 +25,79 @@ start:
   mov  al, CGA4COLOR      ; CGA 4 Colores 320 x 200
   int  VIDEOBIOS   ; LLamar a la BIOS para servicios de video
 
-  mov cx, 100
-  mov ax, 0
-  miloop:
 
-  mov ax, 00
-  mov bx, 00
-  call  dibujasprite16
+  ; Dibujar sprite en su posicion inicial
+  mov ax, [spritey]
+  mov bx, [spritex]
+  call dibujasprite16
 
-  mov ax, 01
-  mov bx, 04
-  call  dibujasprite16
+  leerteclado:
+  mov ah, 0
+  int 16h
+  cmp ah, KB_ESC  ; Comprobar si es tecla ESC
+  je fin
+  cmp ah, KB_UP
+  je moverarriba
+  cmp ah, KB_DOWN
+  je moverabajo
+  cmp ah, KB_LEFT
+  je moverizquierda
+  cmp ah, KB_RIGHT
+  je moverderecha
 
-  mov ax, 02
-  mov bx, 08d
-  call  dibujasprite16
-
-  mov ax, 03
-  mov bx, 12d
-  call  dibujasprite16
-
-  mov ax, 08
-  mov bx, 6d
-  call  borrasprite16
+  jmp leerteclado
   
-
-  call esperatecla
-
 fin:
   int 20h
+
+  moverarriba:
+
+  mov ax, [spritey]
+  mov bx, [spritex]
+  call borrasprite16
+  mov ax, [spritey]
+  dec ax
+  mov [spritey], ax
+  mov bx, [spritex]
+  call dibujasprite16
+  jmp leerteclado
+
+  moverabajo:
+
+  mov ax, [spritey]
+  mov bx, [spritex]
+  call borrasprite16
+  mov ax, [spritey]
+  inc ax
+  mov [spritey], ax
+  mov bx, [spritex]
+  call dibujasprite16
+  jmp leerteclado
+
+  moverizquierda:
+
+  mov ax, [spritey]
+  mov bx, [spritex]
+  call borrasprite16
+  mov bx, [spritex]
+  dec bx
+  mov [spritex], bx
+  mov ax, [spritey]
+  call dibujasprite16
+  jmp leerteclado
+
+  moverderecha:
+
+  mov ax, [spritey]
+  mov bx, [spritex]
+  call borrasprite16
+  mov bx, [spritex]
+  inc bx
+  mov [spritex], bx
+  mov ax, [spritey]
+  call dibujasprite16
+  jmp leerteclado
+
 
 ponbyte:
   ; Parametros:
@@ -261,11 +311,16 @@ section .data
   crlf db 0x0d, 0x0a
   endstr db '$'
 
+  spritex:
+  dw  38d
+  spritey:
+  dw 92d
+
   align   8,db 0
 
   spritepelota:
-  db 01100100b, 00000000b, 00000000b, 00000000b
-  db 00010000b, 00101010b, 10101010b, 00000000b
+  db 00000000b, 00000000b, 00000000b, 00000000b
+  db 00000000b, 00101010b, 10101010b, 00000000b
   db 00000000b, 10101010b, 10101010b, 10000000b
   db 00000010b, 10101010b, 10111011b, 10100000b
   db 00001010b, 10101010b, 10101110b, 10101000b
