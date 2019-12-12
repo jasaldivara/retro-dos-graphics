@@ -26,9 +26,16 @@ start:
   int  VIDEOBIOS   ; LLamar a la BIOS para servicios de video
 
 
+
+  mov ax, 10
+  mov bx, 20
+  mov dx, spritepelota
+  call dibujasprite16
+
   ; Dibujar sprite en su posicion inicial
   mov ax, [spritey]
   mov bx, [spritex]
+  mov dx, spritemonigote
   call dibujasprite16
 
   leerteclado:
@@ -59,6 +66,7 @@ fin:
   dec ax
   mov [spritey], ax
   mov bx, [spritex]
+  mov dx, spritemonigote
   call dibujasprite16
   jmp leerteclado
 
@@ -71,6 +79,7 @@ fin:
   inc ax
   mov [spritey], ax
   mov bx, [spritex]
+  mov dx, spritemonigote
   call dibujasprite16
   jmp leerteclado
 
@@ -83,6 +92,7 @@ fin:
   dec bx
   mov [spritex], bx
   mov ax, [spritey]
+  mov dx, spritemonigote
   call dibujasprite16
   jmp leerteclado
 
@@ -95,6 +105,7 @@ fin:
   inc bx
   mov [spritex], bx
   mov ax, [spritey]
+  mov dx, spritemonigote
   call dibujasprite16
   jmp leerteclado
 
@@ -171,6 +182,8 @@ dibujasprite16:
 
   ; 0.- Respaldar cosas que deberíamos consevar
 
+  mov si, dx  ; Cargar direccion de mapa de bits
+
   ; 1.- Seleccionar banco de memoria
 
   mov cx, MEMCGAEVEN
@@ -183,7 +196,6 @@ dibujasprite16:
   mul dl    ; multiplicar por ancho de pantalla en bytes
   add ax, bx  ; Desplazamiento del byte que vamos a manipular
   mov di, ax
-  mov si, spritepelota  ; Cargar direccion de mapa de bits
 
   ; En caso de que coordenada Y sea impar, comenzar a dibujar sprite desde
   ; la segunda fila de pixeles del mapa de bits en coordenada par de pantalla.
@@ -336,7 +348,9 @@ section .data
   db 00000000b, 10101010b, 10101010b, 10000000b
   db 00000000b, 00101010b, 10101010b, 00000000b
 
- 
+spritemonigote:
+incbin	"moni",0,64
+
 section .bss
   ; uninitialized data
 
