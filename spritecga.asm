@@ -43,6 +43,14 @@ start:
   int 16h
   cmp ah, KB_ESC  ; Comprobar si es tecla ESC
   je fin
+  cmp al, 'q'  ; Comprobar si es caracter 'q'
+  je fin
+  cmp al, 'Q'  ; Comprobar si es caracter 'Q'
+  je fin
+  cmp al, 'p'  ; Comprobar si es caracter 'p'
+  je cambiapaleta
+  cmp al, 'p'  ; Comprobar si es caracter 'P'
+  je cambiapaleta
   cmp ah, KB_UP
   je moverarriba
   cmp ah, KB_DOWN
@@ -109,6 +117,24 @@ fin:
   call dibujasprite16
   jmp leerteclado
 
+
+cambiapaleta:
+  mov ah, [paleta]
+  test ah, ah
+  jz .sig
+  mov bl, 0
+  jmp .guarda
+  .sig
+  mov bl, 1
+  .guarda
+  mov [paleta], bl
+
+  .llama_a_bios
+  mov ah, 0Bx	; Establecer paleta de colores
+  mov bh, 1	; Paleta de cuatro colores
+  mov bl, [paleta]
+  int  VIDEOBIOS
+  jmp leerteclado
 
 ponbyte:
   ; Parametros:
@@ -327,6 +353,8 @@ section .data
   dw  38d
   spritey:
   dw 92d
+  paleta:
+  db 0
 
   align   8,db 0
 
