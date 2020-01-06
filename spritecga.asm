@@ -206,6 +206,12 @@ dibujasprite16:
   ; BX = Coordenada X
   ; DX = Mapa de bits
 
+  ; -1.- Revisar si pixeles están alineados con bytes
+  test bx, 00000011b
+  jnz dibujasprite16noalineado
+  shr bx, 1
+  shr bx, 1
+
   ; 0.- Respaldar cosas que deberíamos consevar
 
   mov si, dx  ; Cargar direccion de mapa de bits
@@ -217,13 +223,13 @@ dibujasprite16:
   mov cx, ax  ; Copiar / respaldar coordenada Y
   shr ax, 1 ; Descartar el bit de selección de banco
 
-  ; Multiplicar
+  ; 2.- Multiplicar
   mov dl, 80d
   mul dl    ; multiplicar por ancho de pantalla en bytes
   add ax, bx  ; Desplazamiento del byte que vamos a manipular
   mov di, ax
 
-  ; En caso de que coordenada Y sea impar, comenzar a dibujar sprite desde
+  ; 3.- En caso de que coordenada Y sea impar, comenzar a dibujar sprite desde
   ; la segunda fila de pixeles del mapa de bits en coordenada par de pantalla.
   test cx, 00000001b
   jz .espar
@@ -231,18 +237,22 @@ dibujasprite16:
   add di, 80d
   .espar pushf
 
-  mov cx, 8  ; Primero dibujamos 8 renglones (en renglones par de patalla)
+  mov cx, 8  ; 4 .- Primero dibujamos 8 renglones (en renglones par de patalla)
 
   .looprenglon:
 
-  movsw
-  movsw
+  ;movsw
+  ;movsw
+  lodsw
+  stosw
+  lodsw
+  stosw
 
   add di, 76d ; Agregar suficientes bytes para que sea siguiente renglon
   add si, 4 ; Saltar renglones de ssprite.mapa de bits
   loop .looprenglon
 
-  ; Después dibujamos otros 8 renglones de sprite, ahora en renglones impar de pantalla
+  ; 5 .- Después dibujamos otros 8 renglones de sprite, ahora en renglones impar de pantalla
 
   mov cx, MEMCGAODD ; Dibujar en renglones impar de pantalla CGA 4 Col
   mov es, cx
@@ -269,6 +279,159 @@ dibujasprite16:
 
   ret
 
+dibujasprite16noalineado:
+
+  ; 0.- Respaldar cosas que deberíamos consevar
+
+  mov si, dx  ; Cargar direccion de mapa de bits
+
+  ; 1.- Seleccionar banco de memoria
+
+  mov cx, MEMCGAEVEN
+  mov es, cx
+  mov cx, ax  ; Copiar / respaldar coordenada Y
+  shr ax, 1 ; Descartar el bit de selección de banco
+
+  ; 2.- Multiplicar
+  mov dl, 80d
+  mul dl    ; multiplicar por ancho de pantalla en bytes
+  mov dx, bx  ; Copiar coordenada X
+  shr dx, 1   ; Descartar dos ultimos bits
+  shr dx, 1
+  add ax, dx  ; Desplazamiento del byte que vamos a manipular
+  mov di, ax
+  and bx, 00000011b	; Usar solo ultimos dos bits para posicion sub-byte
+
+  ; 3.- En caso de que coordenada Y sea impar, comenzar a dibujar sprite desde
+  ; la segunda fila de pixeles del mapa de bits en coordenada par de pantalla.
+  test cx, 00000001b
+  jz .espar
+  add si, 4
+  add di, 80d
+  .espar pushf
+
+  mov cx, 8  ; 4 .- Primero dibujamos 8 renglones (en renglones par de patalla)
+
+
+  .looprenglon:
+
+  push cx ; guardar contador de renglones
+  
+  mov dx, bx     ; copiar coordenada subpixel
+  shl dx, 1	; Multiplicar c-subpixel por 2 (2 bits por pixel)
+  mov cx, dx    ; guardar bits a desplazar en el contador
+
+  xor ax, ax	; borrar ax
+
+  lodsb         ; cargar byte en al
+  shr ax, cl    ; desplazar esa cantidad de bits
+  stosb		; Escribir byte (?)
+
+  dec si
+  lodsw
+  xchg ah, al
+  mov cx, dx
+  shr ax, cl    ; desplazar esa cantidad de bits
+  stosb		; Escribir byte (?)
+
+  dec si
+  lodsw
+  xchg ah, al
+  mov cx, dx
+  shr ax, cl    ; desplazar esa cantidad de bits
+  stosb		; Escribir byte (?)
+
+  dec si
+  lodsw
+  xchg ah, al
+  mov cx, dx
+  shr ax, cl    ; desplazar esa cantidad de bits
+  stosb		; Escribir byte (?)
+
+  xor ax, ax
+  mov ah, [ds:si - 1]
+  mov cx, dx
+  shr ax, cl
+  stosb
+
+  ; movsw	-- Descartar estos
+  ; movsw
+
+  add di, 75d ; Agregar suficientes bytes para que sea siguiente renglon
+  add si, 4 ; Saltar renglones de sprite.mapa de bits
+
+  pop cx  ; contador de renglones
+  loop .looprenglon
+
+  ;popf	; Salir por mientras
+  ;ret
+  ; 5 .- Después dibujamos otros 8 renglones de sprite, ahora en renglones impar de pantalla
+
+  mov cx, MEMCGAODD ; Dibujar en renglones impar de pantalla CGA 4 Col
+  mov es, cx
+
+  sub di, 640d  ; Retroceder hasta posicion inicial en pantalla ? (pero ahora en renglon impar)
+  sub si, 60d   ; retrocedemos hasta posicion inicial de sprite ?
+
+  popf ; ¿Necesario?
+  jz .espar2
+  sub si, 8
+  sub di, 80d
+  .espar2
+
+  mov cx, 8
+
+  .looprenglon2:
+
+  push cx ; guardar contador de renglones
+  
+  mov dx, bx     ; copiar coordenada subpixel
+  shl dx, 1	; Multiplicar c-subpixel por 2 (2 bits por pixel)
+  mov cx, dx    ; guardar bits a desplazar en el contador
+
+  xor ax, ax	; borrar ax
+
+  lodsb         ; cargar byte en al
+  shr ax, cl    ; desplazar esa cantidad de bits
+  stosb		; Escribir byte (?)
+
+  dec si
+  lodsw
+  xchg ah, al
+  mov cx, dx
+  shr ax, cl    ; desplazar esa cantidad de bits
+  stosb		; Escribir byte (?)
+
+  dec si
+  lodsw
+  xchg ah, al
+  mov cx, dx
+  shr ax, cl    ; desplazar esa cantidad de bits
+  stosb		; Escribir byte (?)
+
+  dec si
+  lodsw
+  xchg ah, al
+  mov cx, dx
+  shr ax, cl    ; desplazar esa cantidad de bits
+  stosb		; Escribir byte (?)
+
+  xor ax, ax
+  mov ah, [ds:si - 1]
+  mov cx, dx
+  shr ax, cl
+  stosb
+
+
+  add di, 75d ; Agregar suficientes bytes para que sea siguiente renglon
+  add si, 4 ; Saltar renglones de ssprite.mapa de bits
+  pop cx  ; contador de renglones
+  loop .looprenglon2
+
+
+  ; Fin. Retornar
+  ret
+
 borrasprite16:
 
   ; Parametros:
@@ -288,6 +451,8 @@ borrasprite16:
   ; Multiplicar
   mov dl, 80d
   mul dl    ; multiplicar por ancho de pantalla en bytes
+  shr bx, 1
+  shr bx, 1
   add ax, bx  ; Desplazamiento del byte que vamos a manipular
   mov di, ax
 
@@ -305,8 +470,9 @@ borrasprite16:
 
   stosw
   stosw
+  stosb
 
-  add di, 76d ; Agregar suficientes bytes para que sea siguiente renglon
+  add di, 75d ; Agregar suficientes bytes para que sea siguiente renglon
   loop .looprenglon
 
   ; Después dibujamos otros 8 renglones de sprite, ahora en renglones impar de pantalla
@@ -327,8 +493,9 @@ borrasprite16:
 
   stosw
   stosw
+  stosb
 
-  add di, 76d ; Agregar suficientes bytes para que sea siguiente renglon
+  add di, 75d ; Agregar suficientes bytes para que sea siguiente renglon
   loop .looprenglon2
 
   ret
@@ -350,7 +517,7 @@ section .data
   endstr db '$'
 
   spritex:
-  dw  38d
+  dw  40d
   spritey:
   dw 92d
   paleta:
