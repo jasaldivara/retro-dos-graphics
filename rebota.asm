@@ -52,11 +52,6 @@ start:
 
 
 
-  mov ax, 10
-  mov bx, 20
-  mov dx, spritepelota
-  call dibujasprite16
-
   ; Dibujar sprite en su posicion inicial
   mov ax, [spritey]
   mov bx, [spritex]
@@ -147,90 +142,15 @@ start:
   je fin
   cmp al, 'Q'  ; Comprobar si es caracter 'Q'
   je fin
+  cmp al, 'p'  ; Comprobar si es caracter 'p'
+  je .cambiapaleta
+  cmp al, 'P'  ; Comprobar si es caracter 'P'
+  je .cambiapaleta
 
   jmp .frame
 
-  leerteclado:
-  mov ah, 0
-  int 16h
-  cmp ah, KB_ESC  ; Comprobar si es tecla ESC
-  je fin
-  cmp al, 'q'  ; Comprobar si es caracter 'q'
-  je fin
-  cmp al, 'Q'  ; Comprobar si es caracter 'Q'
-  je fin
-  cmp al, 'p'  ; Comprobar si es caracter 'p'
-  je cambiapaleta
-  cmp al, 'p'  ; Comprobar si es caracter 'P'
-  je cambiapaleta
-  cmp ah, KB_UP
-  je moverarriba
-  cmp ah, KB_DOWN
-  je moverabajo
-  cmp ah, KB_LEFT
-  je moverizquierda
-  cmp ah, KB_RIGHT
-  je moverderecha
 
-  jmp leerteclado
-  
-fin:
-  int 20h
-
-  moverarriba:
-
-  mov ax, [spritey]
-  mov bx, [spritex]
-  call borrasprite16
-  mov ax, [spritey]
-  dec ax
-  mov [spritey], ax
-  mov bx, [spritex]
-  mov dx, spritemonigote
-  call dibujasprite16
-  jmp leerteclado
-
-  moverabajo:
-
-  mov ax, [spritey]
-  mov bx, [spritex]
-  call borrasprite16
-  mov ax, [spritey]
-  inc ax
-  mov [spritey], ax
-  mov bx, [spritex]
-  mov dx, spritemonigote
-  call dibujasprite16
-  jmp leerteclado
-
-  moverizquierda:
-
-  mov ax, [spritey]
-  mov bx, [spritex]
-  call borrasprite16
-  mov bx, [spritex]
-  dec bx
-  mov [spritex], bx
-  mov ax, [spritey]
-  mov dx, spritemonigote
-  call dibujasprite16
-  jmp leerteclado
-
-  moverderecha:
-
-  mov ax, [spritey]
-  mov bx, [spritex]
-  call borrasprite16
-  mov bx, [spritex]
-  inc bx
-  mov [spritex], bx
-  mov ax, [spritey]
-  mov dx, spritemonigote
-  call dibujasprite16
-  jmp leerteclado
-
-
-cambiapaleta:
+.cambiapaleta:
   mov ah, [paleta]
   test ah, ah
   jz .sig
@@ -246,71 +166,14 @@ cambiapaleta:
   mov bh, 1	; Paleta de cuatro colores
   mov bl, [paleta]
   int  VIDEOBIOS
-  jmp leerteclado
+  jmp .frame
 
-ponbyte:
-  ; Parametros:
-  ; ax: desplazamiento
-  ; dl: Valor del byte
-  mov di, ax
-  mov ax, MEMCGAEVEN
-  mov es, ax
-  mov [es:di], dl
-  ret
 
-ponpixelcga4col:
-  ; parametros:
-  ; ax: coordenada Y
-  ; bx: coordenada X
-  ; ch: Color (2 bits)
+  
+fin:
+  int 20h
 
-  ; 1.- Seleccionar banco de memoria
 
-  mov dx, MEMCGAEVEN
-  test ax, 0000000000000001b
-  jz .ponbanco
-  mov dx, MEMCGAODD
-  .ponbanco  mov es, dx
-
-  ; 2.- Obtener dirección en memoria del byte a manipular
-
-  shr ax, 1 ; Descartar el bit de selección de banco
-  mov dl, 80d
-  mul dl    ; multiplicar por ancho de pantalla en bytes
-  mov dx, bx  ; Copiar a dx coordenada X
-  shr dx, 1 ; Descartar ultimos dos bits de copia de coordenada X
-  shr dx, 1 ; Descartar ultimos dos bits de copia de coordenada X
-  add ax, dx  ; Desplazamiento del byte que vamos a manipular
-  mov si, ax
-
-  ; 3.- Obtener valor actual del byte a manipular
-
-  mov dl, [es:si]
-
-  ; 4.- borrar bits antes de sobreescribir
-
-  and bx, 0000000000000011b   ; Tomar en cuenta sólo ultimos dos bits de coordenada X
-  shl bx, 1                   ; Multiplicar por dos ultimo segmento de coord X
-  mov cl, bl
-  mov al, 11000000b   ; mascara de dos bits
-  shr al, cl          ; ajustar mascara de bits
-  not al              ; negativo de mascara
-  and dl, al          ; Borrar sólo los bits correspondientes (mascara)
-
-  ; 5.- Ajustar bits del pixel en byte
-  mov bl, 6
-  sub bl, cl
-  mov cl, bl
-  shl ch, cl
-
-  ; 6.- Escribir bits correspondientes a pixel
-  or dl, ch
-
-  ; 7.- Reescribir byte en memoria de video
-  mov [es:si], dl
-
-  ; 8.- Fin
-  ret
 
 dibujasprite16:
   ; Parametros:
@@ -613,20 +476,9 @@ borrasprite16:
   ret
 
 
-esperatecla:
-
-  wl:             ; mark wl
-  mov ah,0        ; 0 - keyboard BIOS function to get keyboard scancode
-  int 16h         ; keyboard interrupt
-  jz wl           ; if 0 (no button pressed) jump to wl
-  ret
 
 section .data
   ; program data
- 
-  msg  db 'Hola amigos!!'
-  crlf db 0x0d, 0x0a
-  endstr db '$'
 
   spritex:
   dw  40d
@@ -659,8 +511,8 @@ section .data
   db 00000000b, 10101010b, 10101010b, 10000000b
   db 00000000b, 00101010b, 10101010b, 00000000b
 
-spritemonigote:
-incbin	"moni",0,64
+;spritemonigote:
+;incbin	"moni",0,64
 
 section .bss
   ; uninitialized data
