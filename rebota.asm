@@ -100,6 +100,32 @@ start:
   mov [spritex], ax
 
 
+  ; 1.- calcular y
+  mov ax, [spritey]
+  mov dx, VEL
+  mov bh, [deltay]
+  test bh, bh
+  jz .sig5
+  add ax, dx
+  jmp .sig6
+  .sig5:
+  sub ax, dx
+  .sig6
+  cmp ax, HEIGHTPX - ANCHO
+  jng .sig7
+  mov ax, HEIGHTPX - ANCHO
+  mov bh, 0
+  mov [deltay], bh
+  .sig7
+  cmp ax, 0
+  jnl .sig8
+  mov ax, 0
+  mov bh, 1
+  mov [deltay], bh
+  .sig8
+  mov [spritey], ax
+
+
   ; x.- dibujar
   mov ax, [spritey]
   mov bx, [spritex]
