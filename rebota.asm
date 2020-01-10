@@ -1,4 +1,6 @@
 
+CPU 8086
+
   %define VIDEOBIOS 0x10
   %define SETVIDEOMODE 0
   %define CGA4COLOR 0x04
