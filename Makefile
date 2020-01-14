@@ -5,7 +5,8 @@ ASM = nasm
 ASMFLAGS = -fbin
 
 EJECUTABLES = $(BIN)/holacga.com $(BIN)/pixelcga.com $(BIN)/sprite4.com \
-              $(BIN)/rebota.com $(BIN)/rebota2.com $(BIN)/platform.com
+              $(BIN)/rebota.com $(BIN)/rebota2.com $(BIN)/platform.com \
+              $(BIN)/compcol.com
 
 ALL : $(EJECUTABLES)
 
@@ -25,6 +26,9 @@ $(BIN)/rebota2.com : rebota-2.asm
 	$(ASM) $< $(ASMFLAGS) -o $@
 
 $(BIN)/platform.com : platform.asm
+	$(ASM) $< $(ASMFLAGS) -o $@
+
+$(BIN)/compcol.com : compcol.asm
 	$(ASM) $< $(ASMFLAGS) -o $@
 
 clean :
