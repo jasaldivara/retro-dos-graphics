@@ -114,17 +114,17 @@ start:
   .retorno:
   ret
 
-  .movizq
+  .movizq:
   mov ax, -1
   mov [deltax], ax
   ret
 
-  .movder
+  .movder:
   mov ax, 1
   mov [deltax], ax
   ret
 
-  .saltar
+  .saltar:
   mov ax, [parado] ; Tiene que estar parado para poder saltar
   test ax, ax
   jz .noparado
@@ -134,7 +134,7 @@ start:
   mov bx, 0
   mov [parado], bx
 
-  .noparado
+  .noparado:
   ret
 
 cambiapaleta:
@@ -143,12 +143,12 @@ cambiapaleta:
   jz .sig
   mov bl, 0
   jmp .guarda
-  .sig
+  .sig:
   mov bl, 1
-  .guarda
+  .guarda:
   mov [paleta], bl
 
-  .llama_a_bios
+  .llama_a_bios:
   mov ah, 0Bx	; Establecer paleta de colores
   mov bh, 1	; Paleta de cuatro colores
   mov bl, [paleta]
@@ -176,12 +176,12 @@ cambiapaleta:
   jng .sig1
   mov ax, WIDTHPX - ANCHO
   neg bx
-  .sig1
+  .sig1:
   cmp ax, 0
   jnl .sig2
   mov ax, 0
   neg bx
-  .sig2
+  .sig2:
   mov [spritenx], ax
   mov [deltax], bx
 
@@ -203,12 +203,12 @@ cambiapaleta:
   mov ax, HEIGHTPX - ANCHO
   mov bx, 0
   mov word [parado], 1
-  .sig1
+  .sig1:
   cmp ax, 0
   jnl .sig2
   mov ax, 0
   mov bx, 0
-  .sig2
+  .sig2:
   mov [spriteny], ax
   mov [deltay], bx
 
@@ -255,7 +255,7 @@ dibujasprite16:
   jz .espar
   add si, 4
   add di, 80d
-  .espar pushf
+  .espar: pushf
 
   mov cx, 8  ; 4 .- Primero dibujamos 8 renglones (en renglones par de patalla)
 
@@ -284,7 +284,7 @@ dibujasprite16:
   jz .espar2
   sub si, 8
   sub di, 80d
-  .espar2
+  .espar2:
 
   mov cx, 8
 
@@ -397,7 +397,7 @@ dibujasprite16noalineado:
   jz .espar2
   sub si, 8
   sub di, 80d
-  .espar2
+  .espar2:
 
   mov cx, 8
 
@@ -505,7 +505,7 @@ borrasprite16:
   popf ; ¿Necesario?
   jz .espar2
   sub di, 80d
-  .espar2
+  .espar2:
 
   mov cx, 8
 
