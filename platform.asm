@@ -428,12 +428,12 @@ dibujasprite16:
 
   .looprenglon:
 
-  ;movsw
-  ;movsw
-  lodsw
-  stosw
-  lodsw
-  stosw
+  movsw
+  movsw
+  ;lodsw
+  ;stosw
+  ;lodsw
+  ;stosw
 
   add di, 76d ; Agregar suficientes bytes para que sea siguiente renglon
   add si, 4 ; Saltar renglones de ssprite.mapa de bits
