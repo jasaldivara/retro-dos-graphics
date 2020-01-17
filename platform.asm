@@ -159,7 +159,47 @@ leerteclado:
   test al, al
   jnz fin
 
+  mov al, [tecla_left] ; ¿está presionada esta tecla?
+  test al, al
+  jz .sig1
+
+  .movizq:
+  mov ax, -1
+  mov [deltax], ax
+
+  .sig1:
+  mov al, [tecla_right] ; ¿está presionada esta tecla?
+  test al, al
+  jz .sig2
+
+  .movder:
+  mov ax, 1
+  mov [deltax], ax
+
+  .sig2:
+  mov al, [tecla_up] ; ¿está presionada esta tecla?
+  test al, al
+  jz .sig3
+
+  .saltar:
+  mov ax, [parado] ; Tiene que estar parado para poder saltar
+  test ax, ax
+  jz .noparado
+
+  mov bx, 0 - REBOTEY
+  mov [deltay], bx
+  mov bx, 0
+  mov [parado], bx
+
+  .noparado:
+
+
+  .sig3:
+  .retorno:
   ret
+
+
+
 
 kb_int_new:
   ; Keyboard Interrupt Handler
@@ -207,15 +247,26 @@ kb_int_new:
   .cualtecla:
   cmp al, KB_ESC
   jne .sig1
-
-  ;mov al, 1
-  ;mov [tecla_esc], ah
-
   mov bx, tecla_esc
-
-
   jmp .guardar
   .sig1:
+  cmp al, KB_LEFT
+  jne .sig2
+  mov bx, tecla_left
+  jmp .guardar
+  .sig2:
+  cmp al, KB_RIGHT
+  jne .sig3
+  mov bx, tecla_right
+  jmp .guardar
+  .sig3:
+  cmp al, KB_UP
+  jne .sig4
+  mov bx, tecla_up
+  jmp .guardar
+  .sig4:
+
+
 
   jmp .salida
   
@@ -646,6 +697,10 @@ section .data
 
   ; Estado de las teclas:
   tecla_esc: db 0
+  tecla_up: db 0
+  tecla_down: db 0
+  tecla_left: db 0
+  tecla_right: db 0
 
   ; Variables del programa:
   spritex:
