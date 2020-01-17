@@ -48,14 +48,30 @@ CPU 8086
 section .text 
  
 start:
-  ; program code
+
+  ; 1 .- Guardar Rutina de interrupcion del teclado del sistema (BIOS)
+  mov     al,9h
+  mov     ah,35h
+  int     21h
+  mov [kb_int_old_off], bx
+  mov [kb_int_old_seg], es
+
+  ; 2 .- Registrar nueva rutina de interrupción del teclado
+  mov     al, 9h
+  mov     ah, 25h
+  mov     bx, cs
+  mov     ds, bx
+  mov     dx, kb_int_new
+  int     21h
+
+
+  ; 3 .- Establecer modo de video
   mov  ah, SETVIDEOMODE   ; Establecer modo de video
   mov  al, CGA4COLOR      ; CGA 4 Colores 320 x 200
   int  VIDEOBIOS   ; LLamar a la BIOS para servicios de video
 
 
-
-  ; Dibujar sprite en su posicion inicial
+  ; 4 .- Dibujar sprite en su posicion inicial
   mov ax, [spritey]
   mov bx, [spritex]
   mov dx, spritemonigote
@@ -86,7 +102,7 @@ start:
   ; repetir ciclo
   jmp frame
 
-  leerteclado:
+  leerteclado_old:
   ; 1.- Revisar teclado
   mov ah, 1   ; "Get keystroke status"
   int 16h
@@ -136,6 +152,97 @@ start:
 
   .noparado:
   ret
+
+leerteclado:
+
+  mov al, [tecla_esc] ; ¿está presionada esta tecla?
+  test al, al
+  jnz fin
+
+  ret
+
+kb_int_new:
+  ; Keyboard Interrupt Handler
+  sti ; ??? ¿habilitar interrupciones?
+  ; Guardar registros
+  push ax
+  push bx
+  push cx
+  push dx
+  push si
+  push di
+  push ds
+  push es
+
+
+  mov ax, cs  ; Usar segemtno actual del programa, basado en cs
+  mov ds, ax
+  mov es, ax
+  
+  in al, 60h  ; obtener scancode
+  mov bl, al  ; respaldarlo en otro registro
+
+  in  al, 61h
+  mov ah, al	;Save keyboard status
+  or  al, 80h	;Disable
+  out 61h, al
+  mov al, ah	;Enable (If it was disabled at first, you wouldn't
+  out 61h, al	; be doing this anyway :-)
+
+  xchg ax, bx
+
+  ; Revisar si es tecla presionada o liberada
+  test al, 80h  ; Codigo de tecla liberada
+  jnz .k_liberada
+
+  .k_presionada:
+  mov ah, 1 ; Valor 1 para tecla presionada
+
+  jmp .cualtecla
+
+  .k_liberada:
+  and al, 7fh ; Conservar scancode de tecla, desechando bit de presionada o liberada
+  mov ah, 0 ; valor 0 para tecla liberada
+
+  .cualtecla:
+  cmp al, KB_ESC
+  jne .sig1
+
+  ;mov al, 1
+  ;mov [tecla_esc], ah
+
+  mov bx, tecla_esc
+
+
+  jmp .guardar
+  .sig1:
+
+  jmp .salida
+  
+  .guardar:
+  ;mov di, bx
+  mov byte [bx], ah  ; Almacenar valor 1 ó 0 en registro de tecla correspondiente
+
+
+  .salida:
+
+  ;mov byte [tecla_esc], 11b
+  cli ; ??? ¿Deshabilitar interrupciones
+
+  ; Enviar señal EOI (End of Interrupt)
+  mov     al,20h
+  out     20h,al
+
+  ; reestablecer registros
+  pop es
+  pop ds
+  pop di
+  pop si
+  pop dx
+  pop cx
+  pop bx
+  pop ax
+  iret
 
 cambiapaleta:
   mov ah, [paleta]
@@ -216,6 +323,15 @@ cambiapaleta:
   ret
   
 fin:
+  ; 1 .- Reestablecer rutina original de manejo de teclado
+  mov     dx,[kb_int_old_off]
+  mov     ax,[kb_int_old_seg]
+  mov     ds,ax
+  mov     al,9h
+  mov     ah,25h
+  int     21h
+
+  ; 2 .- Salir al sistema
   int 20h
 
 
@@ -525,6 +641,13 @@ borrasprite16:
 section .data
   ; program data
 
+  kb_int_old_off: dw  0
+  kb_int_old_seg: dw  0
+
+  ; Estado de las teclas:
+  tecla_esc: db 0
+
+  ; Variables del programa:
   spritex:
   dw  40d
   spritey:
