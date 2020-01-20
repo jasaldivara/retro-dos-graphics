@@ -506,12 +506,9 @@ dibujasprite16noalineado:
 
   .looprenglon:
 
-  push cx ; guardar contador de renglones
+  mov dx, cx ; guardar contador de renglones
   
-  mov dx, bx     ; copiar coordenada subpixel
-  shl dx, 1	; Multiplicar c-subpixel por 4 (4 bits por pixel)
-  shl dx, 1
-  mov cx, dx    ; guardar bits a desplazar en el contador
+  mov cx, 4    ; guardar bits a desplazar en el contador
 
   xor ax, ax	; borrar ax
 
@@ -522,55 +519,55 @@ dibujasprite16noalineado:
   dec si
   lodsw
   xchg ah, al
-  mov cx, dx
+  mov cx, 4
   shr ax, cl    ; desplazar esa cantidad de bits
   stosb		; Escribir byte (?)
 
   dec si
   lodsw
   xchg ah, al
-  mov cx, dx
+  mov cx, 4
   shr ax, cl    ; desplazar esa cantidad de bits
   stosb		; Escribir byte (?)
 
   dec si
   lodsw
   xchg ah, al
-  mov cx, dx
+  mov cx, 4
   shr ax, cl    ; desplazar esa cantidad de bits
   stosb		; Escribir byte (?)
 
   dec si
   lodsw
   xchg ah, al
-  mov cx, dx
+  mov cx, 4
   shr ax, cl    ; desplazar esa cantidad de bits
   stosb		; Escribir byte (?)
 
   dec si
   lodsw
   xchg ah, al
-  mov cx, dx
+  mov cx, 4
   shr ax, cl    ; desplazar esa cantidad de bits
   stosb		; Escribir byte (?)
 
   dec si
   lodsw
   xchg ah, al
-  mov cx, dx
+  mov cx, 4
   shr ax, cl    ; desplazar esa cantidad de bits
   stosb		; Escribir byte (?)
 
   dec si
   lodsw
   xchg ah, al
-  mov cx, dx
+  mov cx, 4
   shr ax, cl    ; desplazar esa cantidad de bits
   stosb		; Escribir byte (?)
 
   xor ax, ax
   mov ah, [ds:si - 1]
-  mov cx, dx
+  mov cx, 4
   shr ax, cl
   stosb
 
@@ -580,7 +577,7 @@ dibujasprite16noalineado:
   add di, ( BYTESPERSCAN - 9 ) ; Agregar suficientes bytes para que sea siguiente renglon
   add si, ( ANCHO / PXB ) ; Saltar renglones de sprite.mapa de bits
 
-  pop cx  ; contador de renglones
+  mov cx, dx  ; contador de renglones
   loop .looprenglon
 
   ;popf	; Salir por mientras
@@ -603,12 +600,9 @@ dibujasprite16noalineado:
 
   .looprenglon2:
 
-  push cx ; guardar contador de renglones
+  mov dx, cx ; guardar contador de renglones
   
-  mov dx, bx     ; copiar coordenada subpixel
-  shl dx, 1	; Multiplicar c-subpixel por 4 (4 bits por pixel)
-  shl dx, 1
-  mov cx, dx    ; guardar bits a desplazar en el contador
+  mov cx, 4    ; guardar bits a desplazar en el contador
 
   xor ax, ax	; borrar ax
 
@@ -619,62 +613,62 @@ dibujasprite16noalineado:
   dec si
   lodsw
   xchg ah, al
-  mov cx, dx
+  mov cx, 4
   shr ax, cl    ; desplazar esa cantidad de bits
   stosb		; Escribir byte (?)
 
   dec si
   lodsw
   xchg ah, al
-  mov cx, dx
+  mov cx, 4
   shr ax, cl    ; desplazar esa cantidad de bits
   stosb		; Escribir byte (?)
 
   dec si
   lodsw
   xchg ah, al
-  mov cx, dx
+  mov cx, 4
   shr ax, cl    ; desplazar esa cantidad de bits
   stosb		; Escribir byte (?)
 
   dec si
   lodsw
   xchg ah, al
-  mov cx, dx
+  mov cx, 4
   shr ax, cl    ; desplazar esa cantidad de bits
   stosb		; Escribir byte (?)
 
   dec si
   lodsw
   xchg ah, al
-  mov cx, dx
+  mov cx, 4
   shr ax, cl    ; desplazar esa cantidad de bits
   stosb		; Escribir byte (?)
 
   dec si
   lodsw
   xchg ah, al
-  mov cx, dx
+  mov cx, 4
   shr ax, cl    ; desplazar esa cantidad de bits
   stosb		; Escribir byte (?)
 
   dec si
   lodsw
   xchg ah, al
-  mov cx, dx
+  mov cx, 4
   shr ax, cl    ; desplazar esa cantidad de bits
   stosb		; Escribir byte (?)
 
   xor ax, ax
   mov ah, [ds:si - 1]
-  mov cx, dx
+  mov cx, 4
   shr ax, cl
   stosb
 
 
   add di, ( BYTESPERSCAN - 9 ) ; Agregar suficientes bytes para que sea siguiente renglon
   add si, ( ANCHO / PXB ) ; Saltar renglones de ssprite.mapa de bits
-  pop cx  ; contador de renglones
+  mov cx, dx  ; contador de renglones
   loop .looprenglon2
 
 
