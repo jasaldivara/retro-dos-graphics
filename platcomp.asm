@@ -431,7 +431,7 @@ dibujasprite16:
   add di, BYTESPERSCAN
   .espar: pushf
 
-  mov cx, 8  ; 4 .- Primero dibujamos 8 renglones (en renglones par de patalla)
+  mov cx, ( ALTOSPRITE / 2 )  ; 4 .- Primero dibujamos mitad de renglones (en renglones par de patalla)
 
   .looprenglon:
 
@@ -445,13 +445,13 @@ dibujasprite16:
   add si, BWSPRITE ; Saltar renglones de ssprite.mapa de bits
   loop .looprenglon
 
-  ; 5 .- Después dibujamos otros 8 renglones de sprite, ahora en renglones impar de pantalla
+  ; 5 .- Después dibujamos otra mitad de renglones de sprite, ahora en renglones impar de pantalla
 
   mov cx, MEMCGAODD ; Dibujar en renglones impar de pantalla CGA 4 Col
   mov es, cx
 
-  sub di, BYTESPERSCAN * 8  ; Retroceder hasta posicion inicial en pantalla ? (pero ahora en renglon impar)
-  sub si, BWSPRITE * 15   ; retrocedemos hasta posicion inicial de sprite ?
+  sub di, BYTESPERSCAN * ( ALTOSPRITE / 2 )  ; Retroceder hasta posicion inicial en pantalla ? (pero ahora en renglon impar)
+  sub si, BWSPRITE * ( ALTOSPRITE - 1 )   ; retrocedemos hasta posicion inicial de sprite + un renglon
 
   popf ; ¿Necesario?
   jz .espar2
@@ -459,7 +459,7 @@ dibujasprite16:
   sub di, BYTESPERSCAN
   .espar2:
 
-  mov cx, 8
+  mov cx, ( ALTOSPRITE / 2 )
 
   .looprenglon2:
 
@@ -504,7 +504,7 @@ dibujasprite16noalineado:
   add di, BYTESPERSCAN
   .espar pushf
 
-  mov cx, 8  ; 4 .- Primero dibujamos 8 renglones (en renglones par de patalla)
+  mov cx, ( ALTOSPRITE / 2 )  ; 4 .- Primero dibujamos mitad de renglones (en renglones par de patalla)
 
 
   .looprenglon:
@@ -577,7 +577,7 @@ dibujasprite16noalineado:
   ; movsw	-- Descartar estos
   ; movsw
 
-  add di, ( BYTESPERSCAN - 9 ) ; Agregar suficientes bytes para que sea siguiente renglon
+  add di, ( BYTESPERSCAN - ( ( ALTOSPRITE / 2 ) + 1 ) ) ; Agregar suficientes bytes para que sea siguiente renglon
   add si, BWSPRITE ; Saltar renglones de sprite.mapa de bits
 
   mov cx, dx  ; contador de renglones
@@ -585,12 +585,12 @@ dibujasprite16noalineado:
 
   ;popf	; Salir por mientras
   ;ret
-  ; 5 .- Después dibujamos otros 8 renglones de sprite, ahora en renglones impar de pantalla
+  ; 5 .- Después dibujamos otra mitad de renglones de sprite, ahora en renglones impar de pantalla
 
   mov cx, MEMCGAODD ; Dibujar en renglones impar de pantalla CGA 4 Col
   mov es, cx
 
-  sub di, ( BYTESPERSCAN * 8 )  ; Retroceder hasta posicion inicial en pantalla ? (pero ahora en renglon impar)
+  sub di, ( BYTESPERSCAN * ( ALTOSPRITE / 2 ) )  ; Retroceder hasta posicion inicial en pantalla ? (pero ahora en renglon impar)
   sub si, BWSPRITE * 15  ; retrocedemos hasta posicion inicial de sprite ?
 
   popf ; ¿Necesario?
@@ -599,7 +599,7 @@ dibujasprite16noalineado:
   sub di, BYTESPERSCAN
   .espar2:
 
-  mov cx, 8
+  mov cx, ( ALTOSPRITE / 2 )
 
   .looprenglon2:
 
@@ -669,7 +669,7 @@ dibujasprite16noalineado:
   stosb
 
 
-  add di, ( BYTESPERSCAN - 9 ) ; Agregar suficientes bytes para que sea siguiente renglon
+  add di, ( BYTESPERSCAN - ( ( ALTOSPRITE / 2 ) + 1 ) ) ; Agregar suficientes bytes para que sea siguiente renglon
   add si, BWSPRITE ; Saltar renglones de ssprite.mapa de bits
   mov cx, dx  ; contador de renglones
   loop .looprenglon2
@@ -708,7 +708,7 @@ borrasprite16:
   add di, BYTESPERSCAN
   .espar pushf
 
-  mov cx, 8  ; Primero dibujamos 8 renglones (en renglones par de patalla)
+  mov cx, ( ALTOSPRITE / 2 )  ; Primero borramos mitad de renglones (en renglones par de patalla)
   xor ax, ax  ; Registro AX en ceros
 
   .looprenglon:
@@ -719,22 +719,22 @@ borrasprite16:
   stosw
   stosb
 
-  add di, BYTESPERSCAN - 9 ; Agregar suficientes bytes para que sea siguiente renglon
+  add di, BYTESPERSCAN - ( ( ALTOSPRITE / 2 ) + 1 ) ; Agregar suficientes bytes para que sea siguiente renglon
   loop .looprenglon
 
-  ; Después dibujamos otros 8 renglones de sprite, ahora en renglones impar de pantalla
+  ; Después dibujamos otra mitad de renglones de sprite, ahora en renglones impar de pantalla
 
   mov cx, MEMCGAODD ; Dibujar en renglones impar de pantalla CGA 4 Col
   mov es, cx
 
-  sub di, BYTESPERSCAN * 8  ; Retroceder hasta posicion inicial en pantalla ? (pero ahora en renglon impar)
+  sub di, BYTESPERSCAN * ( ALTOSPRITE / 2 )  ; Retroceder hasta posicion inicial en pantalla ? (pero ahora en renglon impar)
 
   popf ; ¿Necesario?
   jz .espar2
   sub di, BYTESPERSCAN
   .espar2:
 
-  mov cx, 8
+  mov cx, ( ALTOSPRITE / 2 )
 
   .looprenglon2:
 
@@ -744,7 +744,7 @@ borrasprite16:
   stosw
   stosb
 
-  add di, BYTESPERSCAN - 9 ; Agregar suficientes bytes para que sea siguiente renglon
+  add di, BYTESPERSCAN - ( ( ALTOSPRITE / 2 ) + 1 ) ; Agregar suficientes bytes para que sea siguiente renglon
   loop .looprenglon2
 
   ret
