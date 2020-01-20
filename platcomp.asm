@@ -22,7 +22,10 @@ CPU 8086
 
   %define GRAVEDAD 1
   %define REBOTEY 10
-  %define ANCHO 16
+  %define ANCHOSPRITE 16
+  %define ALTOSPRITE 16
+
+  %define BWSPRITE ( ANCHOSPRITE / PXB )  ; Ancho de Sprite en Bytes
 
   ; Macros
 
@@ -335,9 +338,9 @@ cambiapaleta:
 
   ; 1.1.- revisar que no se salga
 
-  cmp ax, WIDTHPX - ANCHO
+  cmp ax, WIDTHPX - ANCHOSPRITE
   jng .sig1
-  mov ax, WIDTHPX - ANCHO
+  mov ax, WIDTHPX - ANCHOSPRITE
   neg bx
   .sig1:
   cmp ax, 0
@@ -361,9 +364,9 @@ cambiapaleta:
 
   ; 1.1.- revisar que no se salga
 
-  cmp ax, HEIGHTPX - ANCHO
+  cmp ax, HEIGHTPX - ALTOSPRITE
   jng .sig1
-  mov ax, HEIGHTPX - ANCHO
+  mov ax, HEIGHTPX - ALTOSPRITE
   mov bx, 0
   mov word [parado], 1
   .sig1:
@@ -424,7 +427,7 @@ dibujasprite16:
   ; la segunda fila de pixeles del mapa de bits en coordenada par de pantalla.
   test cx, 00000001b
   jz .espar
-  add si, ( ANCHO / PXB )
+  add si, BWSPRITE
   add di, BYTESPERSCAN
   .espar: pushf
 
@@ -438,8 +441,8 @@ dibujasprite16:
   movsw
 
 
-  add di, BYTESPERSCAN -  ( ANCHO / PXB ); Agregar suficientes bytes para que sea siguiente renglon
-  add si, ( ANCHO / PXB ) ; Saltar renglones de ssprite.mapa de bits
+  add di, BYTESPERSCAN -  BWSPRITE; Agregar suficientes bytes para que sea siguiente renglon
+  add si, BWSPRITE ; Saltar renglones de ssprite.mapa de bits
   loop .looprenglon
 
   ; 5 .- Después dibujamos otros 8 renglones de sprite, ahora en renglones impar de pantalla
@@ -448,11 +451,11 @@ dibujasprite16:
   mov es, cx
 
   sub di, BYTESPERSCAN * 8  ; Retroceder hasta posicion inicial en pantalla ? (pero ahora en renglon impar)
-  sub si, ( ANCHO / PXB ) * 15   ; retrocedemos hasta posicion inicial de sprite ?
+  sub si, BWSPRITE * 15   ; retrocedemos hasta posicion inicial de sprite ?
 
   popf ; ¿Necesario?
   jz .espar2
-  sub si, ( ANCHO / PXB ) * 2
+  sub si, BWSPRITE * 2
   sub di, BYTESPERSCAN
   .espar2:
 
@@ -465,8 +468,8 @@ dibujasprite16:
   movsw
   movsw
 
-  add di, BYTESPERSCAN -  ( ANCHO / PXB ) ; Agregar suficientes bytes para que sea siguiente renglon
-  add si, ( ANCHO / PXB ) ; Saltar renglones de ssprite.mapa de bits
+  add di, BYTESPERSCAN -  BWSPRITE ; Agregar suficientes bytes para que sea siguiente renglon
+  add si, BWSPRITE ; Saltar renglones de ssprite.mapa de bits
   loop .looprenglon2
 
   ret
@@ -497,7 +500,7 @@ dibujasprite16noalineado:
   ; la segunda fila de pixeles del mapa de bits en coordenada par de pantalla.
   test cx, 00000001b
   jz .espar
-  add si, ( ANCHO / PXB )
+  add si, BWSPRITE
   add di, BYTESPERSCAN
   .espar pushf
 
@@ -575,7 +578,7 @@ dibujasprite16noalineado:
   ; movsw
 
   add di, ( BYTESPERSCAN - 9 ) ; Agregar suficientes bytes para que sea siguiente renglon
-  add si, ( ANCHO / PXB ) ; Saltar renglones de sprite.mapa de bits
+  add si, BWSPRITE ; Saltar renglones de sprite.mapa de bits
 
   mov cx, dx  ; contador de renglones
   loop .looprenglon
@@ -588,11 +591,11 @@ dibujasprite16noalineado:
   mov es, cx
 
   sub di, ( BYTESPERSCAN * 8 )  ; Retroceder hasta posicion inicial en pantalla ? (pero ahora en renglon impar)
-  sub si, ( ANCHO / PXB ) * 15  ; retrocedemos hasta posicion inicial de sprite ?
+  sub si, BWSPRITE * 15  ; retrocedemos hasta posicion inicial de sprite ?
 
   popf ; ¿Necesario?
   jz .espar2
-  sub si, ( ANCHO / PXB )
+  sub si, BWSPRITE
   sub di, BYTESPERSCAN
   .espar2:
 
@@ -667,7 +670,7 @@ dibujasprite16noalineado:
 
 
   add di, ( BYTESPERSCAN - 9 ) ; Agregar suficientes bytes para que sea siguiente renglon
-  add si, ( ANCHO / PXB ) ; Saltar renglones de ssprite.mapa de bits
+  add si, BWSPRITE ; Saltar renglones de ssprite.mapa de bits
   mov cx, dx  ; contador de renglones
   loop .looprenglon2
 
