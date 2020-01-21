@@ -5,7 +5,7 @@ CPU 8086
   %define SETVIDEOMODE 0
   %define CGA6 0x06
   %define WIDTHPX 160d
-  %define HEIGHTPX 200d
+  %define HEIGHTPX 100d
   %define PXB 2   ; Pixeles por byte
   %assign BYTESPERSCAN (WIDTHPX / PXB)
 
@@ -414,8 +414,8 @@ dibujasprite16:
 
   mov cx, MEMCGAEVEN
   mov es, cx
-  mov cx, ax  ; Copiar / respaldar coordenada Y
-  shr ax, 1 ; Descartar el bit de selección de banco
+  ; mov cx, ax  ; Copiar / respaldar coordenada Y
+  ; shr ax, 1 ; Descartar el bit de selección de banco
 
   ; 2.- Multiplicar
   mov dl, BYTESPERSCAN
@@ -423,15 +423,9 @@ dibujasprite16:
   add ax, bx  ; Desplazamiento del byte que vamos a manipular
   mov di, ax
 
-  ; 3.- En caso de que coordenada Y sea impar, comenzar a dibujar sprite desde
-  ; la segunda fila de pixeles del mapa de bits en coordenada par de pantalla.
-  test cx, 00000001b
-  jz .espar
-  ;add si, BWSPRITE
-  add di, BYTESPERSCAN
-  .espar: pushf
+  .dibujarenglones:
 
-  mov cx, ALTOSPRITE  ; 4 .- Primero dibujamos mitad de renglones (en renglones par de patalla)
+  mov cx, ALTOSPRITE  ; 4 .- Dibujamos TODOS los renglones (en renglones par de patalla)
 
   .looprenglon:
 
@@ -442,10 +436,14 @@ dibujasprite16:
 
 
   add di, BYTESPERSCAN -  BWSPRITE; Agregar suficientes bytes para que sea siguiente renglon
-  ; add si, BWSPRITE ; Saltar renglones de ssprite.mapa de bits
+
   loop .looprenglon
 
-  ; 5 .- Después dibujamos otra mitad de renglones de sprite, ahora en renglones impar de pantalla
+  ; 5 .- Después dibujamos mismos renglones de sprite, ahora en renglones impar de pantalla
+
+  mov cx, es
+  cmp cx, MEMCGAODD
+  je	.salir
 
   mov cx, MEMCGAODD ; Dibujar en renglones impar de pantalla CGA 4 Col
   mov es, cx
@@ -453,25 +451,10 @@ dibujasprite16:
   sub di, BYTESPERSCAN * ALTOSPRITE  ; Retroceder hasta posicion inicial en pantalla ? (pero ahora en renglon impar)
   sub si, BWSPRITE * ( ALTOSPRITE )   ; retrocedemos hasta posicion inicial de sprite + un renglon
 
-  popf ; ¿Necesario?
-  jz .espar2
-  ;sub si, BWSPRITE * 2
-  sub di, BYTESPERSCAN
-  .espar2:
+  jmp .dibujarenglones
 
-  mov cx, ALTOSPRITE
-
-  .looprenglon2:
-
-  movsw
-  movsw
-  movsw
-  movsw
-
-  add di, BYTESPERSCAN -  BWSPRITE ; Agregar suficientes bytes para que sea siguiente renglon
-  ;add si, BWSPRITE ; Saltar renglones de ssprite.mapa de bits
-  loop .looprenglon2
-
+	; retorno de la función
+  .salir:
   ret
 
 dibujasprite16noalineado:
@@ -485,7 +468,7 @@ dibujasprite16noalineado:
   mov cx, MEMCGAEVEN
   mov es, cx
   mov cx, ax  ; Copiar / respaldar coordenada Y
-  shr ax, 1 ; Descartar el bit de selección de banco
+  ; shr ax, 1 ; Descartar el bit de selección de banco
 
   ; 2.- Multiplicar
   mov dl, BYTESPERSCAN
@@ -494,18 +477,12 @@ dibujasprite16noalineado:
   shr dx, 1   ; Descartar ultimo bit
   add ax, dx  ; Desplazamiento del byte que vamos a manipular
   mov di, ax
-  and bx, 00000001b	; Usar solo ultimo bit para posicion sub-byte
+  ; and bx, 00000001b	; Usar solo ultimo bit para posicion sub-byte
 
-  ; 3.- En caso de que coordenada Y sea impar, comenzar a dibujar sprite desde
-  ; la segunda fila de pixeles del mapa de bits en coordenada par de pantalla.
-  test cx, 00000001b
-  jz .espar
-  ;add si, BWSPRITE
-  add di, BYTESPERSCAN
-  .espar pushf
 
-  mov cx, ALTOSPRITE  ; 4 .- Primero dibujamos mitad de renglones (en renglones par de patalla)
+  .dibujarenglones:
 
+  mov cx, ALTOSPRITE  ; 4 .- Primero dibujamos TODOS los renglones (en renglones par de patalla)
 
   .looprenglon:
 
@@ -578,105 +555,31 @@ dibujasprite16noalineado:
   ; movsw
 
   add di, ( BYTESPERSCAN - ( ( BWSPRITE + 1 ) ) ) ; Agregar suficientes bytes para que sea siguiente renglon
-  ;add si, BWSPRITE ; Saltar renglones de sprite.mapa de bits
+
 
   mov cx, dx  ; contador de renglones
   loop .looprenglon
 
-  ;popf	; Salir por mientras
-  ;ret
-  ; 5 .- Después dibujamos otra mitad de renglones de sprite, ahora en renglones impar de pantalla
+
+  ; 5 .- Después dibujamos los mismos renglones de sprite, ahora en renglones impar de pantalla
+
+  mov cx, es
+  cmp cx, MEMCGAODD
+  je	.salir
 
   mov cx, MEMCGAODD ; Dibujar en renglones impar de pantalla CGA 4 Col
   mov es, cx
 
-  sub di, ( BYTESPERSCAN * ( ALTOSPRITE + 1 ) )  ; Retroceder hasta posicion inicial en pantalla ? (pero ahora en renglon impar)
+  sub di, BYTESPERSCAN * ALTOSPRITE  ; Retroceder hasta posicion inicial en pantalla ? (pero ahora en renglon impar)
   sub si, BWSPRITE * ALTOSPRITE  ; retrocedemos hasta posicion inicial de sprite ?
 
-  popf ; ¿Necesario?
-  jz .espar2
-  ;sub si, BWSPRITE
-  ;sub di, BYTESPERSCAN
-  .espar2:
+  jmp .dibujarenglones
 
-  mov cx, ( ALTOSPRITE )
-
-  .looprenglon2:
-
-  mov dx, cx ; guardar contador de renglones
-  
-  mov cx, 4    ; guardar bits a desplazar en el contador
-
-  xor ax, ax	; borrar ax
-
-  lodsb         ; cargar byte en al
-  shr ax, cl    ; desplazar esa cantidad de bits
-  stosb		; Escribir byte (?)
-
-  dec si
-  lodsw
-  xchg ah, al
-  mov cx, 4
-  shr ax, cl    ; desplazar esa cantidad de bits
-  stosb		; Escribir byte (?)
-
-  dec si
-  lodsw
-  xchg ah, al
-  mov cx, 4
-  shr ax, cl    ; desplazar esa cantidad de bits
-  stosb		; Escribir byte (?)
-
-  dec si
-  lodsw
-  xchg ah, al
-  mov cx, 4
-  shr ax, cl    ; desplazar esa cantidad de bits
-  stosb		; Escribir byte (?)
-
-  dec si
-  lodsw
-  xchg ah, al
-  mov cx, 4
-  shr ax, cl    ; desplazar esa cantidad de bits
-  stosb		; Escribir byte (?)
-
-  dec si
-  lodsw
-  xchg ah, al
-  mov cx, 4
-  shr ax, cl    ; desplazar esa cantidad de bits
-  stosb		; Escribir byte (?)
-
-  dec si
-  lodsw
-  xchg ah, al
-  mov cx, 4
-  shr ax, cl    ; desplazar esa cantidad de bits
-  stosb		; Escribir byte (?)
-
-  dec si
-  lodsw
-  xchg ah, al
-  mov cx, 4
-  shr ax, cl    ; desplazar esa cantidad de bits
-  stosb		; Escribir byte (?)
-
-  xor ax, ax
-  mov ah, [ds:si - 1]
-  mov cx, 4
-  shr ax, cl
-  stosb
-
-
-  add di, ( BYTESPERSCAN - ( BWSPRITE + 1 )) ; Agregar suficientes bytes para que sea siguiente renglon
-  ;add si, BWSPRITE ; Saltar renglones de ssprite.mapa de bits
-  mov cx, dx  ; contador de renglones
-  loop .looprenglon2
-
-
-  ; Fin. Retornar
+	; retorno de la función
+  .salir:
   ret
+
+
 
 borrasprite16:
 
@@ -691,8 +594,8 @@ borrasprite16:
 
   mov cx, MEMCGAEVEN
   mov es, cx
-  mov cx, ax  ; Copiar / respaldar coordenada Y
-  shr ax, 1 ; Descartar el bit de selección de banco
+  ; mov cx, ax  ; Copiar / respaldar coordenada Y
+  ; shr ax, 1 ; Descartar el bit de selección de banco
 
   ; Multiplicar
   mov dl, BYTESPERSCAN
@@ -701,14 +604,9 @@ borrasprite16:
   add ax, bx  ; Desplazamiento del byte que vamos a manipular
   mov di, ax
 
-  ; En caso de que coordenada Y sea impar, comenzar a dibujar sprite desde
-  ; la segunda fila de pixeles del mapa de bits en coordenada par de pantalla.
-  test cx, 00000001b
-  jz .espar
-  add di, BYTESPERSCAN
-  .espar pushf
+  .borrarenglones:
 
-  mov cx, ( ALTOSPRITE  )  ; Primero borramos mitad de renglones (en renglones par de patalla)
+  mov cx, ALTOSPRITE  ; Primero borramos TODOS los renglones del sprite (en renglones par de patalla)
   xor ax, ax  ; Registro AX en ceros
 
   .looprenglon:
@@ -724,31 +622,20 @@ borrasprite16:
 
   ; Después dibujamos otra mitad de renglones de sprite, ahora en renglones impar de pantalla
 
+  mov cx, es
+  cmp cx, MEMCGAODD
+  je	.salir
+
   mov cx, MEMCGAODD ; Dibujar en renglones impar de pantalla CGA 4 Col
   mov es, cx
 
-  sub di, BYTESPERSCAN * ( ALTOSPRITE )  ; Retroceder hasta posicion inicial en pantalla ? (pero ahora en renglon impar)
+  sub di, BYTESPERSCAN * ALTOSPRITE  ; Retroceder hasta posicion inicial en pantalla ? (pero ahora en renglon impar)
 
-  popf ; ¿Necesario?
-  jz .espar2
-  sub di, BYTESPERSCAN
-  .espar2:
+  jmp .borrarenglones
 
-  mov cx, ( ALTOSPRITE )
-
-  .looprenglon2:
-
-  stosw
-  stosw
-  stosw
-  stosw
-  stosb
-
-  add di, BYTESPERSCAN - ( BWSPRITE + 1 ) ; Agregar suficientes bytes para que sea siguiente renglon
-  loop .looprenglon2
-
+	; retorno de la función
+  .salir:
   ret
-
 
 
 section .data
