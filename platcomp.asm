@@ -577,7 +577,7 @@ dibujasprite16noalineado:
   ; movsw	-- Descartar estos
   ; movsw
 
-  add di, ( BYTESPERSCAN - ( ( ALTOSPRITE / 2 ) + 1 ) ) ; Agregar suficientes bytes para que sea siguiente renglon
+  add di, ( BYTESPERSCAN - ( BWSPRITE + 1 ) ) ; Agregar suficientes bytes para que sea siguiente renglon
   add si, BWSPRITE ; Saltar renglones de sprite.mapa de bits
 
   mov cx, dx  ; contador de renglones
@@ -669,7 +669,7 @@ dibujasprite16noalineado:
   stosb
 
 
-  add di, ( BYTESPERSCAN - ( ( ALTOSPRITE / 2 ) + 1 ) ) ; Agregar suficientes bytes para que sea siguiente renglon
+  add di, ( BYTESPERSCAN - ( BWSPRITE + 1 ) ) ; Agregar suficientes bytes para que sea siguiente renglon
   add si, BWSPRITE ; Saltar renglones de ssprite.mapa de bits
   mov cx, dx  ; contador de renglones
   loop .looprenglon2
@@ -719,7 +719,7 @@ borrasprite16:
   stosw
   stosb
 
-  add di, BYTESPERSCAN - ( ( ALTOSPRITE / 2 ) + 1 ) ; Agregar suficientes bytes para que sea siguiente renglon
+  add di, BYTESPERSCAN - ( BWSPRITE + 1 ) ; Agregar suficientes bytes para que sea siguiente renglon
   loop .looprenglon
 
   ; Después dibujamos otra mitad de renglones de sprite, ahora en renglones impar de pantalla
@@ -744,7 +744,7 @@ borrasprite16:
   stosw
   stosb
 
-  add di, BYTESPERSCAN - ( ( ALTOSPRITE / 2 ) + 1 ) ; Agregar suficientes bytes para que sea siguiente renglon
+  add di, BYTESPERSCAN - ( BWSPRITE + 1 ) ; Agregar suficientes bytes para que sea siguiente renglon
   loop .looprenglon2
 
   ret
