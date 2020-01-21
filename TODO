@@ -1,0 +1,11 @@
+
+1 .- Arreglar uso de variables macros en platcomp.asm:
+
+    * En algunos lugares de dibujasprite16 se usa la varialbe ( ALTOSPRITE / 2 )
+      cuando debería ser BWSPRITE.
+      Revisar especialmente lineas que comienzan por "add di ..."
+
+    * Corregir errores en borrado y dibujo de p16doble.asm
+
+
+
