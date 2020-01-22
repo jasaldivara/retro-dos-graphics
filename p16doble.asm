@@ -172,7 +172,9 @@ leerteclado:
   jz .sig1
 
   .movizq:
-  mov ax, -1
+  mov ax, [deltax]
+  dec ax
+  dec ax
   mov [deltax], ax
 
   .sig1:
@@ -181,7 +183,9 @@ leerteclado:
   jz .sig2
 
   .movder:
-  mov ax, 1
+  mov ax, [deltax]
+  inc ax
+  inc ax
   mov [deltax], ax
 
   .sig2:
@@ -324,11 +328,33 @@ cambiapaleta:
 
   mecanicadeljuego:
 
+  mov ax, [deltax]
+  cmp ax, 0
+  je .leetec
+  jg .decdx
+  inc ax
+  mov [deltax], ax
+  jmp .leetec
+  .decdx:
+  dec ax
+  mov [deltax], ax
+
   ; 1.- Leer el teclado
 
-  mov ax, 0
-  mov [deltax], ax
+
+  .leetec:
   call leerteclado
+
+  mov ax, [deltax]
+  cmp ax, 2
+  jl .sig1
+  mov word [deltax], 2
+  .sig1:
+  cmp ax, -2
+  jg .sig2
+  mov word [deltax], -2
+  .sig2:
+
 
   calcx:    ; 2.- calcular x
 
