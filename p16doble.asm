@@ -364,9 +364,9 @@ cambiapaleta:
 
   ; 1.1.- revisar que no se salga
 
-  cmp ax, HEIGHTPX - ( ALTOSPRITE * 2 )
+  cmp ax, HEIGHTPX - ALTOSPRITE
   jng .sig1
-  mov ax, HEIGHTPX - ( ALTOSPRITE * 2 )
+  mov ax, HEIGHTPX - ALTOSPRITE
   mov bx, 0
   mov word [parado], 1
   .sig1:
