@@ -1,3 +1,39 @@
 
+Nuevas características:
 
+  Música y sonidos por medio del altavoz de la PC.
+  Sprites del doble de alto en pixeles para que funcionen en modo 160 x 200
+  (Doble resolución vertical que horizontal).
+
+Experimentos:
+
+  Cambio de paleta en modo composite?
+  Usar modo 4 o 5 en modo composite?
+
+Mecánica del juego:
+
+  Plataformas.
+  Que Objetos/sprites den la vuelta a la pantalla por las orillas.
+  Saltar sólo volviendo a presionar el botón cuando se esté en el suelo (tener
+  que soltar el botón)
+
+Optimizaciones:
+
+  Borrar sprite:
+
+  Borrar sólo los bytes sobre los cuales no vamos a vovler a escribir.
+  Tomar en cuenta posicion anterior y nueva de sprites, compararlas.
+  Hacer una estructura de sprite, que contenga las coordenadas nuevas y
+  anteriores
+
+  Dibujado de sprites:
+
+  Ver si se vuelve más rápido si hacemos un loop de pixeles y dobles pixeles,
+  tanto en dibujado de sprites alineados como no-alineados.
+  En sprites no-alineados es mucho más pesado y lento el proceso de dibujado.
+
+  Opción 2, para sprites no-alineados:
+  Hacer una version de mapa de bits en los que los bits ya tengan desplazamiento
+  de 4 posiciones, para no estarlos desplazando cada vez que dibujemos, y así
+  hacer mucho más rápida y óptima la rutina de dibujado.
 
