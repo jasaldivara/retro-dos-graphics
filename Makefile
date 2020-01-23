@@ -16,7 +16,7 @@ $(BIN)/holacga.com : holacga.asm
 $(BIN)/pixelcga.com : pixelcga.asm
 	$(ASM) $< $(ASMFLAGS) -o $@
 
-$(BIN)/sprite4.com : spritecga.asm
+$(BIN)/sprite4.com : spritecga.asm moni
 	$(ASM) $< $(ASMFLAGS) -o $@
 
 $(BIN)/rebota.com : rebota.asm
@@ -26,15 +26,15 @@ $(BIN)/rebota2.com : rebota-2.asm
 	$(ASM) $< $(ASMFLAGS) -o $@
 
 $(BIN)/platform.com : platform.asm
-	$(ASM) $< $(ASMFLAGS) -o $@
+	$(ASM) $< $(ASMFLAGS) -o $@ moni
 
-$(BIN)/platcomp.com : platcomp.asm
+$(BIN)/platcomp.com : platcomp.asm mdoble.bin
 	$(ASM) $< $(ASMFLAGS) -o $@
 
 $(BIN)/compcol.com : compcol.asm
 	$(ASM) $< $(ASMFLAGS) -o $@
 
-$(BIN)/p16doble.com : p16doble.asm
+$(BIN)/p16doble.com : p16doble.asm monocomposite
 	$(ASM) $< $(ASMFLAGS) -o $@
 
 clean :

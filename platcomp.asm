@@ -21,9 +21,9 @@ CPU 8086
   ; Constantes del juego
 
   %define GRAVEDAD 1
-  %define REBOTEY 10
+  %define REBOTEY 14
   %define ANCHOSPRITE 16
-  %define ALTOSPRITE 16
+  %define ALTOSPRITE 32
 
   %define BWSPRITE ( ANCHOSPRITE / PXB )  ; Ancho de Sprite en Bytes
 
@@ -591,7 +591,7 @@ dibujasprite16noalineado:
   mov es, cx
 
   sub di, ( BYTESPERSCAN * ( ALTOSPRITE / 2 ) )  ; Retroceder hasta posicion inicial en pantalla ? (pero ahora en renglon impar)
-  sub si, BWSPRITE * 15  ; retrocedemos hasta posicion inicial de sprite ?
+  sub si, BWSPRITE * ( ALTOSPRITE - 1 )  ; retrocedemos hasta posicion inicial de sprite ?
 
   popf ; ¿Necesario?
   jz .espar2
@@ -803,7 +803,7 @@ section .data
   db 00000000b, 00101010b, 10101010b, 00000000b
 
 spritemonigote:
-incbin	"monocomposite",0,128
+incbin	"mdoble.bin",0,256
 
 section .bss
   ; uninitialized data
