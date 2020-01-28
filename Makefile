@@ -6,7 +6,8 @@ ASMFLAGS = -fbin
 
 EJECUTABLES = $(BIN)/holacga.com $(BIN)/pixelcga.com $(BIN)/sprite4.com \
               $(BIN)/rebota.com $(BIN)/rebota2.com $(BIN)/platform.com \
-              $(BIN)/compcol.com $(BIN)/platcomp.com $(BIN)/p16doble.com
+              $(BIN)/compcol.com $(BIN)/platcomp.com $(BIN)/p16doble.com \
+              $(BIN)/speaker.com
 
 ALL : $(EJECUTABLES)
 
@@ -35,6 +36,9 @@ $(BIN)/compcol.com : compcol.asm
 	$(ASM) $< $(ASMFLAGS) -o $@
 
 $(BIN)/p16doble.com : p16doble.asm monocomposite
+	$(ASM) $< $(ASMFLAGS) -o $@
+
+$(BIN)/speaker.com : speaker.asm
 	$(ASM) $< $(ASMFLAGS) -o $@
 
 clean :
