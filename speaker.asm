@@ -53,9 +53,22 @@ start:
   mov [timer_int_old_seg], es
 
 
-  mov bx, 4554d
-  setFreqSpeak
-  SpeakerOn
+  ; inicia musica
+  ; mov bx, 4554d
+  ; setFreqSpeak
+  ; SpeakerOn
+
+  mov ax, partitura
+  mov word [iniciopart], ax
+
+  ; 2 .- Registrar nueva rutina de interrupción del teclado
+  mov     al, 1Ch
+  mov     ah, 25h
+  mov     bx, cs
+  mov     ds, bx
+  mov     dx, rutinatimer
+  int     21h
+
 
 ciclo:
   mov ah, 1   ; "Get keystroke status"
@@ -82,6 +95,71 @@ fin:
   int 20h
 
 
+rutinatimer:
+
+  ; 1.- cargar segmento de datos (igual al segmento de codigo)
+  mov bx, cs
+  mov ds, bx
+
+  .carganota:
+  ; 2.- cargar posicion de nota actual en la partitura
+  mov word dx, [iniciopart]
+  mov si, dx
+  mov word bx, [notapos]
+  shl bx, 1
+  shl bx, 1
+  lea si, [si + bx]
+  lodsw
+
+  ; 3.- Verificar que no sea fin de partitura
+  test ax, ax
+  jnz .sig1
+  	; 3.1 Si es el fin de partitura, volver a comenzar
+  xor bx, bx
+  mov word [notapos], bx
+  mov word [notatick], bx
+  jmp .carganota
+
+  .sig1:
+
+  ; 4.- Verificar timer tick
+  mov word bx, [notatick]
+  test bx, bx
+  jnz .sig2
+  	; Si tick es cero, tocar nota nueva
+  	lodsw
+  	test ax, ax
+  	jnz .sonido
+  		; si nota (ax) es cero, apagar speaker
+  		SpeakerOff
+  		jmp .inctick
+  	.sonido:
+  		; Si no es cero, reproducir en dicha frecuencia
+  		mov bx, ax
+  		setFreqSpeak
+  		SpeakerOn
+  		jmp .inctick
+  .sig2:
+
+  ; Verificar si termina nota actual
+  cmp ax, bx
+  jge .inctick
+
+  mov word ax, [notapos]
+  inc ax
+  mov word [notapos], ax
+  xor bx, bx
+  mov word [notatick], bx
+  jmp .carganota
+
+  .inctick:
+  mov word bx, [notatick]
+  inc bx
+  mov word [notatick], bx
+
+  .fin:
+  iret
+
 section .data
   ; program data
 
@@ -96,9 +174,35 @@ section .data
 
 
   ;	duracion, nota
-  musica:
-  dw	8, 4554
-  dw	4, 4058
-  dw	4, 0		; Si la nota es cero: Guardar silencio
+  partitura:	; Si la nota es cero: Guardar silencio
+
+  dw	4, 4554
+  dw	2, 4058
+
+  dw     1,7231
+  dw     1,6449
+  dw     2,6818
+
+  dw	4, 3615
+  dw	2, 4058
+
+  dw     1,7231
+  dw     1,6449
+  dw     2,6818
+
+  dw	4, 2875
+  dw	2, 3224
+
+  dw     1,7231
+  dw     1,6449
+  dw     2,6818
+
+  dw	4, 2415
+  dw	2, 2875
+
+  dw     1,7231
+  dw     1,6449
+  dw     2,6818
+
   dw	0, 0		; Si la duración es cero: Fin de la música
 
