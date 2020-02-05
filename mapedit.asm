@@ -13,7 +13,7 @@ CPU 8086
   %define KB_LEFT 4Bh
   %define KB_RIGHT 4Dh
 
-
+  %define BYTESPERROW 160d
 
   ; Macros
 
@@ -71,10 +71,17 @@ start:
   call escribecaracter
 
   lea bx, [msg1]
-  mov dh, 10
-  mov dl, 5
+  mov dh, 5
+  mov dl, 10
   mov ch, 00111111b
   call escribestringz
+
+  mov dh, 6
+  mov dl, 10
+  mov bh, 40
+  mov bl, 10
+  mov ch, 01001111b
+  call cuadrodoble
 
 fin:
   ; 2 .- Salir al sistema
@@ -84,13 +91,13 @@ escribecaracter:
   ; parametros
   ; bl = caracter
   ; bh = atributos/colores
-  ; dh = coord x
-  ; dl = coord y
+  ; dh = coord y
+  ; dl = coord x
 
   mov ax, MEMCGAEVEN
   mov es, ax
 
-  mov al, 160d
+  mov al, BYTESPERROW
   mul dh
   xor dh, dh
   shl dx, 1	; multiplicar x * 2
@@ -104,8 +111,8 @@ escribecaracter:
 escribestringz:
   ; escribe en pantalla cadena de caracteres terminada en cero
   ; bx = puntero a cadena
-  ; dh = coord x
-  ; dl = coord y
+  ; dh = coord y
+  ; dl = coord x
   ; ch = atributos/colores
 
   mov ax, MEMCGAEVEN
@@ -113,7 +120,7 @@ escribestringz:
 
   mov si, bx	; cadena origen en si
 
-  mov al, 160d
+  mov al, BYTESPERROW
   mul dh
   xor dh, dh
   shl dx, 1	; multiplicar x * 2
@@ -131,15 +138,90 @@ escribestringz:
   jmp .ciclo
 
   .fin:
-
+  ret
 
 cuadrodoble:
   ; Parametros:
-  ; bh = coordenada x
-  ; bl = coordenada y
-  ; dh = ancho
-  ; dl = alto
-  ; ah = Atributos/colores
+  ; dh = coordenada y
+  ; dl = coordenada x
+  ; bh = ancho
+  ; bl = alto
+  ; ch = Atributos/colores
+
+  mov ax, MEMCGAEVEN
+  mov es, ax
+
+  mov al, BYTESPERROW
+  mul dh
+  xor dh, dh
+  shl dx, 1	; multiplicar x * 2
+  add ax, dx
+  mov di, ax	; Destino en pantalla en es:di
+
+  ; esquina sup izquierda
+  mov al, 201	; caracter de esquina izquierda doble
+  mov ah, ch	; atributos
+  stosw		; escribir
+
+  ; linea horizontal superior
+  mov al, 205	; caracter linea horizontal doble
+  xor cx, cx
+  mov cl, bh
+  rep stosw
+
+  ; esquina sup derecha
+  mov al, 187	; caracter de esquina derecha doble
+  stosw		; escribir
+
+  ; lineas verticales y relleno
+  xor cx, cx
+  mov cl, bl
+
+  ; aritmetica para dibujar en renglon siguiente
+  xor dx, dx
+  mov dl, bh
+  inc dx
+  inc dx
+  shl dx, 1
+  sub dx, BYTESPERROW
+  sub di, dx
+
+  .loopvertical:
+  push cx
+
+	  ; linea izquierda
+	  mov al, 186	; caracter de linea vertical doble
+	  stosw		; escribir
+
+	  ; relleno
+	  mov al, 0	; caracter linea horizontal doble
+	  xor cx, cx
+	  mov cl, bh
+	  rep stosw
+
+	  ; linea derecha
+	  mov al, 186	; caracter de linea vertical doble
+	  stosw		; escribir
+
+	  ; adelantar al renglón siguiente
+	  sub di, dx
+  pop cx
+  loop .loopvertical
+
+  ; esquina inf izquierda
+  mov al, 200	; caracter de esquina izquierda doble
+  stosw		; escribir
+
+  ; linea horizontal inferior
+  mov al, 205	; caracter linea horizontal doble
+  xor cx, cx
+  mov cl, bh
+  rep stosw
+
+  ; esquina inf derecha
+  mov al, 188	; caracter de esquina derecha doble
+  stosw		; escribir
+
 
 ret
 
