@@ -70,6 +70,12 @@ start:
   mov dl, 3
   call escribecaracter
 
+  lea bx, [msg1]
+  mov dh, 10
+  mov dl, 5
+  mov ch, 00111111b
+  call escribestringz
+
 fin:
   ; 2 .- Salir al sistema
   int 20h
@@ -95,6 +101,38 @@ escribecaracter:
 
   ret
 
+escribestringz:
+  ; escribe en pantalla cadena de caracteres terminada en cero
+  ; bx = puntero a cadena
+  ; dh = coord x
+  ; dl = coord y
+  ; ch = atributos/colores
+
+  mov ax, MEMCGAEVEN
+  mov es, ax
+
+  mov si, bx	; cadena origen en si
+
+  mov al, 160d
+  mul dh
+  xor dh, dh
+  shl dx, 1	; multiplicar x * 2
+  add ax, dx
+  mov di, ax	; Destino en pantalla en es:di
+
+  mov ah, ch	; atributos en byte alto
+
+  .ciclo:
+  lodsb		; Cargar caracter en al
+  test al, al	; si es caracter es cero, terminar de escribir
+  jz .fin
+  ; mov ah, ch
+  stosw		;  Escribir en pantalla, caracter + atributos
+  jmp .ciclo
+
+  .fin:
+
+
 cuadrodoble:
   ; Parametros:
   ; bh = coordenada x
@@ -105,5 +143,9 @@ cuadrodoble:
 
 ret
 
+section .data
+  ; program data
+
+msg1:     db 'Probando cadena de texto', 0x00   ; message
 
 
