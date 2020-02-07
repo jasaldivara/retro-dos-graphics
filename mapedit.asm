@@ -1,8 +1,6 @@
 
 CPU 8086
 
-  %define VIDEOBIOS 0x10
-  %define SETVIDEOMODE 0
 
   %define MEMCGAEVEN 0xB800
   %define MEMCGAODD 0xBA00
@@ -14,6 +12,20 @@ CPU 8086
   %define KB_RIGHT 4Dh
 
   %define BYTESPERROW 160d
+
+  ; Estructuras de datos
+
+  struc DTA	; Disk Transfer Area
+
+    .privado:	resb 21
+    .attrib:	resb 1
+    .time:	resw 1
+    .date:	resw 1
+    .filesize:	resd 1
+    .filename:	resb 13
+
+  endstruc
+
 
   ; Macros
 
@@ -34,60 +46,83 @@ CPU 8086
 
   %endmacro
 
+  %macro SetDta 1
+
+  mov dx, %1
+  mov ah, 1ah
+  int 21h
+
+  %endmacro
+
+  %macro mSetVideoMode 1
+
+  mov  ah, 0   ; Establecer modo de video
+  mov  al, %1      ; Modo de video
+  int  10h   ; LLamar a la BIOS para servicios de video
+
+  %endmacro
+
+  %macro mEscribeStringzColor 3
+
+  ; ds:bx = stringz
+  ; %1 = atributos (colores)
+  ; %2 = x
+  ; %3 = y
+
+  mov dh, %2
+  mov dl, %3
+  mov ch, %1
+  call escribestringz
+
+  %endmacro
+
+  %macro mDibujaCuadroDoble	5
+  ; %1 = Atributos (colores)
+  ; %2 = x
+  ; %3 = y
+  ; %4 = w
+  ; %5 = h
+
+  mov ch, %1
+  mov dh, %2
+  mov dl, %3
+  mov bh, %4
+  mov bl, %5
+  call cuadrodoble
+
+  %endmacro
+
+  %macro mGetCurrentDir 1-2 0
+  ; %1 = buffer donde escribir el directorio
+  ; %2 = Numero de disco (default = 0)
+
+  mov si, %1
+  mov dl, %2
+  mov ah, 47h	; MSDOS: Current Dir
+  int 21h	; Llamada al sistema MSDOS
+
+  %endmacro
+
   org 100h
 
 section .text
 
 start:
 
-  ; 3 .- Establecer modo de video
-  mov  ah, SETVIDEOMODE   ; Establecer modo de video
-  mov  al, 3      ; CGA Modo 3: Texto a color, 80 x 25.
-  int  VIDEOBIOS   ; LLamar a la BIOS para servicios de video
+  SetDta midta
 
+  mSetVideoMode 3	; CGA Modo 3: Texto a color, 80 x 25.
 
-  mov bl, 'L'
-  mov bh, 00011111b
-  mov dh, 3
-  mov dl, 0
-  call escribecaracter
+  ; Dibujar cuadro doble en pantalla
 
-  mov bl, 'a'
-  mov bh, 00011111b
-  mov dh, 3
-  mov dl, 1
-  call escribecaracter
+  mDibujaCuadroDoble 00011111b, 2, 4, 60, 16
 
-  mov bl, 'l'
-  mov bh, 01001111b
-  mov dh, 3
-  mov dl, 2
-  call escribecaracter
-
-  mov bl, 'o'
-  mov bh, 01001111b
-  mov dh, 3
-  mov dl, 3
-  call escribecaracter
+  ; Escribir texto en pantalla
 
   lea bx, [msg1]
-  mov dh, 5
-  mov dl, 10
-  mov ch, 00111111b
-  call escribestringz
+  mEscribeStringzColor  00011111b, 2, 6
 
-  mov dh, 6
-  mov dl, 10
-  mov bh, 40
-  mov bl, 10
-  mov ch, 01001111b
-  call cuadrodoble
-
-  ; Averiguar directorio actual
-  mov ah, 47h
-  mov dl, 0
-  mov si, buffer
-  int 21h
+  mGetCurrentDir buffer	; Obtener ruta del directorio actuañ
 
   ; mostrar directorio actual
   jc .err1
@@ -96,10 +131,7 @@ start:
   .err1:
   lea bx, [msgerror]
   .escribe:
-  mov dh, 20
-  mov dl, 10
-  mov ch, 01011111b
-  call escribestringz
+  mEscribeStringzColor  01011111b, 10, 18
 
 
 
@@ -256,5 +288,9 @@ msgerror:     db 'Probando cadena de texto', 0x00   ; message
 
 section .bss
 
+pdta:	resw 1	; Puntero a DTA actual (en caso de que no se pueda establecer uno nuevo
+
 buffer:         resb    64
+
+midta:		resb	DTA_size
 
