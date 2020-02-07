@@ -83,6 +83,26 @@ start:
   mov ch, 01001111b
   call cuadrodoble
 
+  ; Averiguar directorio actual
+  mov ah, 47h
+  mov dl, 0
+  mov si, buffer
+  int 21h
+
+  ; mostrar directorio actual
+  jc .err1
+  lea bx, [buffer]
+  jmp .escribe
+  .err1:
+  lea bx, [msgerror]
+  .escribe:
+  mov dh, 20
+  mov dl, 10
+  mov ch, 01011111b
+  call escribestringz
+
+
+
 fin:
   ; 2 .- Salir al sistema
   int 20h
@@ -230,4 +250,11 @@ section .data
 
 msg1:     db 'Probando cadena de texto', 0x00   ; message
 
+msgerror:     db 'Probando cadena de texto', 0x00   ; message
+
+
+
+section .bss
+
+buffer:         resb    64
 
