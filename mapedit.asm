@@ -130,6 +130,13 @@ CPU 8086
 
   %endmacro
 
+  %macro FindNext 0
+
+  mov ah, 4Fh	; MSDOS: Find Next
+  int 21h	; Llamada al sistema MSDOS
+
+  %endmacro
+
   org 100h
 
 section .text
@@ -158,19 +165,26 @@ start:
   .escribe:
   mEscribeStringzColor  00011111b, 6, 2
 
+
   ; Listar archivos del directorio
   FindFirst
-  jc .err2
+
+  mov cl, 3
+  jc .sig
+  .muestrarchivo:
+  push ax
   GetDTA
   mov ax, es
   mov ds, ax
   add bx, DTA.filename
-  jmp .escribe2
-  .err2:
-  mov bx, eunknown
-  .escribe2:
-  mEscribeStringzColor  00011111b, 6, 3
 
+  mEscribeStringzColor  00011111b, 6, cl
+
+  FindNext
+  inc cl
+  jnc .muestrarchivo
+
+  .sig:
 
 fin:
   ; 2 .- Salir al sistema
