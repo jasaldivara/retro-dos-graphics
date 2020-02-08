@@ -46,14 +46,6 @@ CPU 8086
 
   %endmacro
 
-  %macro SetDta 1
-
-  mov dx, %1
-  mov ah, 1ah
-  int 21h
-
-  %endmacro
-
   %macro mSetVideoMode 1
 
   mov  ah, 0   ; Establecer modo de video
@@ -69,8 +61,8 @@ CPU 8086
   ; %2 = x
   ; %3 = y
 
-  mov dh, %2
-  mov dl, %3
+  mov dh, %3
+  mov dl, %2
   mov ch, %1
   call escribestringz
 
@@ -92,6 +84,24 @@ CPU 8086
 
   %endmacro
 
+  %macro SetDta 1
+
+  mov dx, %1
+  mov ah, 1ah	; MSDOS: SetDTA
+  int 21h
+
+  %endmacro
+
+  %macro GetDTA	0
+  ; Valores de retorno:
+  ; ES:BX = Dirección de DTA
+
+  mov ah, 2Fh	; MSDOS: GetDTA
+  int 21h
+  mov ax, es
+
+  %endmacro
+
   %macro mGetCurrentDir 1-2 0
   ; %1 = buffer donde escribir el directorio
   ; %2 = Numero de disco (default = 0)
@@ -99,6 +109,23 @@ CPU 8086
   mov si, %1
   mov dl, %2
   mov ah, 47h	; MSDOS: Current Dir
+  int 21h	; Llamada al sistema MSDOS
+
+  %endmacro
+
+  %macro FindFirst 0-2 pathtodos, 0
+  ; %1 = ruta de archivo(s) a buscar
+  ; %2 = atributos de busqueda
+  ; Retorno:
+  ; Carry set = error
+  ;	ax = 2, ruta de búsqueda no válida
+  ;	ax = 18, ningún archivo coincide
+  ; Carry unset = todo bien
+  ;	Infomación sobre archivo encontrado en DTA
+
+  mov dx, %1
+  mov cx, %2
+  mov ah, 4Eh	; MSDOS: Find First
   int 21h	; Llamada al sistema MSDOS
 
   %endmacro
@@ -119,8 +146,6 @@ start:
 
   ; Escribir texto en pantalla
 
-  lea bx, [msg1]
-  mEscribeStringzColor  00011111b, 2, 6
 
   mGetCurrentDir buffer	; Obtener ruta del directorio actuañ
 
@@ -131,8 +156,20 @@ start:
   .err1:
   lea bx, [msgerror]
   .escribe:
-  mEscribeStringzColor  01011111b, 10, 18
+  mEscribeStringzColor  00011111b, 6, 2
 
+  ; Listar archivos del directorio
+  FindFirst
+  jc .err2
+  GetDTA
+  mov ax, es
+  mov ds, ax
+  add bx, DTA.filename
+  jmp .escribe2
+  .err2:
+  mov bx, eunknown
+  .escribe2:
+  mEscribeStringzColor  00011111b, 6, 3
 
 
 fin:
@@ -284,7 +321,11 @@ msg1:     db 'Probando cadena de texto', 0x00   ; message
 
 msgerror:     db 'Probando cadena de texto', 0x00   ; message
 
+enoarchivos:	db 'Error: No se encontraron archivos', 0
+erutaincorrecta:	db 'Error: Ruta de archivos incorrecta', 0
+eunknown:	db 'Error: Desconocido', 0
 
+pathtodos:	db '*.*', 0x00	; encontrar todos los archivos
 
 section .bss
 
