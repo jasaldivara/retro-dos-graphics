@@ -13,6 +13,8 @@ CPU 8086
 
   %define BYTESPERROW 160d
 
+  %define SHOWDIRS 00010000b
+
   ; Estructuras de datos
 
   struc DTA	; Disk Transfer Area
@@ -26,6 +28,12 @@ CPU 8086
 
   endstruc
 
+  struc FILENAME
+
+    .attrib	resb 1
+    .filename	resb 13
+
+  endstruc
 
   ; Macros
 
@@ -98,7 +106,6 @@ CPU 8086
 
   mov ah, 2Fh	; MSDOS: GetDTA
   int 21h
-  mov ax, es
 
   %endmacro
 
@@ -113,7 +120,7 @@ CPU 8086
 
   %endmacro
 
-  %macro FindFirst 0-2 pathtodos, 0
+  %macro FindFirst 0-2 pathtodos, 00010000b
   ; %1 = ruta de archivo(s) a buscar
   ; %2 = atributos de busqueda
   ; Retorno:
@@ -127,6 +134,38 @@ CPU 8086
   mov cx, %2
   mov ah, 4Eh	; MSDOS: Find First
   int 21h	; Llamada al sistema MSDOS
+
+  %endmacro
+
+  %macro mSelectFile 0-5 00010000b, pathtodos, 10, 2, 2
+  ; %1 = File attributes
+  ; %2 = Pathname with wildcards
+  ; %3 = Windowheight / files per window
+  ; %4 = X coord
+  ; %5 = Y coord
+
+  push bp
+  mov bp, sp
+
+  ; meter parámetros en la pila en orden inverso
+  ; push word %5	; Commenting this out because 8086 processor doesn't support pushing immediate operands
+  ; push word %4
+  ; push word %3
+  ; push word %2
+  ; push word %1
+  sub sp, (5 * 2)  ; 5 parametros *  2 bytes cada palabra
+  mov word [bp - 10], %1
+  mov word [bp - 8], %2
+  mov word [bp - 6], %3
+  mov word [bp - 4], %4
+  mov word [bp - 2], %5
+
+  call selectfile
+
+  ; eliminar parametros de la pila
+  ;add sp, (5 * 2)	; 5 parametros *  2 bytes cada palabra
+  mov sp, bp
+  pop bp
 
   %endmacro
 
@@ -165,24 +204,25 @@ start:
   .escribe:
   mEscribeStringzColor  00011111b, 6, 2
 
+  mSelectFile SHOWDIRS, pathtodos, 15, 0, 2
 
   ; Listar archivos del directorio
-  FindFirst
+  ; FindFirst
 
-  mov cl, 3
-  jc .sig
-  .muestrarchivo:
-  push ax
-  GetDTA
-  mov ax, es
-  mov ds, ax
-  add bx, DTA.filename
+  ; mov cl, 3
+  ; jc .sig
+  ; .muestrarchivo:
+  ; push ax
+  ; GetDTA
+  ; mov ax, es
+  ; mov ds, ax
+  ; add bx, DTA.filename
 
-  mEscribeStringzColor  00011111b, 6, cl
+  ; mEscribeStringzColor  00011111b, 6, cl
 
-  FindNext
-  inc cl
-  jnc .muestrarchivo
+  ; FindNext
+  ; inc cl
+  ; jnc .muestrarchivo
 
   .sig:
 
@@ -328,6 +368,84 @@ cuadrodoble:
 
 ret
 
+selectfile:
+
+  ; prologue
+  push bp	; save old base pointer value
+  mov bp, sp
+  sub sp, (2 * 2)	; Make room for two local vars
+  push di	; save source and destination indexes
+  push si
+
+  ; parameters
+  ; [bp + 12] => y coord
+  ; [bp + 10] => x coord
+  ; [bp + 8] => WindowHeight / Files per page
+  ; [bp + 6] => Pathname with wildcards
+  ; [bp + 4] => File attributes
+  ; [bp + 2] => previous ip/return address in near call (if far function, this will take two words for saving cs:ip)
+  ; [bp] => previous value of bp
+  ; [bp + 2] => first local variable
+  ; [bp + 4] => second local variable
+
+  ; 1.- Draw Window
+  mov dh, [bp + 12]
+  mov dl, [bp + 10]
+  mov bl, [bp + 8]
+  mov bh, 40
+  mov ch, 00111111b
+
+  call cuadrodoble
+
+
+  ; 2.- Traverse directory
+  ; .findfirst:
+  ; xchg dx, bx
+  ; push cx
+  ; mov cl, ch
+  ; xor ch, ch
+  ; mov ax, 4Eh	; MSDOS: Find First
+  ; int 21
+  ; pop cx
+
+  .findfirst:
+  mov cx, [bp + 4]	; File search atttributes
+  mov dx, [bp + 6]	; File search path with wildcards
+  mov ah, 4eh		; MSDOS FindFirst function
+  int 21h
+
+  mov dl, [bp + 12]	; y coordinate
+  inc dl
+
+  jnc .displayfilename	; Display file name if there is no error
+  xor ax, ax		; Clear ax and return on error :/
+  jmp .epilogue
+
+  .displayfilename:
+  GetDTA
+  mov ax, es
+  mov ds, ax
+  add bx, DTA.filename
+
+  mov dh, [bp + 12]
+  inc dh
+  ; mov dl, cl
+  mov ch, 00111111b
+  call escribestringz
+
+  .findnext:
+  FindNext
+  inc dl
+  jnc .displayfilename
+
+  .epilogue:
+
+  pop si
+  pop di
+  mov sp, bp
+  pop bp
+  ret
+
 section .data
   ; program data
 
@@ -348,4 +466,10 @@ pdta:	resw 1	; Puntero a DTA actual (en caso de que no se pueda establecer uno n
 buffer:         resb    64
 
 midta:		resb	DTA_size
+
+
+
+listfiles:	resb    (25 * FILENAME_size)
+
+
 
