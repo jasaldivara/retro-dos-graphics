@@ -414,8 +414,8 @@ selectfile:
   mov ah, 4eh		; MSDOS FindFirst function
   int 21h
 
-  mov dl, [bp + 12]	; y coordinate
-  inc dl
+  mov dh, [bp + 12]	; y coordinate
+  inc dh
 
   jnc .displayfilename	; Display file name if there is no error
   xor ax, ax		; Clear ax and return on error :/
@@ -427,15 +427,17 @@ selectfile:
   mov ds, ax
   add bx, DTA.filename
 
-  mov dh, [bp + 12]
-  inc dh
+  mov dl, [bp + 12]
+  inc dl
   ; mov dl, cl
   mov ch, 00111111b
+  push dx
   call escribestringz
+  pop dx
 
   .findnext:
   FindNext
-  inc dl
+  inc dh
   jnc .displayfilename
 
   .epilogue:
