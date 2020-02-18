@@ -204,7 +204,7 @@ start:
   .escribe:
   mEscribeStringzColor  00011111b, 6, 2
 
-  mSelectFile SHOWDIRS, pathtodos, 15, 0, 2
+  mSelectFile SHOWDIRS, pathtodos, 10, 0, 2
 
   ; Listar archivos del directorio
   ; FindFirst
@@ -385,8 +385,8 @@ selectfile:
   ; [bp + 4] => File attributes
   ; [bp + 2] => previous ip/return address in near call (if far function, this will take two words for saving cs:ip)
   ; [bp] => previous value of bp
-  ; [bp + 2] => first local variable
-  ; [bp + 4] => second local variable
+  ; [bp - 2] => local variable: Conteo de archivo
+  ; [bp - 4] => local variable: conteo de renglones
 
   ; 1.- Draw Window
   mov dh, [bp + 12]
@@ -397,18 +397,14 @@ selectfile:
 
   call cuadrodoble
 
+  ; 2.- Display directory in title
+  ; TODO
 
-  ; 2.- Traverse directory
-  ; .findfirst:
-  ; xchg dx, bx
-  ; push cx
-  ; mov cl, ch
-  ; xor ch, ch
-  ; mov ax, 4Eh	; MSDOS: Find First
-  ; int 21
-  ; pop cx
+  ; 3.- Traverse directory
 
   .findfirst:
+  mov word [bp - 2], 0	; Poner a cero variable 'conteo de archivo'
+  mov word [bp - 4], 0	; Poner a cero variable 'conteo de renglones'
   mov cx, [bp + 4]	; File search atttributes
   mov dx, [bp + 6]	; File search path with wildcards
   mov ah, 4eh		; MSDOS FindFirst function
@@ -436,8 +432,14 @@ selectfile:
   pop dx
 
   .findnext:
+  inc word [bp - 4]	; incrementar variable 'conteo de renglón'
+  mov ax, [bp + 8] 	; Files per page
+  cmp ax, [bp - 4]	; ver si sobrepasamos el numero de archivos por pagina
+  jle .epilogue
+
   FindNext
   inc dh
+  inc word [bp - 2]	; incrementar variable 'conteo de archivo'
   jnc .displayfilename
 
   .epilogue:
