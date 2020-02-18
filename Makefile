@@ -27,7 +27,7 @@ $(BIN)/rebota2.com : rebota-2.asm
 	$(ASM) $< $(ASMFLAGS) -o $@
 
 $(BIN)/platform.com : platform.asm
-	$(ASM) $< $(ASMFLAGS) -o $@ moni
+	$(ASM) $< $(ASMFLAGS) -o $@
 
 $(BIN)/platcomp.com : platcomp.asm mdoble.bin
 	$(ASM) $< $(ASMFLAGS) -o $@
