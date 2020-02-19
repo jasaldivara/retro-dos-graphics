@@ -204,7 +204,7 @@ start:
   .escribe:
   mEscribeStringzColor  00011111b, 6, 2
 
-  mSelectFile SHOWDIRS, pathtodos, 10, 0, 2
+  mSelectFile SHOWDIRS, pathtodos, 12, 0, 2
 
   ; Listar archivos del directorio
   ; FindFirst
@@ -257,6 +257,9 @@ escribestringz:
   ; dh = coord y
   ; dl = coord x
   ; ch = atributos/colores
+
+  mov ax, cs	; Use code segment in .com executable, because is the same as data segment
+  mov ds, ax
 
   mov ax, MEMCGAEVEN
   mov es, ax
@@ -405,6 +408,7 @@ selectfile:
   .findfirst:
   mov word [bp - 2], 0	; Poner a cero variable 'conteo de archivo'
   mov word [bp - 4], 0	; Poner a cero variable 'conteo de renglones'
+  mov di, listfiles	; For savnig file name and attributes
   mov cx, [bp + 4]	; File search atttributes
   mov dx, [bp + 6]	; File search path with wildcards
   mov ah, 4eh		; MSDOS FindFirst function
@@ -413,22 +417,39 @@ selectfile:
   mov dh, [bp + 12]	; y coordinate
   inc dh
 
-  jnc .displayfilename	; Display file name if there is no error
+  ;int3
+
+  jnc .savefilename	; Display file name if there is no error
   xor ax, ax		; Clear ax and return on error :/
   jmp .epilogue
 
-  .displayfilename:
+  .savefilename:
   GetDTA
   mov ax, es
   mov ds, ax
-  add bx, DTA.filename
+  ; push bx
 
+  mov ax, cs	; Use code segment in .com executable, because is the same as data segment
+  mov es, ax
+  mov si, bx
+  add si, DTA.attrib
+  movsb		; save attribute byte in memory structure
+  mov si, bx
+  add si, DTA.filename	; Point source index to DTA.filename
+
+  mov cx, 13	; 13 = DTA.filename size
+  rep movsb	; Copy filename to memory structure
+
+
+  ; pop bx
+  add bx, DTA.filename
   mov dl, [bp + 12]
   inc dl
-  ; mov dl, cl
   mov ch, 00111111b
   push dx
+  push di
   call escribestringz
+  pop di
   pop dx
 
   .findnext:
@@ -440,7 +461,7 @@ selectfile:
   FindNext
   inc dh
   inc word [bp - 2]	; incrementar variable 'conteo de archivo'
-  jnc .displayfilename
+  jnc .savefilename
 
   .epilogue:
 
