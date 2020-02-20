@@ -186,6 +186,12 @@ start:
 
   mSetVideoMode 3	; CGA Modo 3: Texto a color, 80 x 25.
 
+  ; Disable blinking
+  mov dx, 03D8h
+  mov al, 00001001b
+  out dx, al
+
+
   ; Dibujar cuadro doble en pantalla
 
   mDibujaCuadroDoble 00011111b, 2, 4, 60, 16
@@ -204,25 +210,7 @@ start:
   .escribe:
   mEscribeStringzColor  00011111b, 6, 2
 
-  mSelectFile SHOWDIRS, pathtodos, 12, 0, 2
-
-  ; Listar archivos del directorio
-  ; FindFirst
-
-  ; mov cl, 3
-  ; jc .sig
-  ; .muestrarchivo:
-  ; push ax
-  ; GetDTA
-  ; mov ax, es
-  ; mov ds, ax
-  ; add bx, DTA.filename
-
-  ; mEscribeStringzColor  00011111b, 6, cl
-
-  ; FindNext
-  ; inc cl
-  ; jnc .muestrarchivo
+  mSelectFile SHOWDIRS, pathtodos, 14, 12, 4
 
   .sig:
 
@@ -285,6 +273,37 @@ escribestringz:
 
   .fin:
   ret
+
+changeattribs:	; Change attributes (colors) of screen area
+  ; bl = new attributes
+  ; dh = coord y
+  ; dl = coord x
+  ; cx = width in characters
+  push es
+  push di
+
+  mov ax, MEMCGAEVEN	; CGA video memory
+  mov es, ax
+
+  ; Find video memory address
+  mov al, BYTESPERROW
+  mul dh
+  xor dh, dh
+  shl dx, 1	; multiply (x * 2)
+  add ax, dx
+  mov di, ax
+  mov al, bl
+  inc di
+
+  .loopwrite:
+  stosb
+  inc di
+  loop .loopwrite
+
+  pop di
+  pop es
+  ret
+
 
 cuadrodoble:
   ; Parametros:
@@ -376,7 +395,7 @@ selectfile:
   ; prologue
   push bp	; save old base pointer value
   mov bp, sp
-  sub sp, (2 * 2)	; Make room for two local vars
+  sub sp, (3 * 2)	; Make room for three local vars
   push di	; save source and destination indexes
   push si
 
@@ -388,8 +407,9 @@ selectfile:
   ; [bp + 4] => File attributes
   ; [bp + 2] => previous ip/return address in near call (if far function, this will take two words for saving cs:ip)
   ; [bp] => previous value of bp
-  ; [bp - 2] => local variable: Conteo de archivo
-  ; [bp - 4] => local variable: conteo de renglones
+  ; [bp - 2] => local variable: File count
+  ; [bp - 4] => local variable: Row count
+  ; [bp - 6] => local variable: User selection
 
   ; 1.- Draw Window
   mov dh, [bp + 12]
@@ -443,7 +463,7 @@ selectfile:
 
   ; pop bx
   add bx, DTA.filename
-  mov dl, [bp + 12]
+  mov dl, [bp + 10]	; coord x
   inc dl
   mov ch, 00111111b
   push dx
@@ -456,12 +476,26 @@ selectfile:
   inc word [bp - 4]	; incrementar variable 'conteo de renglón'
   mov ax, [bp + 8] 	; Files per page
   cmp ax, [bp - 4]	; ver si sobrepasamos el numero de archivos por pagina
-  jle .epilogue
+  jle .userinteraction
 
   FindNext
   inc dh
   inc word [bp - 2]	; incrementar variable 'conteo de archivo'
   jnc .savefilename
+
+  .userinteraction:
+  mov word [bp - 6], 0	; User selection = first file in menu
+
+  .highlightsel:	; highlight selection
+  mov bl, 11110000b	; white background, blue text
+  mov byte dl, [bp - 6]	; user selecion index. byte bp - 6 or bp - 5 or bp -7 (???)
+  add byte dl, [bp + 10] ; y coordinate
+  inc dl
+  mov byte dh, [bp + 12] ; x coordinate
+  inc dh
+  mov cx, 16		; characters to higlight
+  call changeattribs
+
 
   .epilogue:
 
