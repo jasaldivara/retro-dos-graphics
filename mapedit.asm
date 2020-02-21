@@ -484,15 +484,15 @@ selectfile:
   jnc .savefilename
 
   .userinteraction:
-  mov word [bp - 6], 0	; User selection = first file in menu
+  mov word [bp - 6], 2	; User selection = first file in menu
 
   .highlightsel:	; highlight selection
   mov bl, 11110000b	; white background, blue text
-  mov byte dl, [bp - 6]	; user selecion index. byte bp - 6 or bp - 5 or bp -7 (???)
-  add byte dl, [bp + 10] ; y coordinate
-  inc dl
-  mov byte dh, [bp + 12] ; x coordinate
+  mov byte dh, [bp - 6]	; user selecion index. byte bp - 6 or bp - 5 or bp -7 (???)
+  add byte dh, [bp + 12] ; y coordinate
   inc dh
+  mov byte dl, [bp + 10] ; x coordinate
+  inc dl
   mov cx, 16		; characters to higlight
   call changeattribs
 
