@@ -496,6 +496,16 @@ selectfile:
   mov cx, 16		; characters to higlight
   call changeattribs
 
+  .readkeyb:
+  mov ah, 0
+  int 16h
+  cmp ah, KB_UP
+  je .uparrow
+  cmp ah, KB_DOWN
+  je .downarrow
+  cmp ah, KB_ESC  ; Comprobar si es tecla ESC
+  jne .highlightsel
+
 
   .epilogue:
 
@@ -504,6 +514,48 @@ selectfile:
   mov sp, bp
   pop bp
   ret
+
+
+  .unhighligthsel:
+
+  mov bl, 00111111b	; white background, blue text
+  mov byte dh, [bp - 6]	; user selecion index
+  add byte dh, [bp + 12] ; y coordinate
+  inc dh
+  mov byte dl, [bp + 10] ; x coordinate
+  inc dl
+  mov cx, 16		; characters to higlight
+  call changeattribs
+  ret
+
+  .uparrow:
+
+  mov ax, [bp - 6]	; count of rows/files shown
+  dec ax		; ++
+  cmp ax, 0		; selected row + 1 > files shown ?
+  jl .highlightsel
+
+  push ax
+  call .unhighligthsel
+  pop ax
+  mov word [bp - 6], ax	; increment selected row
+  jmp .highlightsel	; user interaction loop
+
+  .downarrow:
+
+  mov word ax, [bp - 4]	; count of rows/files shown
+  mov word bx, [bp - 6]	; User selected row
+  inc bx		; ++
+  cmp ax, bx		; selected row + 1 > files shown ?
+  jle .highlightsel
+
+  push bx
+  call .unhighligthsel
+  pop bx
+  mov word [bp - 6], bx	; increment selected row
+  jmp .highlightsel	; user interaction loop
+
+
 
 section .data
   ; program data
