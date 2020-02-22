@@ -6,6 +6,15 @@ Nuevos programas:
   Editor de mapas (con tiles)
   Editor de tiles y sprites
 
+Text (console) interface for editors:
+  SelectFile dialog:
+    Add page navigation
+    Show File size, date, time, and if is a directory
+    Directory Navigation
+    Return file handle if file selected (null if not file selected)
+  Show DOS error messages
+  Menus and message dialogs
+
 Nuevas características:
 
   Música y sonidos por medio del altavoz de la PC.
