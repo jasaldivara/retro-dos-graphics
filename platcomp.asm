@@ -326,37 +326,94 @@ cambiapaleta:
 
   ; 1.- Leer el teclado
 
-  mov ax, 0
-  mov [deltax], ax
-  call leerteclado
+  mov al, [tecla_esc] ; ¿está presionada esta tecla?
+  test al, al
+  jnz fin
 
-  calcx:    ; 2.- calcular x
+  ; mov ax, 0
+  ; mov [deltax], ax
+  ; call leerteclado
+  
+  .test_left:
+  mov al, [tecla_left] ; ¿está presionada esta tecla?
+  test al, al
+  jz .sig1
+
+  .movizq:
+  dec word [vuelox]
+  jmp .testright
+
+  .sig1:
+  mov ax, [vuelox]
+  cmp ax, 0
+  jnl .testright
+  inc word [vuelox]
+
+  .testright:
+  mov al, [tecla_right] ; ¿está presionada esta tecla?
+  test al, al
+  jz .sig2
+
+  .movder:
+  inc word [vuelox]
+  jmp .calcx
+
+  .sig2:
+  mov ax, [vuelox]
+  cmp ax, 0
+  jng .calcx
+  dec word [vuelox]
+
+
+
+  .calcx:    ; 2.- calcular x
 
   mov ax, [spritex]
-  mov bx, [deltax]
-  add ax, bx
+  mov bx, [vuelox]
+  mov dx, bx
+  mov cl, 2
+  sar dx, cl
+  add ax, dx
 
   ; 1.1.- revisar que no se salga
 
   cmp ax, WIDTHPX - ANCHOSPRITE
-  jng .sig1
+  jng .sig3
   mov ax, WIDTHPX - ANCHOSPRITE
-  neg bx
-  .sig1:
+  neg bx	; Rebotar, reduciendo velocidad a la mitad
+  sar bx, 1
+  .sig3:
   cmp ax, 0
-  jnl .sig2
+  jnl .sig4
   mov ax, 0
-  neg bx
-  .sig2:
+  neg bx	; Rebotar, reduciendo velocidad a la mitad
+  sar bx, 1
+  .sig4:
   mov [spritenx], ax
-  mov [deltax], bx
+  mov [vuelox], bx
 
-  calcdy:  ; 2.- Calcular delta Y
+  .saltar:
+  mov al, [tecla_up] ; ¿está presionada esta tecla?
+  test al, al
+  jz .calcdy
+
+  mov ax, [parado] ; Tiene que estar parado para poder saltar
+  test ax, ax
+  jz .calcdy
+
+  ; Ahora sí: Saltar porque estamos parados y con la tecla saltar presionada
+  mov bx, 0 - REBOTEY
+  mov [deltay], bx
+  mov bx, 0
+  mov [parado], bx
+
+
+  .calcdy:  ; 2.- Calcular delta Y
   mov dx, [deltay]
   add dx, GRAVEDAD
   mov [deltay], dx
 
-  calcy:      ; 3.- calcular y
+  .calcy:      ; 3.- calcular y
   
   mov ax, [spritey]
   mov bx, [deltay]
@@ -365,16 +422,16 @@ cambiapaleta:
   ; 1.1.- revisar que no se salga
 
   cmp ax, HEIGHTPX - ALTOSPRITE
-  jng .sig1
+  jng .sig5
   mov ax, HEIGHTPX - ALTOSPRITE
   mov bx, 0
   mov word [parado], 1
-  .sig1:
+  .sig5:
   cmp ax, 0
-  jnl .sig2
+  jnl .sig6
   mov ax, 0
   mov bx, 0
-  .sig2:
+  .sig6:
   mov [spriteny], ax
   mov [deltay], bx
 
@@ -776,6 +833,8 @@ section .data
   deltax:
   dw 0
   deltay:
+  dw 0
+  vuelox:
   dw 0
   parado:
   dw 0
