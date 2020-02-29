@@ -1,6 +1,8 @@
 
 CPU 8086
 
+  %use ifunc
+
   %define VIDEOBIOS 0x10
   %define SETVIDEOMODE 0
   %define CGA6 0x06
@@ -24,6 +26,8 @@ CPU 8086
   %define REBOTEY 14
   %define ANCHOSPRITE 16
   %define ALTOSPRITE 32
+  %define ANCHOTILE 16
+  %define ALTOTILE 32
 
   %define BWSPRITE ( ANCHOSPRITE / PXB )  ; Ancho de Sprite en Bytes
 
@@ -750,6 +754,50 @@ borrasprite16:
   ret
 
 
+drawtilesimple:
+  ; AX = Y Coordinate of tile
+  ; BX = X Coordinate of tile
+  ; CX = Tile Code
+
+  ; 1 .- Seleccionar banco de memoria
+  mov dx, MEMCGAEVEN
+  mov es, dx
+
+  ; 2 .- Multiplicar para calcular desplazamiento
+  mov dl, BYTESPERSCAN
+  mul dl	; Multiply by screen width in bytes
+  mov dx, cx
+  mov cx, ( ilog2e( ALTOTILE ) - 1 )
+  shl ax, cl
+
+  ; 3 .- Multiplicar X por ancho de TILE
+  mov cx, ilog2e(ANCHOTILE / PXB)
+  shl bx, cl
+
+  ; 4 .- Sumar
+  add ax, bx
+  mov di, ax	; Destination Index
+
+  mov ax, dx		 ; Sprite Simple: sólo colorear (rellenar todo ax de los mismos 4 bits)
+  mov ah, al
+  mov cl, (8 / PXB)
+  shl ah, cl
+  or al, ah
+  mov ah, al
+
+  mov cx, ( ALTOTILE / 2 )  ; Primero dibujamos mitad de renglones (en renglones par de patalla)
+
+  .looprenglon:
+  mov dx, cx	; respaldar cx
+  mov cx, ( ANCHOTILE / PXB * 2 )
+  rep stosw
+  mov cx, dx	; Reestablecer cx
+  add di, BYTESPERSCAN - ( ANCHOTILE / PXB )
+  loop .looprenglon
+
+  ret
+
+
 
 section .data
   ; program data
@@ -801,6 +849,16 @@ section .data
   db 00000010b, 01100110b, 10101010b, 10100000b
   db 00000000b, 10101010b, 10101010b, 10000000b
   db 00000000b, 00101010b, 10101010b, 00000000b
+
+map1:
+
+  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+  db 0, 0, 0, 0, 0, 0, 4, 0, 0, 0
+  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
+  db 0, 0, 0, 0, 0, 0, 0, 0, 2, 2
+  db 1, 2, 3, 0, 0, 0, 0, 3, 3, 3
+
 
 spritemonigote:
 incbin	"mdoble.bin",0,256
