@@ -873,6 +873,7 @@ drawtilesimple:
   or al, ah
   mov ah, al
 
+  .draw:
   mov cx, ( ALTOTILE / 2 )  ; Primero dibujamos mitad de renglones (en renglones par de patalla)
 
   .looprenglon:
@@ -884,6 +885,16 @@ drawtilesimple:
   add di, BYTESPERSCAN - ( ANCHOTILE / PXB )
   loop .looprenglon
 
+  mov cx, es
+  cmp cx, MEMCGAODD
+  je .salir
+
+  mov cx, MEMCGAODD
+  mov es, cx
+  sub di, BYTESPERSCAN * ( ALTOTILE / 2 ) 
+  jmp .draw
+
+  .salir:
   pop bx	; Restaurar bx y ax
   pop ax
   ret
