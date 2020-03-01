@@ -28,6 +28,8 @@ CPU 8086
   %define ALTOSPRITE 32
   %define ANCHOTILE 16
   %define ALTOTILE 32
+  %define MAPWIDTH 10
+  %define MAPHEIGHT 6
 
   %define BWSPRITE ( ANCHOSPRITE / PXB )  ; Ancho de Sprite en Bytes
 
@@ -82,6 +84,10 @@ start:
   mov al, 00011010b
   out dx, al
 
+
+  ; x .- Draw map
+  mov dx, map1
+  call drawmap
 
   ; 4 .- Dibujar sprite en su posicion inicial
   mov ax, [spritey]
@@ -164,6 +170,29 @@ start:
 
   .noparado:
   ret
+
+drawmap:
+  ; DX = Map data
+  xor ax, ax	; AX = 0
+  mov si, dx	; Load Map data on Source index
+
+  .looprows:
+  
+  xor bx, bx	; BX = 0
+  .loopcols:
+  mov cx, ax
+  lodsb
+  xchg ax, cx
+  call drawtilesimple
+  inc bx
+  cmp bx, MAPWIDTH
+  jl .loopcols
+  inc ax
+  cmp ax, MAPHEIGHT
+  jl .looprows
+  ret
+  
+  
 
 leerteclado:
 
@@ -815,6 +844,8 @@ drawtilesimple:
   ; AX = Y Coordinate of tile
   ; BX = X Coordinate of tile
   ; CX = Tile Code
+  push ax	; Respaldar AX y BX
+  push bx
 
   ; 1 .- Seleccionar banco de memoria
   mov dx, MEMCGAEVEN
@@ -846,12 +877,15 @@ drawtilesimple:
 
   .looprenglon:
   mov dx, cx	; respaldar cx
-  mov cx, ( ANCHOTILE / PXB * 2 )
-  rep stosw
+  mov cx, ( ANCHOTILE / PXB )
+  ; Usar stosb en lugar de stosw. Si usamos stosw pasan cosas muy raras
+  rep stosb
   mov cx, dx	; Reestablecer cx
   add di, BYTESPERSCAN - ( ANCHOTILE / PXB )
   loop .looprenglon
 
+  pop bx	; Restaurar bx y ax
+  pop ax
   ret
 
 
@@ -871,7 +905,7 @@ section .data
 
   ; Variables del programa:
   spritex:
-  dw  40d
+  dw 32d 
   spritey:
   dw 92d
   spritenx:
@@ -911,12 +945,12 @@ section .data
 
 map1:
 
-  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-  db 0, 0, 0, 0, 0, 0, 4, 0, 0, 0
-  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
-  db 0, 0, 0, 0, 0, 0, 0, 0, 2, 2
-  db 1, 2, 3, 0, 0, 0, 0, 3, 3, 3
+  db 0, 12, 10, 11, 8, 9, 0, 0, 0, 0
+  db 0, 6, 6, 6, 6, 0, 0, 13, 0, 0
+  db 0, 0, 0, 0, 0, 0, 7, 0, 14, 15 
+  db 4, 0, 0, 0, 0, 0, 0, 0, 0, 2
+  db 1, 5, 0, 0, 0, 0, 0, 2, 0, 0
+  db 1, 0, 0, 0, 0, 1, 0, 0, 0, 0
 
 
 spritemonigote:
