@@ -120,56 +120,6 @@ start:
   ; repetir ciclo
   jmp frame
 
-  leerteclado_old:
-  ; 1.- Revisar teclado
-  mov ah, 1   ; "Get keystroke status"
-  int 16h
-  jz .retorno
-
-  mov ah, 0   ; Problema: Por alguna razon tengo que hacer lectura destructiva de teclado para que reporte la tecla presionada
-  int 16h
-  cmp ah, KB_ESC  ; Comprobar si es tecla ESC
-  je fin
-  cmp al, 'q'  ; Comprobar si es caracter 'q'
-  je fin
-  cmp al, 'Q'  ; Comprobar si es caracter 'Q'
-  je fin
-  cmp al, 'p'  ; Comprobar si es caracter 'p'
-  je cambiapaleta
-  cmp al, 'P'  ; Comprobar si es caracter 'P'
-  je cambiapaleta
-  cmp ah, KB_LEFT  ; Comprobar si es flecha izquierda
-  je .movizq
-  cmp ah, KB_RIGHT  ; Comprobar si es flecha derecha
-  je .movder
-  cmp ah, KB_UP  ; Comprobar si es flecha arriba
-  je .saltar
-
-  .retorno:
-  ret
-
-  .movizq:
-  mov ax, -1
-  mov [deltax], ax
-  ret
-
-  .movder:
-  mov ax, 1
-  mov [deltax], ax
-  ret
-
-  .saltar:
-  mov ax, [parado] ; Tiene que estar parado para poder saltar
-  test ax, ax
-  jz .noparado
-
-  mov bx, 0 - REBOTEY
-  mov [deltay], bx
-  mov bx, 0
-  mov [parado], bx
-
-  .noparado:
-  ret
 
 drawmap:
   ; DX = Map data
@@ -192,54 +142,6 @@ drawmap:
   jl .looprows
   ret
   
-  
-
-leerteclado:
-
-  mov al, [tecla_esc] ; ¿está presionada esta tecla?
-  test al, al
-  jnz fin
-
-  mov al, [tecla_left] ; ¿está presionada esta tecla?
-  test al, al
-  jz .sig1
-
-  .movizq:
-  mov ax, -1
-  mov [deltax], ax
-
-  .sig1:
-  mov al, [tecla_right] ; ¿está presionada esta tecla?
-  test al, al
-  jz .sig2
-
-  .movder:
-  mov ax, 1
-  mov [deltax], ax
-
-  .sig2:
-  mov al, [tecla_up] ; ¿está presionada esta tecla?
-  test al, al
-  jz .sig3
-
-  .saltar:
-  mov ax, [parado] ; Tiene que estar parado para poder saltar
-  test ax, ax
-  jz .noparado
-
-  mov bx, 0 - REBOTEY
-  mov [deltay], bx
-  mov bx, 0
-  mov [parado], bx
-
-  .noparado:
-
-
-  .sig3:
-  .retorno:
-  ret
-
-
 
 
 kb_int_new:
@@ -363,10 +265,6 @@ cambiapaleta:
   test al, al
   jnz fin
 
-  ; mov ax, 0
-  ; mov [deltax], ax
-  ; call leerteclado
-  
   .test_left:
   mov al, [tecla_left] ; ¿está presionada esta tecla?
   test al, al
@@ -959,7 +857,7 @@ map1:
   db 0, 12, 10, 11, 8, 9, 0, 0, 0, 0
   db 0, 6, 6, 6, 6, 0, 0, 13, 0, 0
   db 0, 0, 0, 0, 0, 0, 7, 0, 14, 15 
-  db 4, 0, 0, 0, 0, 0, 0, 0, 0, 2
+  db 4, 0, 0, 0, 0, 0, 0, 0, 4, 2
   db 1, 5, 0, 0, 0, 0, 0, 2, 0, 0
   db 1, 0, 0, 0, 0, 1, 0, 0, 0, 0
 
