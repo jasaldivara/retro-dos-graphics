@@ -32,6 +32,30 @@ CPU 8086
   %define MAPHEIGHT 6
 
   %define BWSPRITE ( ANCHOSPRITE / PXB )  ; Ancho de Sprite en Bytes
+  %define SPRITESUB	4		; Number of reserved memory words for Sprite subclasess
+
+  ; data structures
+
+  struc SPRITE
+
+    .graphics:	resw 1	; Pointer to graphic data
+    .frame:	resw 1	; Pointer to function defining per frame logic
+    .x		resw 1
+    .y		resw 1
+    .nx		resw 1
+    .ny		resw 1
+    .next	resw 1	; Pointer to nexts prite in linked list
+    ; .sub	resw SPRITESUB	; Subclass properties
+
+  endstruc
+
+  struc SPRITEPHYS
+
+    .sprite:	resb SPRITE_size
+    .vuelox:	resw 1
+    .deltay:	resw 1
+
+  endstruc
 
   ; Macros
 
@@ -831,6 +855,21 @@ section .data
   dw 0
   paleta:
   db 1
+
+  playersprite:
+    istruc SPRITEPHYS
+    at SPRITE.graphics, dw spritemonigote
+    at SPRITE.frame, dw 0
+    at SPRITE.x, dw 48d
+    at SPRITE.y, dw 92d
+    at SPRITE.nx, dw 0
+    at SPRITE.ny, dw 0
+    at SPRITE.next, dw 0
+    at SPRITEPHYS.vuelox, dw 0
+    at SPRITEPHYS.deltay,dw 0
+
+  firstsprite:
+  dw playersprite
 
   align   8,db 0
 
