@@ -116,6 +116,7 @@ start:
   ; 4 .- Dibujar sprite en su posicion inicial
   mov bp, playersprite
   call dibujasprite16
+  call borrasprite16
 
   jmp fin	; Temporal
 
@@ -410,9 +411,6 @@ fin:
 dibujasprite16:
   ; Parametros:
   ; BP: sprite
-  ; AX = Coordenada Y
-  ; BX = Coordenada X
-  ; DX = Mapa de bits
 
   mov bx, [bp + SPRITE.x]
 
@@ -702,22 +700,20 @@ dibujasprite16noalineado:
 borrasprite16:
 
   ; Parametros:
-  ; AX = Coordenada Y
-  ; BX = Coordenada X
-
-
-  ; 0.- Respaldar cosas que deberíamos consevar
+  ; BP => sprite
 
   ; 1.- Seleccionar banco de memoria
 
   mov cx, MEMCGAEVEN
   mov es, cx
+  mov ax, [bp + SPRITE.y]
   mov cx, ax  ; Copiar / respaldar coordenada Y
   shr ax, 1 ; Descartar el bit de selección de banco
 
   ; Multiplicar
   mov dl, BYTESPERSCAN
   mul dl    ; multiplicar por ancho de pantalla en bytes
+  mov bx, [bp + SPRITE.x]
   shr bx, 1
   add ax, bx  ; Desplazamiento del byte que vamos a manipular
   mov di, ax
