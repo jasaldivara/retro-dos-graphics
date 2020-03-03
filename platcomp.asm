@@ -49,11 +49,12 @@ CPU 8086
 
   endstruc
 
-  struc SPRITEPHYS
+  struc SPRITEPHYS	; Sprite with Physics
 
     .sprite:	resb SPRITE_size
     .vuelox:	resw 1
     .deltay:	resw 1
+    .parado:	resw 1
 
   endstruc
 
@@ -116,30 +117,21 @@ start:
   ; 4 .- Dibujar sprite en su posicion inicial
   mov bp, playersprite
   call dibujasprite16
-  call borrasprite16
 
-  jmp fin	; Temporal
+  ;jmp fin	; Temporal
 
   frame:
 
-  ; 1 .- Llamar a 'mecanicadeljuego' para que calcule posicion de sprites
-  call mecanicadeljuego
-
-  ; 2 .- VSync
-
+  call playerframe
   VSync
-
-  ; 3 .- borrar
-  mov ax, [spritey]
-  mov bx, [spritex]
   call borrasprite16
 
-  ; 4.- dibujar
-  mov ax, [spriteny]
-  mov bx, [spritenx]
-  mov [spritey], ax
-  mov [spritex], bx
-  mov dx, spritemonigote
+  mov ax, [ds:bp + SPRITE.ny]
+  mov bx, [ds:bp + SPRITE.nx]
+  mov [ds:bp + SPRITE.y], ax
+  mov [ds:bp + SPRITE.x], bx
+
+
   call dibujasprite16
 
   ; repetir ciclo
@@ -282,7 +274,9 @@ cambiapaleta:
   ret
 
 
-  mecanicadeljuego:
+playerframe:
+  ; Parametros:
+  ; BP => sprite
 
   ; 1.- Leer el teclado
 
@@ -296,14 +290,14 @@ cambiapaleta:
   jz .sig1
 
   .movizq:
-  dec word [vuelox]
+  dec word [ds:bp + SPRITEPHYS.vuelox]
   jmp .testright
 
   .sig1:
-  mov ax, [vuelox]
+  mov ax, [ds:bp + SPRITEPHYS.vuelox]
   cmp ax, 0
   jnl .testright
-  inc word [vuelox]
+  inc word [ds:bp + SPRITEPHYS.vuelox]
 
   .testright:
   mov al, [tecla_right] ; ¿está presionada esta tecla?
@@ -311,21 +305,21 @@ cambiapaleta:
   jz .sig2
 
   .movder:
-  inc word [vuelox]
+  inc word [ds:bp + SPRITEPHYS.vuelox]
   jmp .calcx
 
   .sig2:
-  mov ax, [vuelox]
+  mov ax, [ds:bp + SPRITEPHYS.vuelox]
   cmp ax, 0
   jng .calcx
-  dec word [vuelox]
+  dec word [ds:bp + SPRITEPHYS.vuelox]
 
 
 
   .calcx:    ; 2.- calcular x
 
-  mov ax, [spritex]
-  mov bx, [vuelox]
+  mov ax, [ds:bp + SPRITE.x]
+  mov bx, [ds:bp + SPRITEPHYS.vuelox]
   mov dx, bx
   mov cl, 2
   sar dx, cl
@@ -345,34 +339,34 @@ cambiapaleta:
   neg bx	; Rebotar, reduciendo velocidad a la mitad
   sar bx, 1
   .sig4:
-  mov [spritenx], ax
-  mov [vuelox], bx
+  mov [ds:bp + SPRITE.nx], ax
+  mov [ds:bp + SPRITEPHYS.vuelox], bx
 
   .saltar:
   mov al, [tecla_up] ; ¿está presionada esta tecla?
   test al, al
   jz .calcdy
 
-  mov ax, [parado] ; Tiene que estar parado para poder saltar
+  mov ax, [ds:bp + SPRITEPHYS.parado] ; Tiene que estar parado para poder saltar
   test ax, ax
   jz .calcdy
 
   ; Ahora sí: Saltar porque estamos parados y con la tecla saltar presionada
   mov bx, 0 - REBOTEY
-  mov [deltay], bx
+  mov [ds:bp + SPRITEPHYS.deltay], bx
   mov bx, 0
-  mov [parado], bx
+  mov [ds:bp + SPRITEPHYS.parado], bx
 
 
   .calcdy:  ; 2.- Calcular delta Y
-  mov dx, [deltay]
+  mov dx, [ds:bp + SPRITEPHYS.deltay]
   add dx, GRAVEDAD
-  mov [deltay], dx
+  mov [ds:bp + SPRITEPHYS.deltay], dx
 
   .calcy:      ; 3.- calcular y
   
-  mov ax, [spritey]
-  mov bx, [deltay]
+  mov ax, [ds:bp + SPRITE.y]
+  mov bx, [ds:bp + SPRITEPHYS.deltay]
   add ax, bx
 
   ; 1.1.- revisar que no se salga
@@ -381,17 +375,17 @@ cambiapaleta:
   jng .sig5
   mov ax, HEIGHTPX - ALTOSPRITE
   mov bx, 0
-  mov word [parado], 1
+  mov word [ds:bp + SPRITEPHYS.parado], 1
   .sig5:
   cmp ax, 0
   jnl .sig6
   mov ax, 0
   mov bx, 0
   .sig6:
-  mov [spriteny], ax
-  mov [deltay], bx
+  mov [ds:bp + SPRITE.ny], ax
+  mov [ds:bp + SPRITEPHYS.deltay], bx
 
-  ; Fin de mecanica del juego
+  ; Fin de logica del jugador por frame
   ret
   
 fin:
@@ -412,7 +406,7 @@ dibujasprite16:
   ; Parametros:
   ; BP: sprite
 
-  mov bx, [bp + SPRITE.x]
+  mov bx, [ds:bp + SPRITE.x]
 
   ; -1.- Revisar si pixeles están alineados con bytes
   test bx, 0000001b
@@ -421,7 +415,7 @@ dibujasprite16:
 
   ; 0.- Respaldar cosas que deberíamos consevar
 
-  mov dx, [bp + SPRITE.graphics]
+  mov dx, [ds:bp + SPRITE.graphics]
   mov si, dx  ; Cargar direccion de mapa de bits
 
   ; 1.- Seleccionar banco de memoria
@@ -429,7 +423,8 @@ dibujasprite16:
   mov cx, MEMCGAEVEN
   mov es, cx
   ; mov cx, ax  ; Copiar / respaldar coordenada Y
-  mov ax, [bp + SPRITE.y]
+  mov ax, [ds:bp + SPRITE.y]
+  mov cx, ax
   shr ax, 1 ; Descartar el bit de selección de banco
 
   ; 2.- Multiplicar
@@ -440,7 +435,7 @@ dibujasprite16:
 
   ; 3.- En caso de que coordenada Y sea impar, comenzar a dibujar sprite desde
   ; la segunda fila de pixeles del mapa de bits en coordenada par de pantalla.
-  mov cx, [bp + SPRITE.y]
+  ; mov cx, [ds:bp + SPRITE.y]
   test cx, 00000001b
   jz .espar
   add si, BWSPRITE
@@ -494,7 +489,7 @@ dibujasprite16noalineado:
 
   ; 0.- Respaldar cosas que deberíamos consevar
 
-  mov dx, [bp + SPRITE.graphics]
+  mov dx, [ds:bp + SPRITE.graphics]
   mov si, dx  ; Cargar direccion de mapa de bits
 
   ; 1.- Seleccionar banco de memoria
@@ -502,13 +497,13 @@ dibujasprite16noalineado:
   mov cx, MEMCGAEVEN
   mov es, cx
   ; mov cx, ax  ; Copiar / respaldar coordenada Y
-  mov ax, [bp + SPRITE.y]
+  mov ax, [ds:bp + SPRITE.y]
   shr ax, 1 ; Descartar el bit de selección de banco
 
   ; 2.- Multiplicar
   mov dl, BYTESPERSCAN
   mul dl    ; multiplicar por ancho de pantalla en bytes
-  mov bx, [bp + SPRITE.x]
+  mov bx, [ds:bp + SPRITE.x]
   mov dx, bx  ; Copiar coordenada X
   shr dx, 1   ; Descartar ultimo bit
   add ax, dx  ; Desplazamiento del byte que vamos a manipular
@@ -706,14 +701,14 @@ borrasprite16:
 
   mov cx, MEMCGAEVEN
   mov es, cx
-  mov ax, [bp + SPRITE.y]
+  mov ax, [ds:bp + SPRITE.y]
   mov cx, ax  ; Copiar / respaldar coordenada Y
   shr ax, 1 ; Descartar el bit de selección de banco
 
   ; Multiplicar
   mov dl, BYTESPERSCAN
   mul dl    ; multiplicar por ancho de pantalla en bytes
-  mov bx, [bp + SPRITE.x]
+  mov bx, [ds:bp + SPRITE.x]
   shr bx, 1
   add ax, bx  ; Desplazamiento del byte que vamos a manipular
   mov di, ax
@@ -727,6 +722,7 @@ borrasprite16:
 
   mov cx, ( ALTOSPRITE / 2 )  ; Primero borramos mitad de renglones (en renglones par de patalla)
   xor ax, ax  ; Registro AX en ceros
+  ; mov ax, 1010101010101010b <= debug
 
   .looprenglon:
 
@@ -842,29 +838,14 @@ section .data
   tecla_right: db 0
 
   ; Variables del programa:
-  spritex:
-  dw 32d 
-  spritey:
-  dw 92d
-  spritenx:
-  dw  0
-  spriteny:
-  dw 0
-  deltax:
-  dw 0
-  deltay:
-  dw 0
-  vuelox:
-  dw 0
-  parado:
-  dw 0
+
   paleta:
   db 1
 
   playersprite:
     istruc SPRITEPHYS
     at SPRITE.graphics, dw spritemonigote
-    at SPRITE.frame, dw 0
+    at SPRITE.frame, dw playerframe
     at SPRITE.x, dw 81d
     at SPRITE.y, dw 80d
     at SPRITE.nx, dw 0
@@ -872,6 +853,7 @@ section .data
     at SPRITE.next, dw 0
     at SPRITEPHYS.vuelox, dw 0
     at SPRITEPHYS.deltay,dw 0
+    at SPRITEPHYS.parado,dw 0
 
   firstsprite:
   dw playersprite
