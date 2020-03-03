@@ -114,10 +114,10 @@ start:
   call drawmap
 
   ; 4 .- Dibujar sprite en su posicion inicial
-  mov ax, [spritey]
-  mov bx, [spritex]
-  mov dx, spritemonigote
+  mov bp, playersprite
   call dibujasprite16
+
+  jmp fin	; Temporal
 
   frame:
 
@@ -409,9 +409,12 @@ fin:
 
 dibujasprite16:
   ; Parametros:
+  ; BP: sprite
   ; AX = Coordenada Y
   ; BX = Coordenada X
   ; DX = Mapa de bits
+
+  mov bx, [bp + SPRITE.x]
 
   ; -1.- Revisar si pixeles están alineados con bytes
   test bx, 0000001b
@@ -420,13 +423,15 @@ dibujasprite16:
 
   ; 0.- Respaldar cosas que deberíamos consevar
 
+  mov dx, [bp + SPRITE.graphics]
   mov si, dx  ; Cargar direccion de mapa de bits
 
   ; 1.- Seleccionar banco de memoria
 
   mov cx, MEMCGAEVEN
   mov es, cx
-  mov cx, ax  ; Copiar / respaldar coordenada Y
+  ; mov cx, ax  ; Copiar / respaldar coordenada Y
+  mov ax, [bp + SPRITE.y]
   shr ax, 1 ; Descartar el bit de selección de banco
 
   ; 2.- Multiplicar
@@ -437,6 +442,7 @@ dibujasprite16:
 
   ; 3.- En caso de que coordenada Y sea impar, comenzar a dibujar sprite desde
   ; la segunda fila de pixeles del mapa de bits en coordenada par de pantalla.
+  mov cx, [bp + SPRITE.y]
   test cx, 00000001b
   jz .espar
   add si, BWSPRITE
@@ -490,18 +496,21 @@ dibujasprite16noalineado:
 
   ; 0.- Respaldar cosas que deberíamos consevar
 
+  mov dx, [bp + SPRITE.graphics]
   mov si, dx  ; Cargar direccion de mapa de bits
 
   ; 1.- Seleccionar banco de memoria
 
   mov cx, MEMCGAEVEN
   mov es, cx
-  mov cx, ax  ; Copiar / respaldar coordenada Y
+  ; mov cx, ax  ; Copiar / respaldar coordenada Y
+  mov ax, [bp + SPRITE.y]
   shr ax, 1 ; Descartar el bit de selección de banco
 
   ; 2.- Multiplicar
   mov dl, BYTESPERSCAN
   mul dl    ; multiplicar por ancho de pantalla en bytes
+  mov bx, [bp + SPRITE.x]
   mov dx, bx  ; Copiar coordenada X
   shr dx, 1   ; Descartar ultimo bit
   add ax, dx  ; Desplazamiento del byte que vamos a manipular
@@ -860,8 +869,8 @@ section .data
     istruc SPRITEPHYS
     at SPRITE.graphics, dw spritemonigote
     at SPRITE.frame, dw 0
-    at SPRITE.x, dw 48d
-    at SPRITE.y, dw 92d
+    at SPRITE.x, dw 81d
+    at SPRITE.y, dw 80d
     at SPRITE.nx, dw 0
     at SPRITE.ny, dw 0
     at SPRITE.next, dw 0
