@@ -496,8 +496,9 @@ dibujasprite16noalineado:
 
   mov cx, MEMCGAEVEN
   mov es, cx
-  ; mov cx, ax  ; Copiar / respaldar coordenada Y
+
   mov ax, [ds:bp + SPRITE.y]
+  mov cx, ax  ; Copiar / respaldar coordenada Y
   shr ax, 1 ; Descartar el bit de selección de banco
 
   ; 2.- Multiplicar
