@@ -727,9 +727,8 @@ drawtilesimple:
 
   .looprenglon:
   mov dx, cx	; respaldar cx
-  mov cx, ( ANCHOTILE / PXB )
-  ; Usar stosb en lugar de stosw. Si usamos stosw pasan cosas muy raras
-  rep stosb
+  mov cx, ( ANCHOTILE / ( PXB * 2 ) )
+  rep stosw
   mov cx, dx	; Reestablecer cx
   add di, BYTESPERSCAN - ( ANCHOTILE / PXB )
   loop .looprenglon
