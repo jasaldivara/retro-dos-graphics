@@ -446,11 +446,10 @@ dibujasprite16:
 
   .looprenglon:
 
-  movsw
-  movsw
-  movsw
-  movsw
-
+  mov dx, cx	; respaldar conteo de renglones
+  mov cx, ( ANCHOSPRITE / ( PXB * 2 ) )	; Palabras a copiar por renglon
+  rep movsw
+  mov cx, dx	; restaurar conteo de renglones
 
   add di, BYTESPERSCAN -  BWSPRITE; Agregar suficientes bytes para que sea siguiente renglon
   add si, BWSPRITE ; Saltar renglones de ssprite.mapa de bits
@@ -474,10 +473,10 @@ dibujasprite16:
 
   .looprenglon2:
 
-  movsw
-  movsw
-  movsw
-  movsw
+  mov dx, cx	; respaldar conteo de renglones
+  mov cx, ( ANCHOSPRITE / ( PXB * 2 ) )	; Palabras a copiar por renglon
+  rep movsw
+  mov cx, dx	; restaurar conteo de renglones
 
   add di, BYTESPERSCAN -  BWSPRITE ; Agregar suficientes bytes para que sea siguiente renglon
   add si, BWSPRITE ; Saltar renglones de ssprite.mapa de bits
@@ -534,54 +533,17 @@ dibujasprite16noalineado:
   shr ax, cl    ; desplazar esa cantidad de bits
   stosb		; Escribir byte (?)
 
+  mov cx, ( ( ANCHOSPRITE / PXB ) - 1 )	; numero de bytes a copiar
+  .loopbyte:
+  mov bx, cx
   dec si
   lodsw
   xchg ah, al
   mov cx, 4
   shr ax, cl    ; desplazar esa cantidad de bits
   stosb		; Escribir byte (?)
-
-  dec si
-  lodsw
-  xchg ah, al
-  mov cx, 4
-  shr ax, cl    ; desplazar esa cantidad de bits
-  stosb		; Escribir byte (?)
-
-  dec si
-  lodsw
-  xchg ah, al
-  mov cx, 4
-  shr ax, cl    ; desplazar esa cantidad de bits
-  stosb		; Escribir byte (?)
-
-  dec si
-  lodsw
-  xchg ah, al
-  mov cx, 4
-  shr ax, cl    ; desplazar esa cantidad de bits
-  stosb		; Escribir byte (?)
-
-  dec si
-  lodsw
-  xchg ah, al
-  mov cx, 4
-  shr ax, cl    ; desplazar esa cantidad de bits
-  stosb		; Escribir byte (?)
-
-  dec si
-  lodsw
-  xchg ah, al
-  mov cx, 4
-  shr ax, cl    ; desplazar esa cantidad de bits
-  stosb		; Escribir byte (?)
-
-  dec si
-  lodsw
-  xchg ah, al
-  mov cx, 4
-  shr ax, cl    ; desplazar esa cantidad de bits
-  stosb		; Escribir byte (?)
+  mov cx, bx
+  loop .loopbyte
 
   xor ax, ax
   mov ah, [ds:si - 1]
@@ -628,54 +590,17 @@ dibujasprite16noalineado:
   shr ax, cl    ; desplazar esa cantidad de bits
   stosb		; Escribir byte (?)
 
+  mov cx, ( ( ANCHOSPRITE / PXB ) - 1 )	; numero de bytes a copiar
+  .loopbyte2:
+  mov bx, cx
   dec si
   lodsw
   xchg ah, al
   mov cx, 4
   shr ax, cl    ; desplazar esa cantidad de bits
   stosb		; Escribir byte (?)
-
-  dec si
-  lodsw
-  xchg ah, al
-  mov cx, 4
-  shr ax, cl    ; desplazar esa cantidad de bits
-  stosb		; Escribir byte (?)
-
-  dec si
-  lodsw
-  xchg ah, al
-  mov cx, 4
-  shr ax, cl    ; desplazar esa cantidad de bits
-  stosb		; Escribir byte (?)
-
-  dec si
-  lodsw
-  xchg ah, al
-  mov cx, 4
-  shr ax, cl    ; desplazar esa cantidad de bits
-  stosb		; Escribir byte (?)
-
-  dec si
-  lodsw
-  xchg ah, al
-  mov cx, 4
-  shr ax, cl    ; desplazar esa cantidad de bits
-  stosb		; Escribir byte (?)
-
-  dec si
-  lodsw
-  xchg ah, al
-  mov cx, 4
-  shr ax, cl    ; desplazar esa cantidad de bits
-  stosb		; Escribir byte (?)
-
-  dec si
-  lodsw
-  xchg ah, al
-  mov cx, 4
-  shr ax, cl    ; desplazar esa cantidad de bits
-  stosb		; Escribir byte (?)
+  mov cx, bx
+  loop .loopbyte2
 
   xor ax, ax
   mov ah, [ds:si - 1]
