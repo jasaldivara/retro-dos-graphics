@@ -124,7 +124,7 @@ start:
 
   call playerframe
   VSync
-  call borrasprite16
+  call borraspritemov
 
   mov ax, [ds:bp + SPRITE.ny]
   mov bx, [ds:bp + SPRITE.nx]
@@ -618,6 +618,68 @@ dibujasprite16noalineado:
   ; Fin. Retornar
   ret
 
+borraspritemov:
+  ; Optimized routine for erasing only the pixels that needs to be erased
+  ; DS:BP => Sprite
+
+  ; 1.- Check if moved vertically
+
+  .checkvertical:
+  mov ax, [ds:bp + SPRITE.y]
+  mov bx, [ds:bp + SPRITE.ny]
+  cmp ax, bx
+  je .checkhorizontal	; Si son iguales es que no hay mov vertical
+  jg .bkvertical	; Si y es mayor que ny, vamos hacia abajo
+			; Si y es nemor que ny, vamos hacia arriba
+			; ax => c.y = s.y
+  sub bx, ax		; bx => c.h = s.ny - s.y
+  jmp .clearvertical
+
+  .bkvertical:
+  xchg ax, bx		; ax => s.ny, bx => s.y
+  sub bx, ax		; bx => s.ny - s.y	(numero negativo)
+  neg bx		; bx => c.h = s.y - s.ny (numero positivo)
+  add ax, ALTOSPRITE	; ax => c.y = s.ny + s.h
+
+  .clearvertical:
+  ; ax => c.y
+  ; bx => c.h
+
+  mov cx, MEMCGAEVEN
+  mov es, cx
+  mov cx, ax	; respaldar coordenada y
+  shr ax, 1	; Descartar bit de seleccion de banco
+  ; multiplicar
+  mov dx, BYTESPERSCAN
+  mul dl	; multiplicar por ancho de pantalla en bytes
+  mov dx, [ds:bp + SPRITE.x]
+  shr dx, 1	; Descartar ultimo bit (posicion de pixel dentro del byte)
+  add ax, dx	; Direccion en memoria donde comenzamos a borrar
+  mov di, ax
+
+  ; En caso de que coordenada Y sea impar, comenzar a borrar desde
+  ; la segunda fila de pixeles del mapa de bits en coordenada par de pantalla.
+  test cx, 00000001b
+  jz .espar
+  add di, BYTESPERSCAN
+  .espar: ; pushf
+
+  mov cx, bx
+  ; shr cx, 1
+  mov ax, 11h
+  .looprenglon:
+  mov dx, cx
+  mov cx, BWSPRITE
+  rep stosb
+  mov cx, dx
+  add di, BYTESPERSCAN - ( BWSPRITE )
+  loop .looprenglon
+
+
+
+  .checkhorizontal:
+  ret
+
 borrasprite16:
 
   ; Parametros:
@@ -639,7 +701,7 @@ borrasprite16:
   add ax, bx  ; Desplazamiento del byte que vamos a manipular
   mov di, ax
 
-  ; En caso de que coordenada Y sea impar, comenzar a dibujar sprite desde
+  ; En caso de que coordenada Y sea impar, comenzar a borrar sprite desde
   ; la segunda fila de pixeles del mapa de bits en coordenada par de pantalla.
   test cx, 00000001b
   jz .espar
