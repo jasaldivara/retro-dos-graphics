@@ -638,7 +638,7 @@ borraspritemov:
   .bkvertical:
   xchg ax, bx		; ax => s.ny, bx => s.y
   sub bx, ax		; bx => s.ny - s.y	(numero negativo)
-  neg bx		; bx => c.h = s.y - s.ny (numero positivo)
+  ; neg bx		; bx => c.h = s.y - s.ny (numero positivo)
   add ax, ALTOSPRITE	; ax => c.y = s.ny + s.h
 
   .clearvertical:
