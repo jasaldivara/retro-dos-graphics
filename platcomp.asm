@@ -572,7 +572,7 @@ dibujasprite16noalineado:
 
   popf ; ¿Necesario?
   jz .espar2
-  sub si, BWSPRITE
+  sub si, BWSPRITE * 2
   sub di, BYTESPERSCAN
   .espar2:
 
