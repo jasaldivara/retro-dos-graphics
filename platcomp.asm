@@ -112,7 +112,7 @@ start:
 
   ; x .- Draw map
   mov dx, map1
-  call drawmap
+  ; call drawmap
 
   ; 4 .- Dibujar sprite en su posicion inicial
   mov bp, playersprite
@@ -665,13 +665,15 @@ borraspritemov:
   and ax, 00000001b
   test cx, 00000001b
   jz .espar
-  add dx, ax
   add di, BYTESPERSCAN
-  .espar: pushf
-
+  jmp .sig1
+  .espar:
+  add dx, ax
+  .sig1:
+  pushf
   .initlooprow:
   mov cx, dx
-  mov ax, 00h
+  mov ax, 55h
   test cx, cx
   jz .finlooprow
   .looprenglon:
@@ -705,7 +707,7 @@ borraspritemov:
   sub di, BYTESPERSCAN
   .espar2:
   mov cx, dx
-  mov ax, 00h
+  mov ax, 44h
   test cx, cx
   jz .checkhorizontal
   jmp .looprenglon
@@ -867,8 +869,8 @@ section .data
     istruc SPRITEPHYS
     at SPRITE.graphics, dw spritemonigote
     at SPRITE.frame, dw playerframe
-    at SPRITE.x, dw 81d
-    at SPRITE.y, dw 80d
+    at SPRITE.x, dw 80d
+    at SPRITE.y, dw 81d
     at SPRITE.nx, dw 0
     at SPRITE.ny, dw 0
     at SPRITE.next, dw 0
