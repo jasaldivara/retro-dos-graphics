@@ -671,7 +671,7 @@ borraspritemov:
 
   .initlooprow:
   mov cx, dx
-  mov ax, 55h
+  mov ax, 00h
   test cx, cx
   jz .finlooprow
   .looprenglon:
@@ -689,6 +689,11 @@ borraspritemov:
 
   mov cx, MEMCGAODD
   mov es, cx
+  mov ax, bx
+  shr ax, 1
+  mov dl, BYTESPERSCAN
+  mul dl
+  sub di, ax ; TODO: Ver como optimizar esto, junto con el siguiente 'jz .espar2'
   ; sub di, BYTESPERSCAN * ( ALTOSPRITE / 2 )
   mov dx, bx
   shr dx, 1
@@ -700,7 +705,7 @@ borraspritemov:
   sub di, BYTESPERSCAN
   .espar2:
   mov cx, dx
-  mov ax, 44h
+  mov ax, 00h
   test cx, cx
   jz .checkhorizontal
   jmp .looprenglon
