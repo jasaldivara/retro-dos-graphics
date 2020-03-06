@@ -659,14 +659,21 @@ borraspritemov:
 
   ; En caso de que coordenada Y sea impar, comenzar a borrar desde
   ; la segunda fila de pixeles del mapa de bits en coordenada par de pantalla.
+  mov dx, bx
+  shr dx, 1
+  mov ax, bx
+  and ax, 00000001b
   test cx, 00000001b
   jz .espar
+  add dx, ax
   add di, BYTESPERSCAN
-  .espar: ; pushf
+  .espar: pushf
 
-  mov cx, bx
-  ; shr cx, 1
-  mov ax, 11h
+  .initlooprow:
+  mov cx, dx
+  mov ax, 55h
+  test cx, cx
+  jz .finlooprow
   .looprenglon:
   mov dx, cx
   mov cx, BWSPRITE
@@ -674,7 +681,29 @@ borraspritemov:
   mov cx, dx
   add di, BYTESPERSCAN - ( BWSPRITE )
   loop .looprenglon
+  .finlooprow:
 
+  mov cx, es
+  cmp cx, MEMCGAODD
+  je .checkhorizontal
+
+  mov cx, MEMCGAODD
+  mov es, cx
+  ; sub di, BYTESPERSCAN * ( ALTOSPRITE / 2 )
+  mov dx, bx
+  shr dx, 1
+  mov ax, bx
+  and ax, 00000001b
+  popf
+  jz .espar2
+  add dx, ax
+  sub di, BYTESPERSCAN
+  .espar2:
+  mov cx, dx
+  mov ax, 44h
+  test cx, cx
+  jz .checkhorizontal
+  jmp .looprenglon
 
 
   .checkhorizontal:
