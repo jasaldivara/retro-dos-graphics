@@ -726,7 +726,7 @@ borraspritemov:
   mov dl, [ds:bp + SPRITE.nx]
   cmp dh, dl
   je .salir
-  jg .mizq
+  ja .mizq
   .mder:	; dh => c.x = s.x
   sub dl, dh	; dl => c.w = s.nx - s.x
   jmp .sig3
@@ -748,13 +748,78 @@ borraspritemov:
   .mdown:
   add bh, bl
   sub bh, al	; bh => c.h, al => c.y
-  jle .salir	; ?? Salir en caso de que sea menor o igual a cero ?
+  je .salir	; ?? Salir en caso de que sea menor o igual a cero ?
   .clearhorizontal:
   ; dh => c.x
   ; dl => c.w
   ; bh => c.h
   ; al => c.y
   
+  mov cx, MEMCGAEVEN
+  mov es, cx
+  mov bl, al	; bl => c.y
+  shr ax, 1	; descartar bit de seleccion de banco
+  mov ah, BYTESPERSCAN	; multiplicar por ancho de pantalla en bytes
+  mul ah	; ax => desplazamiento en bytes del renglon
+  xor cx, cx
+  mov cl, dh	; cx => c.x
+  shr cx, 1	; descartar utlimo bit	(posicion de pixel intra-byte)
+  add ax, cx	; ax => Direccion de memoria donde empezamos a borrar
+  mov di, ax	; Destination index = posicion inicial a borrar
+		; ax queda libre para usar en otras cosas
+
+  xor ch, ch
+  mov cl, bh	; cx => c.h
+  shr cx, 1	; dividir numero de renglones entre dos (para escaneo par)
+  test bl, 00000001b	; ver si coordenada y es par
+  jz .espar3
+  add di, BYTESPERSCAN	; Comenzar en un renglón más abajo en caso de coordenada impar
+  jmp .sig4
+  .espar3:
+  ; mov al, bh	; al => c.h
+  ; and al, 00000001b
+  ; xor ah, ah
+  ; and cx, ax	; incrementar numero de renglones en escaneo par en caso de que
+  		; renglones totales sea impar y coordenada y par
+  test bh, 00000001b
+  jz .sig4
+  inc cx
+  .sig4:
+  .initlooprowh:
+  push bx	; ¿Aun es necesario respaldar estas variables?
+  ; push dx
+  mov al, 55h
+  mov ah, dl	; ah => c.w
+  shr ah, 1	; dividir entre dos pixeles por byte
+  test dl, 00000001b	; agregar un byte si numero de pixeles es impar
+  jz .sig5
+  inc ah	; ah => numero de bytes a escribir horizontalmente
+  .sig5:
+  test cx, cx
+  jz .finlooprowh
+  .looprowh:
+  mov bx, cx	; respaldar conteo de renglones
+  xor ch, ch
+  mov cl, ah
+  rep stosb
+  mov cx, bx	; restaurar conteo de renglones
+  xor bx, bx
+  mov bl, ah
+  sub bx, BYTESPERSCAN
+  sub di, bx
+  loop .looprowh
+  .finlooprowh:
+  pop bx
+
+  mov cx, es
+  cmp cx, MEMCGAODD
+  je .salir
+
+  mov cx, MEMCGAODD
+  mov es,cx
+
+
+
   .salir:
   ret
 
@@ -911,7 +976,7 @@ section .data
     istruc SPRITEPHYS
     at SPRITE.graphics, dw spritemonigote
     at SPRITE.frame, dw playerframe
-    at SPRITE.x, dw 0d
+    at SPRITE.x, dw 126d
     at SPRITE.y, dw 40d
     at SPRITE.nx, dw 0
     at SPRITE.ny, dw 0
