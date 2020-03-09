@@ -722,6 +722,40 @@ borraspritemov:
 
 
   .checkhorizontal:
+  mov dh, [ds:bp + SPRITE.x]
+  mov dl, [ds:bp + SPRITE.nx]
+  cmp dh, dl
+  je .salir
+  jg .mizq
+  .mder:	; dh => c.x = s.x
+  sub dl, dh	; dl => c.w = s.nx - s.x
+  jmp .sig3
+  .mizq:
+  xchg dh, dl	; dl => s.x, dh = s.nx
+  sub dl, dh	; dl => c.w = s.x - s.nx
+  add dh, ANCHOSPRITE	; dh => c.x = s.nx + s.w
+  .sig3:
+  ; dh => c.x
+  ; dl => c.w
+
+  ; Calcular movimiento vertical para borrado de seccion horizontal
+  mov bh, ALTOSPRITE
+  mov al, [ds:bp + SPRITE.y]
+  mov bl, [ds:bp + SPRITE.ny]
+  cmp al, bl
+  jl .mdown
+  xchg al, bl	; al => s.ny, bl => s.y
+  .mdown:
+  add bh, bl
+  sub bh, al	; bh => c.h, al => c.y
+  jle .salir	; ?? Salir en caso de que sea menor o igual a cero ?
+  .clearhorizontal:
+  ; dh => c.x
+  ; dl => c.w
+  ; bh => c.h
+  ; al => c.y
+  
+  .salir:
   ret
 
 borrasprite16:
