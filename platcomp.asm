@@ -788,7 +788,7 @@ borraspritemov:
   .initlooprowh:
   push bx	; ¿Aun es necesario respaldar estas variables?
   ; push dx
-  mov al, 55h
+  mov al, 00h
   mov ah, dl	; ah => c.w
   shr ah, 1	; dividir entre dos pixeles por byte
   test dl, 00000001b	; agregar un byte si numero de pixeles es impar
@@ -817,6 +817,32 @@ borraspritemov:
 
   mov cx, MEMCGAODD
   mov es,cx
+
+  ; xor ax, ax
+  mov al, bl	; al => c.y
+  shr al, 1
+  mov ah, BYTESPERSCAN
+  mul ah	; ax => desplazamiento en bytes del renglon
+  xor cx, cx
+  mov cl, dh	; cx => c.x
+  shr cx, 1	; descartar utlimo bit (posicion de pixel intra-byte)
+  add ax, cx
+  mov di, ax
+
+  xor cx, cx
+  mov cl, bh	; cx => c.h
+  shr cx, 1	; dividir numero de renglones entre dos (para escaneo impar)
+  test bl, 00000001b	; ver si coordenada c.y es impar
+  jz .espar4
+  test bh, 00000001b	; y además altura c.h es impar
+  jz .espar4
+  inc cx		; si ambos sin impares: incrementar numero de renglones
+  			; a dibujar en lineas de escaneo impar de pantalla
+  .espar4:
+  jmp .initlooprowh
+  test cx, cx
+  ;jz .salir		; salir en caso de que conteo de renglones sea cero
+  jnz .initlooprowh
 
 
 
