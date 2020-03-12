@@ -1,4 +1,20 @@
 
+Inmediatos:
+
+  Bug: Nueva rutina de borrado no borra pixeles del extramo derecho de sprite
+  cuando no está alineado.
+  Falta reorganizar codigo de nueva rutina de borrado para que tanto segmentos
+  horizontales como verticales usen una misma subrutina de borrado, y la unica
+  diferencia sea el calculo de coordenadas de superficies a borrar. Esto debe
+  arreglar el bug de arriba.
+
+  Reorganizar código de rutinas anteriores de dibujado ¿y borrado? para no
+  repetir código (lineas pares y lineas impares), y así reducir el tamaño del
+  archovo, además de simplificar futuras modificaciones (no tener que hacerlas
+  dos veces)
+
+  Detección de colisiones
+
 Nuevos programas:
 
   Programa para tocar musica desde el teclado de la PC
@@ -36,9 +52,11 @@ Mecánica del juego:
 
 Optimizaciones:
 
-
   Dibujado de sprites:
 
   Ver posibilidad de copiar datos por palabra en lugar de por byte al dibujar
   sprites no alineados (Usar movsw en lugar de movsb)
+
+  Borrado de sprites: Que calculo de coordenadas a borrar se haga de acuerdo a
+  bytes y no a pixeles, de esta forma evitamos limpiar dos veces un mismo byte.
 
