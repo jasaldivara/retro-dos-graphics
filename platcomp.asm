@@ -111,6 +111,11 @@ start:
   out dx, al
 
 
+  ; Inicializar gráficos
+  mov bp, playersprite
+  call inicializaspritegrafico
+
+
   ; x .- Draw map
   mov dx, map1
   call drawmap
@@ -489,7 +494,7 @@ dibujasprite16noalineado:
 
   ; 0.- Respaldar cosas que deberíamos consevar
 
-  mov dx, [ds:bp + SPRITE.gr0]
+  mov dx, [ds:bp + SPRITE.gr1]	; Usar gráfico con bits previamente recorridos
   mov si, dx  ; Cargar direccion de mapa de bits
 
   ; 1.- Seleccionar banco de memoria
@@ -525,38 +530,24 @@ dibujasprite16noalineado:
   .looprenglon:
 
   mov dx, cx ; guardar contador de renglones
+  ; mov cx, 4    ; guardar bits a desplazar en el contador
+  ; xor ax, ax	; borrar ax
+  ; lodsb         ; cargar byte en al
+  ; shr ax, cl    ; desplazar esa cantidad de bits
+  ; stosb		; Escribir byte (?)
   
-  mov cx, 4    ; guardar bits a desplazar en el contador
-
-  xor ax, ax	; borrar ax
-
-  lodsb         ; cargar byte en al
-  shr ax, cl    ; desplazar esa cantidad de bits
-  stosb		; Escribir byte (?)
+  movsb		; primer pixel del renglón
+		; TODO: Conservar pixel izquiero del primer byte a escribir
 
   mov cx, ( ( ANCHOSPRITE / PXB ) - 1 )	; numero de bytes a copiar
-  .loopbyte:
-  mov bx, cx
-  dec si
-  lodsw
-  xchg ah, al
-  mov cx, 4
-  shr ax, cl    ; desplazar esa cantidad de bits
-  stosb		; Escribir byte (?)
-  mov cx, bx
-  loop .loopbyte
+  rep movsb
 
-  xor ax, ax
-  mov ah, [ds:si - 1]
-  mov cx, 4
-  shr ax, cl
-  stosb
+  movsb		; Ultimo pixel del renglón
+		; TODO: Conservar pixel derecho del ultimo byte a escribir
 
-  ; movsw	-- Descartar estos
-  ; movsw
 
   add di, ( BYTESPERSCAN - ( BWSPRITE + 1 ) ) ; Agregar suficientes bytes para que sea siguiente renglon
-  add si, BWSPRITE ; Saltar renglones de sprite.mapa de bits
+  add si, BWSPRITE - 1 ; Saltar renglones de sprite.mapa de bits
 
   mov cx, dx  ; contador de renglones
   loop .looprenglon
@@ -583,35 +574,23 @@ dibujasprite16noalineado:
 
   mov dx, cx ; guardar contador de renglones
   
-  mov cx, 4    ; guardar bits a desplazar en el contador
+  ; mov cx, 4    ; guardar bits a desplazar en el contador
+  ; xor ax, ax	; borrar ax
+  ; lodsb         ; cargar byte en al
+  ; shr ax, cl    ; desplazar esa cantidad de bits
+  ; stosb		; Escribir byte (?)
 
-  xor ax, ax	; borrar ax
-
-  lodsb         ; cargar byte en al
-  shr ax, cl    ; desplazar esa cantidad de bits
-  stosb		; Escribir byte (?)
+  movsb		; primer pixel del renglón
+		; TODO: Conservar pixel izquiero del primer byte a escribir
 
   mov cx, ( ( ANCHOSPRITE / PXB ) - 1 )	; numero de bytes a copiar
-  .loopbyte2:
-  mov bx, cx
-  dec si
-  lodsw
-  xchg ah, al
-  mov cx, 4
-  shr ax, cl    ; desplazar esa cantidad de bits
-  stosb		; Escribir byte (?)
-  mov cx, bx
-  loop .loopbyte2
+  rep movsb
 
-  xor ax, ax
-  mov ah, [ds:si - 1]
-  mov cx, 4
-  shr ax, cl
-  stosb
-
+  movsb		; Ultimo pixel del renglón
+		; TODO: Conservar pixel derecho del ultimo byte a escribir
 
   add di, ( BYTESPERSCAN - ( BWSPRITE + 1 ) ) ; Agregar suficientes bytes para que sea siguiente renglon
-  add si, BWSPRITE ; Saltar renglones de ssprite.mapa de bits
+  add si, BWSPRITE - 1 ; Saltar renglones de ssprite.mapa de bits
   mov cx, dx  ; contador de renglones
   loop .looprenglon2
 
