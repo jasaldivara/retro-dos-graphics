@@ -38,13 +38,14 @@ CPU 8086
 
   struc SPRITE
 
-    .graphics:	resw 1	; Pointer to graphic data
     .frame:	resw 1	; Pointer to function defining per frame logic
     .x		resw 1
     .y		resw 1
     .nx		resw 1
     .ny		resw 1
     .next	resw 1	; Pointer to nexts prite in linked list
+    .gr0:	resw 1	; Pointer to graphic data
+    .gr1:	resw 1	; Pointer to graphic data
     ; .sub	resw SPRITESUB	; Subclass properties
 
   endstruc
@@ -415,7 +416,7 @@ dibujasprite16:
 
   ; 0.- Respaldar cosas que deberíamos consevar
 
-  mov dx, [ds:bp + SPRITE.graphics]
+  mov dx, [ds:bp + SPRITE.gr0]
   mov si, dx  ; Cargar direccion de mapa de bits
 
   ; 1.- Seleccionar banco de memoria
@@ -488,7 +489,7 @@ dibujasprite16noalineado:
 
   ; 0.- Respaldar cosas que deberíamos consevar
 
-  mov dx, [ds:bp + SPRITE.graphics]
+  mov dx, [ds:bp + SPRITE.gr0]
   mov si, dx  ; Cargar direccion de mapa de bits
 
   ; 1.- Seleccionar banco de memoria
@@ -978,6 +979,46 @@ drawtilesimple:
   pop ax
   ret
 
+inicializaspritegrafico:
+  ; Parametros:
+  ; BP => sprite
+
+  mov bx, ds
+  mov es, bx
+
+  mov si, [ds:bp + SPRITE.gr0]
+  ; mov di, [ds:bp + SPRITE.gr1]
+  mov di, memorialibre	; TODO: Hacer un gestor de memoria
+
+  .px0:		; guardar el primer pixel con desplazamiento de bits
+
+  mov cx, 4 	; guardar bits a desplazar en el contador
+  xor ax, ax	; borrar ax
+  lodsb		; cargar byte en al
+  shr ax, cl	; desplazar esa cantidad de bits
+  stosb		; Escribir byte
+
+  mov cx, (ALTOSPRITE * ( ANCHOSPRITE / PXB )) - 1
+  .loopbyte:
+  mov bx, cx
+  dec si
+  lodsw
+  xchg ah, al
+  mov cx, 4
+  shr ax, cl    ; desplazar esa cantidad de bits
+  stosb		; Escribir byte (?)
+  mov cx, bx
+  loop .loopbyte
+
+  xor ax, ax
+  mov ah, [ds:si - 1]
+  mov cx, 4
+  shr ax, cl
+  stosb
+
+  mov word [ds:bp + SPRITE.gr1], memorialibre
+  ret
+
 
 
 section .data
@@ -1000,13 +1041,14 @@ section .data
 
   playersprite:
     istruc SPRITEPHYS
-    at SPRITE.graphics, dw spritemonigote
     at SPRITE.frame, dw playerframe
     at SPRITE.x, dw 126d
     at SPRITE.y, dw 40d
     at SPRITE.nx, dw 0
     at SPRITE.ny, dw 0
     at SPRITE.next, dw 0
+    at SPRITE.gr0, dw spritemonigote
+    at SPRITE.gr1, dw 0
     at SPRITEPHYS.vuelox, dw 0
     at SPRITEPHYS.deltay,dw 0
     at SPRITEPHYS.parado,dw 0
@@ -1047,6 +1089,12 @@ map1:
 spritemonigote:
 incbin	"mdoble.bin",0,256
 
+
+allocinit: dw memorialibre
+allocend: dw memorialibre
+
 section .bss
   ; uninitialized data
+
+memorialibre:
 
