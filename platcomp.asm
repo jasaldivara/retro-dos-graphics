@@ -530,20 +530,29 @@ dibujasprite16noalineado:
   .looprenglon:
 
   mov dx, cx ; guardar contador de renglones
-  ; mov cx, 4    ; guardar bits a desplazar en el contador
-  ; xor ax, ax	; borrar ax
-  ; lodsb         ; cargar byte en al
-  ; shr ax, cl    ; desplazar esa cantidad de bits
-  ; stosb		; Escribir byte (?)
-  
-  movsb		; primer pixel del renglón
-		; TODO: Conservar pixel izquiero del primer byte a escribir
+
+  ; primer pixel del renglón
+  ; Conservar el pixel de la izquierda, que pertenece al fondo?
+
+  mov ah, [es:di]
+  and ah, 11110000b
+  lodsb
+  and al, 00001111b
+  or al, ah
+  stosb
 
   mov cx, ( ( ANCHOSPRITE / PXB ) - 1 )	; numero de bytes a copiar
-  rep movsb
 
-  movsb		; Ultimo pixel del renglón
-		; TODO: Conservar pixel derecho del ultimo byte a escribir
+  ; ultimp pixel del renglón
+  ; Conservar el pixel de la derecha, que pertenece al fondo?
+
+  rep movsb
+  mov ah, [es:di]
+  and ah, 00001111b
+  lodsb
+  and al, 11110000b
+  or al, ah
+  stosb
 
 
   add di, ( BYTESPERSCAN - ( BWSPRITE + 1 ) ) ; Agregar suficientes bytes para que sea siguiente renglon
@@ -574,20 +583,30 @@ dibujasprite16noalineado:
 
   mov dx, cx ; guardar contador de renglones
   
-  ; mov cx, 4    ; guardar bits a desplazar en el contador
-  ; xor ax, ax	; borrar ax
-  ; lodsb         ; cargar byte en al
-  ; shr ax, cl    ; desplazar esa cantidad de bits
-  ; stosb		; Escribir byte (?)
+  ; primer pixel del renglón
+  ; Conservar el pixel de la izquierda, que pertenece al fondo?
 
-  movsb		; primer pixel del renglón
-		; TODO: Conservar pixel izquiero del primer byte a escribir
+  mov ah, [es:di]
+  and ah, 11110000b
+  lodsb
+  and al, 00001111b
+  or al, ah
+  stosb
 
   mov cx, ( ( ANCHOSPRITE / PXB ) - 1 )	; numero de bytes a copiar
   rep movsb
 
-  movsb		; Ultimo pixel del renglón
-		; TODO: Conservar pixel derecho del ultimo byte a escribir
+  ; ultimp pixel del renglón
+  ; Conservar el pixel de la derecha, que pertenece al fondo?
+
+  rep movsb
+  mov ah, [es:di]
+  and ah, 00001111b
+  lodsb
+  and al, 11110000b
+  or al, ah
+  stosb
+
 
   add di, ( BYTESPERSCAN - ( BWSPRITE + 1 ) ) ; Agregar suficientes bytes para que sea siguiente renglon
   add si, BWSPRITE - 1 ; Saltar renglones de ssprite.mapa de bits
