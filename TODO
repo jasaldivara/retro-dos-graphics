@@ -18,6 +18,9 @@ Text (console) interface for editors:
 Nuevas características:
 
   Música y sonidos por medio del altavoz de la PC.
+  Rutinas ¿Simples? de gestion de memoria, para:
+	Inicialización de sprites no alineados
+	¿Otros?
 
 Experimentos:
 
@@ -33,21 +36,9 @@ Mecánica del juego:
 
 Optimizaciones:
 
-  Borrar sprite:
-
-  Borrar sólo los bytes sobre los cuales no vamos a vovler a escribir.
-  Tomar en cuenta posicion anterior y nueva de sprites, compararlas.
-  Hacer una estructura de sprite, que contenga las coordenadas nuevas y
-  anteriores
 
   Dibujado de sprites:
 
-  Ver si se vuelve más rápido si hacemos un loop de pixeles y dobles pixeles,
-  tanto en dibujado de sprites alineados como no-alineados.
-  En sprites no-alineados es mucho más pesado y lento el proceso de dibujado.
-
-  Opción 2, para sprites no-alineados:
-  Hacer una version de mapa de bits en los que los bits ya tengan desplazamiento
-  de 4 posiciones, para no estarlos desplazando cada vez que dibujemos, y así
-  hacer mucho más rápida y óptima la rutina de dibujado.
+  Ver posibilidad de copiar datos por palabra en lugar de por byte al dibujar
+  sprites no alineados (Usar movsw en lugar de movsb)
 
