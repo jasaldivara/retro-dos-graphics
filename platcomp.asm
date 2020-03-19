@@ -78,7 +78,21 @@ CPU 8086
 
   %endmacro
 
-  org 100h 
+  ; NYT: Nivel de tile vertical
+  ; Calcula el nivel vertical en tiles al que pertenece una coordenada Y en pixeles
+  %macro NYT 1
+  mov cl, ilog2e( ALTOTILE )
+  shr %1, cl
+  %endmacro
+
+  ; NYT: Nivel de tile horizontal
+  ; Calcula el nivel horizontal en tiles al que pertenece una coordenada X en pixeles
+  %macro NXT 1
+  mov cl, ilog2e( ANCHOTILE )
+  shr %1, cl
+  %endmacro
+
+  org 100h
  
 section .text 
  
@@ -129,6 +143,7 @@ start:
   frame:
 
   call playerframe
+  call spritecollisions
   VSync
   call borraspritemov
 
@@ -393,7 +408,58 @@ playerframe:
 
   ; Fin de logica del jugador por frame
   ret
+
+spritecollisions:
+  ; parametros:
+  ; DS:BP => Sprite
+  ; Mapa? TODO: obtener como parámetro
+
+  mov bx, map1
+  mov si, bx
+
+  .vertical:
+  mov bh, [ds:bp + SPRITE.y]
+  mov bl, [ds:bp + SPRITE.ny]
+  cmp bh, bl
+  je .horizontal	; Si y == ny, es que no hay movimiento vertical
+  ja .movarriba
+  .movabajo:
+  add bh, ALTOSPRITE
+  add bl, ALTOSPRITE
+  NYT bh
+  NYT bl
+  cmp bh, bl
+  jge .horizontal
+  inc bh
+  mov al, bh	; multiplicar nivel del tile Y
+  mov cl, MAPWIDTH
+  mul cl
+  ; xor dx, dx
+  mov dx, [ds:bp + SPRITE.nx]
+  NXT dx
+  add ax, dx
+  add si, ax
+  lodsb
+  test al, al
+  jnz .colabajo
+  jmp .horizontal
+  .colabajo:
+  mov cl, ( ilog2e( ALTOTILE ) )
+  shl bh, cl
+  sub bh, ALTOSPRITE + 1
+  mov [ds:bp + SPRITE.ny], bh
+  mov word [ds:bp + SPRITEPHYS.parado], 1
+  mov word [ds:bp + SPRITEPHYS.deltay], 0
   
+  jmp .horizontal
+  .movarriba:
+
+  .horizontal:
+
+  .fin:
+  ret
+
+
 fin:
   ; 1 .- Reestablecer rutina original de manejo de teclado
   mov     dx,[kb_int_old_off]
@@ -1040,8 +1106,8 @@ section .data
   playersprite:
     istruc SPRITEPHYS
     at SPRITE.frame, dw playerframe
-    at SPRITE.x, dw 126d
-    at SPRITE.y, dw 40d
+    at SPRITE.x, dw 128d
+    at SPRITE.y, dw 16d
     at SPRITE.nx, dw 0
     at SPRITE.ny, dw 0
     at SPRITE.next, dw 0
@@ -1076,12 +1142,12 @@ section .data
 
 map1:
 
-  db 0, 12, 10, 11, 8, 9, 0, 0, 0, 0
-  db 0, 6, 6, 6, 6, 0, 0, 13, 0, 0
-  db 0, 0, 0, 0, 0, 0, 7, 0, 14, 15 
-  db 4, 0, 0, 0, 0, 0, 0, 0, 4, 2
-  db 1, 5, 0, 0, 0, 0, 0, 2, 0, 0
-  db 1, 0, 0, 0, 0, 1, 0, 0, 0, 0
+  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 15
+  db 0, 0, 0, 0, 0, 0, 0, 0, 14, 13
+  db 1, 5, 0, 0, 0, 0, 0, 2, 11, 12
+  db 10, 9, 8, 7, 6, 1, 2, 3, 4, 5
 
 
 spritemonigote:
