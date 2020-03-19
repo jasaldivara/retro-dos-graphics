@@ -415,7 +415,8 @@ spritecollisions:
   ; Mapa? TODO: obtener como parámetro
 
   mov bx, map1
-  mov si, bx
+  ; mov si, bx
+  mov di, bx
 
   .vertical:
   mov bh, [ds:bp + SPRITE.y]
@@ -431,24 +432,31 @@ spritecollisions:
   cmp bh, bl
   jge .horizontal
   inc bh
+  .loopnivelabajo:
   mov al, bh	; multiplicar nivel del tile Y
   mov cl, MAPWIDTH
   mul cl
   xor dx, dx
   mov dl, [ds:bp + SPRITE.nx]
   NXT dl
+  mov cx, di
+  mov si, cx
   add ax, dx
   add si, ax
   mov dh, [ds:bp + SPRITE.nx]
   add dh, ANCHOSPRITE
   NXT dh
-  .looptilearriba:
+  .looptileabajo:
   lodsb
   test al, al
   jnz .colabajo
   inc dl
   cmp dh, dl
-  jge .looptilearriba
+  jge .looptileabajo
+  inc bh	; siguiente renglon/nivel
+  cmp bh, bl
+  jle .loopnivelabajo
+
   jmp .horizontal
   .colabajo:
   mov cl, ( ilog2e( ALTOTILE ) )
@@ -1149,11 +1157,12 @@ section .data
 
 map1:
 
+
   db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
   db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 15
+  db 1, 0, 0, 0, 0, 2, 3, 0, 0, 6
   db 0, 0, 0, 0, 0, 0, 0, 0, 14, 13
-  db 1, 5, 0, 0, 0, 0, 0, 2, 11, 12
+  db 0, 0, 4, 0, 7, 0, 0, 12, 11, 12
   db 10, 9, 8, 7, 6, 1, 2, 3, 4, 5
 
 
