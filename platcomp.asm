@@ -434,14 +434,21 @@ spritecollisions:
   mov al, bh	; multiplicar nivel del tile Y
   mov cl, MAPWIDTH
   mul cl
-  ; xor dx, dx
-  mov dx, [ds:bp + SPRITE.nx]
-  NXT dx
+  xor dx, dx
+  mov dl, [ds:bp + SPRITE.nx]
+  NXT dl
   add ax, dx
   add si, ax
+  mov dh, [ds:bp + SPRITE.nx]
+  add dh, ANCHOSPRITE
+  NXT dh
+  .looptilearriba:
   lodsb
   test al, al
   jnz .colabajo
+  inc dl
+  cmp dh, dl
+  jge .looptilearriba
   jmp .horizontal
   .colabajo:
   mov cl, ( ilog2e( ALTOTILE ) )
@@ -1106,7 +1113,7 @@ section .data
   playersprite:
     istruc SPRITEPHYS
     at SPRITE.frame, dw playerframe
-    at SPRITE.x, dw 128d
+    at SPRITE.x, dw 120d
     at SPRITE.y, dw 16d
     at SPRITE.nx, dw 0
     at SPRITE.ny, dw 0
