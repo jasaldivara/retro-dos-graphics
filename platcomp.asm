@@ -468,6 +468,45 @@ spritecollisions:
   
   jmp .horizontal
   .movarriba:
+  mov bh, [ds:bp + SPRITE.y]
+  mov bl, [ds:bp + SPRITE.ny]
+  NYT bh
+  NYT bl
+  cmp bh, bl
+  jle .horizontal
+  dec bh
+  .loopnivelarriba:
+  mov al, bh	; Multiplicar nivel de tile Y
+  mov cl, MAPWIDTH
+  mul cl
+  xor dx, dx
+  mov dl, [ds:bp + SPRITE.nx]
+  NXT dl
+  mov cx, di
+  mov si, cx
+  add ax, dx
+  add si, ax
+  mov dh, [ds:bp + SPRITE.nx]
+  add dh, ANCHOSPRITE - 1
+  NXT dh
+  .looptilearriba:
+  lodsb
+  test al, al
+  jnz .colarriba
+  inc dl
+  cmp dh, dl
+  jge .looptilearriba
+  dec bh	; renglon / nivel arriba
+  cmp bh, bl
+  jge .loopnivelarriba
+  jmp .horizontal
+
+  .colarriba:
+  mov cl, ( ilog2e( ALTOTILE ) )
+  shl bh, cl
+  add bh, ALTOTILE
+  mov [ds:bp + SPRITE.ny], bh
+  mov word [ds:bp + SPRITEPHYS.deltay], 0
 
   .horizontal:
 
