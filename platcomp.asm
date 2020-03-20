@@ -425,8 +425,8 @@ spritecollisions:
   je .horizontal	; Si y == ny, es que no hay movimiento vertical
   ja .movarriba
   .movabajo:
-  add bh, ALTOSPRITE
-  add bl, ALTOSPRITE
+  add bh, ALTOSPRITE - 1
+  add bl, ALTOSPRITE - 1
   NYT bh
   NYT bl
   cmp bh, bl
@@ -444,7 +444,7 @@ spritecollisions:
   add ax, dx
   add si, ax
   mov dh, [ds:bp + SPRITE.nx]
-  add dh, ANCHOSPRITE
+  add dh, ANCHOSPRITE - 1
   NXT dh
   .looptileabajo:
   lodsb
@@ -461,7 +461,7 @@ spritecollisions:
   .colabajo:
   mov cl, ( ilog2e( ALTOTILE ) )
   shl bh, cl
-  sub bh, ALTOSPRITE + 1
+  sub bh, ALTOSPRITE
   mov [ds:bp + SPRITE.ny], bh
   mov word [ds:bp + SPRITEPHYS.parado], 1
   mov word [ds:bp + SPRITEPHYS.deltay], 0
