@@ -522,6 +522,7 @@ spritecollisions:
   cmp bh, bl
   jge .fin
   inc bh
+  .loopnivelderecha:
   ; Calcular SI
   mov al, [ds:bp + SPRITE.ny]
   NYT al
@@ -546,6 +547,9 @@ spritecollisions:
   inc dl
   cmp dh, dl
   jge .looptilederecha
+  inc bh
+  cmp bh, bl
+  jle .loopnivelderecha
   jmp .fin
 
   .colderecha:
