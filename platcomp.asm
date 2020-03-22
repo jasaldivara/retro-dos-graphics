@@ -509,7 +509,58 @@ spritecollisions:
   mov word [ds:bp + SPRITEPHYS.deltay], 0
 
   .horizontal:
+  mov bh, [ds:bp + SPRITE.x]
+  mov bl, [ds:bp + SPRITE.nx]
+  cmp bh, bl
+  je .fin
+  ja .movizquierda
+  .movderecha:
+  add bh, ANCHOSPRITE - 1
+  add bl, ANCHOSPRITE - 1
+  NXT bh
+  NXT bl
+  cmp bh, bl
+  jge .fin
+  inc bh
+  ; Calcular SI
+  mov al, [ds:bp + SPRITE.ny]
+  NYT al
+  mov ah, MAPWIDTH
+  mul ah
+  xor dx, dx
+  mov dl, bh
+  add ax, dx
+  mov cx, di
+  mov si, cx
+  add si, ax
+  mov dl, [ds:bp + SPRITE.ny]
+  mov dh, dl
+  add dh, ALTOSPRITE - 1
+  NYT dl
+  NYT dh
+  .looptilederecha:
+  lodsb
+  test al, al
+  jnz .colderecha
+  add si, MAPWIDTH - 1
+  inc dl
+  cmp dh, dl
+  jge .looptilederecha
+  jmp .fin
 
+  .colderecha:
+  mov cl, ( ilog2e( ANCHOTILE ) )
+  shl bh, cl
+  sub bh, ANCHOSPRITE
+  mov [ds:bp + SPRITE.nx], bh
+  ; mov word [ds:bp + SPRITEPHYS.vuelox], 0
+  mov word dx, [ds:bp + SPRITEPHYS.vuelox]
+  neg dx
+  sar dx, 1
+  mov word [ds:bp + SPRITEPHYS.vuelox], dx
+
+  jmp .fin
+  .movizquierda:
   .fin:
   ret
 
@@ -1199,10 +1250,10 @@ map1:
 
   db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
   db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-  db 1, 0, 0, 0, 0, 2, 3, 0, 0, 6
-  db 0, 0, 0, 0, 0, 0, 0, 0, 14, 13
-  db 0, 0, 4, 0, 7, 0, 0, 12, 11, 12
-  db 10, 9, 8, 7, 6, 1, 2, 3, 4, 5
+  db 1, 2, 3, 4, 0, 0, 0, 0, 0, 0
+  db 0, 0, 0, 0, 0, 0, 0, 0, 7, 8
+  db 0, 0, 0, 0, 0, 0, 4, 3, 1, 6
+  db 6, 5, 4, 3, 2, 1, 2, 3, 4, 5
 
 
 spritemonigote:
