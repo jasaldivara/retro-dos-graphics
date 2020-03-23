@@ -468,7 +468,7 @@ spritecollisions:
   
   jmp .horizontal
   .movarriba:
-  mov bh, [ds:bp + SPRITE.y]
+  mov bh, [ds:bp + SPRITE.y]	; Estas dos lineas están de mas?
   mov bl, [ds:bp + SPRITE.ny]
   NYT bh
   NYT bl
@@ -564,7 +564,55 @@ spritecollisions:
   mov word [ds:bp + SPRITEPHYS.vuelox], dx
 
   jmp .fin
+
   .movizquierda:
+  NXT bh
+  NXT bl
+  cmp bh, bl
+  jle .fin
+  dec bh
+  .loopnivelizquierda:
+  ; Calcular SI
+  mov al, [ds:bp + SPRITE.ny]
+  NYT al
+  mov ah, MAPWIDTH
+  mul ah
+  xor dx, dx
+  mov dl, bh
+  add ax, dx
+  mov cx, di
+  mov si, cx
+  add si, ax
+  mov dl, [ds:bp + SPRITE.ny]
+  mov dh, dl
+  add dh, ALTOSPRITE - 1
+  NYT dl
+  NYT dh
+  .looptileizquierda:
+  lodsb
+  test al, al
+  jnz .colizquierda
+  add si, MAPWIDTH - 1
+  inc dl
+  cmp dh, dl
+  jge .looptileizquierda
+  dec bh
+  cmp bh, bl
+  jge .loopnivelizquierda
+  jmp .fin
+
+  .colizquierda:
+  ; jmp .fin
+  mov cl, ( ilog2e( ANCHOTILE ) )
+  shl bh, cl
+  add bh, ANCHOTILE
+  mov [ds:bp + SPRITE.nx], bh
+  mov word [ds:bp + SPRITEPHYS.vuelox], 0
+  ; mov word dx, [ds:bp + SPRITEPHYS.vuelox]
+  ; neg dx
+  ;sar dx, 1
+  ; mov word [ds:bp + SPRITEPHYS.vuelox], dx
+
   .fin:
   ret
 
@@ -1254,9 +1302,9 @@ map1:
 
   db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
   db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-  db 1, 2, 3, 4, 0, 0, 0, 0, 0, 0
-  db 0, 0, 0, 0, 0, 0, 0, 0, 7, 8
-  db 0, 0, 0, 0, 0, 0, 4, 3, 1, 6
+  db 1, 2, 0, 0, 0, 0, 0, 0, 0, 0
+  db 0, 0, 0, 0, 6, 0, 5, 2, 0, 0
+  db 0, 0, 0, 4, 0, 1, 4, 3, 1, 0
   db 6, 5, 4, 3, 2, 1, 2, 3, 4, 5
 
 
