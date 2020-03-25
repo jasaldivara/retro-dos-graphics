@@ -145,7 +145,7 @@ start:
   call playerframe
   call spritecollisions
   VSync
-  call borraspritemov
+  call borrasprite16
 
   mov ax, [ds:bp + SPRITE.ny]
   mov bx, [ds:bp + SPRITE.nx]
@@ -1087,8 +1087,16 @@ borrasprite16:
   ; Multiplicar
   mov dl, BYTESPERSCAN
   mul dl    ; multiplicar por ancho de pantalla en bytes
+
+  mov dx, BWSPRITE	; guardar ancho de sprite en pixeles
+
   mov bx, [ds:bp + SPRITE.x]
   shr bx, 1
+
+  jnc .sig1	; Incrementar numero de bytes a borrar si la alineacion x es non
+  inc dx
+  .sig1:
+
   add ax, bx  ; Desplazamiento del byte que vamos a manipular
   mov di, ax
 
@@ -1100,18 +1108,18 @@ borrasprite16:
   .espar pushf
 
   mov cx, ( ALTOSPRITE / 2 )  ; Primero borramos mitad de renglones (en renglones par de patalla)
+
   xor ax, ax  ; Registro AX en ceros
   ; mov ax, 1010101010101010b <= debug
 
   .looprenglon:
+  mov bx, cx
+  mov cx, dx
+  rep stosb
+  mov cx, bx
 
-  stosw
-  stosw
-  stosw
-  stosw
-  stosb
-
-  add di, BYTESPERSCAN - ( BWSPRITE + 1 ) ; Agregar suficientes bytes para que sea siguiente renglon
+  add di, BYTESPERSCAN		; Agregar suficientes bytes para que sea siguiente renglon
+  sub di, dx
   loop .looprenglon
 
   ; Después dibujamos otra mitad de renglones de sprite, ahora en renglones impar de pantalla
@@ -1129,14 +1137,13 @@ borrasprite16:
   mov cx, ( ALTOSPRITE / 2 )
 
   .looprenglon2:
+  mov bx, cx
+  mov cx, dx
+  rep stosb
+  mov cx, bx
 
-  stosw
-  stosw
-  stosw
-  stosw
-  stosb
-
-  add di, BYTESPERSCAN - ( BWSPRITE + 1 ) ; Agregar suficientes bytes para que sea siguiente renglon
+  add di, BYTESPERSCAN		; Agregar suficientes bytes para que sea siguiente renglon
+  sub di, dx
   loop .looprenglon2
 
   ret
@@ -1312,7 +1319,7 @@ map1:
 
   db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
   db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 0, 0, 0, 0
+  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 0, 0, 0, 0, 0
   db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
   db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 7, 8
   db 2, 3, 4, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
