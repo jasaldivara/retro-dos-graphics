@@ -24,12 +24,12 @@ CPU 8086
 
   %define GRAVEDAD 1
   %define REBOTEY 14
-  %define ANCHOSPRITE 16
+  %define ANCHOSPRITE 8
   %define ALTOSPRITE 32
-  %define ANCHOTILE 16
-  %define ALTOTILE 32
-  %define MAPWIDTH 10
-  %define MAPHEIGHT 6
+  %define ANCHOTILE 8
+  %define ALTOTILE 16
+  %define MAPWIDTH 20
+  %define MAPHEIGHT 12
 
   %define BWSPRITE ( ANCHOSPRITE / PXB )  ; Ancho de Sprite en Bytes
   %define SPRITESUB	4		; Number of reserved memory words for Sprite subclasess
@@ -1297,7 +1297,7 @@ section .data
   db 00000000b, 10101010b, 10101010b, 10000000b
   db 00000000b, 00101010b, 10101010b, 00000000b
 
-map1:
+; map1:
 
 
   db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
@@ -1307,9 +1307,26 @@ map1:
   db 0, 0, 0, 4, 0, 1, 4, 3, 1, 0
   db 6, 5, 4, 3, 2, 1, 2, 3, 4, 5
 
+map1:
+
+
+  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 0, 0, 0, 0
+  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 7, 8
+  db 2, 3, 4, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 4, 0, 0, 0
+  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0
+  db 0, 0, 0, 0, 0, 0, 0, 0, 6, 8, 0, 4, 0, 0, 0, 0, 0, 0, 2, 3
+  db 0, 0, 0, 0, 0, 0, 0, 5, 4, 9, 0, 5, 6, 0, 0, 0, 0, 0, 0, 0
+  db 0, 0, 0, 0, 0, 0, 1, 2, 3, 10, 0, 6, 9, 8, 0, 0, 0, 0, 0, 0
+  db 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 1, 2, 3, 4, 5
+
 
 spritemonigote:
-incbin	"mdoble.bin",0,256
+;incbin	"mdoble.bin",0,256
+incbin	"mono-alto-8x32.bin",0,256
 
 
 allocinit: dw memorialibre
