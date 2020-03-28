@@ -36,6 +36,11 @@ CPU 8086
 
   ; data structures
 
+  ; Game specific constants
+
+
+
+
   struc SPRITE
 
     .frame:	resw 1	; Pointer to function defining per frame logic
@@ -311,7 +316,14 @@ playerframe:
   jz .sig1
 
   .movizq:
-  dec word [ds:bp + SPRITEPHYS.vuelox]
+  ; dec word [ds:bp + SPRITEPHYS.vuelox]
+  mov ax, [ds:bp + SPRITEPHYS.vuelox]
+  dec ax
+  cmp ax, -16
+  jge .nol1
+  mov ax, -16
+  .nol1:
+  mov [ds:bp + SPRITEPHYS.vuelox], ax
   jmp .testright
 
   .sig1:
@@ -326,7 +338,14 @@ playerframe:
   jz .sig2
 
   .movder:
-  inc word [ds:bp + SPRITEPHYS.vuelox]
+  ; inc word [ds:bp + SPRITEPHYS.vuelox]
+  mov ax, [ds:bp + SPRITEPHYS.vuelox]
+  inc ax
+  cmp ax, 16
+  jle .nol2
+  mov ax, 16
+  .nol2:
+  mov [ds:bp + SPRITEPHYS.vuelox], ax
   jmp .calcx
 
   .sig2:
@@ -342,7 +361,7 @@ playerframe:
   mov ax, [ds:bp + SPRITE.x]
   mov bx, [ds:bp + SPRITEPHYS.vuelox]
   mov dx, bx
-  mov cl, 2
+  mov cl, 3
   sar dx, cl
   add ax, dx
 
