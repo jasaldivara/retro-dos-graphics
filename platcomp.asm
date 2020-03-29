@@ -1129,8 +1129,9 @@ borrasprite16:
 
   mov cx, ( ALTOSPRITE / 2 )  ; Primero borramos mitad de renglones (en renglones par de patalla)
 
-  xor ax, ax  ; Registro AX en ceros
+  ; xor ax, ax  ; Registro AX en ceros
   ; mov ax, 1010101010101010b <= debug
+  mov ax, 77h
 
   .looprenglon:
   mov bx, cx
@@ -1173,12 +1174,15 @@ drawtilesimple:
   ; AX = Y Coordinate of tile
   ; BX = X Coordinate of tile
   ; CX = Tile Code
+  push si
   push ax	; Respaldar AX y BX
   push bx
 
   ; 1 .- Seleccionar banco de memoria
   mov dx, MEMCGAEVEN
   mov es, dx
+  mov dx, cs
+  mov ds, dx
 
   ; 2 .- Multiplicar para calcular desplazamiento
   mov dl, BYTESPERSCAN
@@ -1195,22 +1199,25 @@ drawtilesimple:
   add ax, bx
   mov di, ax	; Destination Index
 
-  mov ax, dx		 ; Sprite Simple: sólo colorear (rellenar todo ax de los mismos 4 bits)
-  mov ah, al
-  mov cl, (8 / PXB)
-  shl ah, cl
-  or al, ah
-  mov ah, al
+
+  lea si, [tilesgraphics]
+  ; mov si, bx
+  mov al, dl
+  mov ah, 64
+  mul ah
+  add si, ax
+  ; mov si, bx
 
   .draw:
   mov cx, ( ALTOTILE / 2 )  ; Primero dibujamos mitad de renglones (en renglones par de patalla)
 
   .looprenglon:
   mov dx, cx	; respaldar cx
-  mov cx, ( ANCHOTILE / ( PXB * 2 ) )
-  rep stosw
+  mov cx, ( ANCHOTILE / PXB )
+  rep movsb
   mov cx, dx	; Reestablecer cx
   add di, BYTESPERSCAN - ( ANCHOTILE / PXB )
+  add si, ( ANCHOTILE / PXB )
   loop .looprenglon
 
   mov cx, es
@@ -1219,12 +1226,14 @@ drawtilesimple:
 
   mov cx, MEMCGAODD
   mov es, cx
-  sub di, BYTESPERSCAN * ( ALTOTILE / 2 ) 
+  sub di, BYTESPERSCAN * ( ALTOTILE / 2 )
+  sub si, ( ANCHOTILE / PXB ) * ( ALTOTILE - 1 )
   jmp .draw
 
   .salir:
   pop bx	; Restaurar bx y ax
   pop ax
+  pop si
   ret
 
 inicializaspritegrafico:
@@ -1341,19 +1350,28 @@ map1:
   db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
   db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 0, 0, 0, 0, 0
   db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 7, 8
+  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0
   db 2, 3, 4, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 4, 0, 0, 0
-  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0
-  db 0, 0, 0, 0, 0, 0, 0, 0, 6, 8, 0, 4, 0, 0, 0, 0, 0, 0, 2, 3
-  db 0, 0, 0, 0, 0, 0, 0, 5, 4, 9, 0, 5, 6, 0, 0, 0, 0, 0, 0, 0
-  db 0, 0, 0, 0, 0, 0, 1, 2, 3, 10, 0, 6, 9, 8, 0, 0, 0, 0, 0, 0
-  db 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 1, 2, 3, 4, 5
+  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 6, 0, 0, 0
+  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+  db 0, 0, 0, 0, 0, 0, 0, 5, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 3
+  db 0, 0, 0, 0, 0, 0, 0, 5, 4, 0, 0, 5, 6, 0, 0, 0, 0, 0, 0, 0
+  db 0, 0, 0, 0, 0, 0, 1, 2, 6, 0, 0, 6, 1, 2, 0, 0, 0, 0, 0, 0
+  db 1, 2, 3, 4, 5, 4, 4, 5, 5, 4, 4, 1, 1, 2, 3, 4, 5, 5, 4, 4
 
 
 spritemonigote:
 ;incbin	"mdoble.bin",0,256
-incbin	"mono-alto-8x32.bin",0,256
+incbin	"mono-alto-8x32.bin",0,128
+
+tilesgraphics:
+incbin "img/tile0.bin",0,64
+incbin "img/tile1.bin",0,64
+incbin "img/tile2.bin",0,64
+incbin "img/tile3.bin",0,64
+incbin "img/tile4.bin",0,64
+incbin "img/tile5.bin",0,64
+incbin "img/tile6.bin",0,64
 
 
 allocinit: dw memorialibre
