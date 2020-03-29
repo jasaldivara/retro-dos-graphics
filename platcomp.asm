@@ -23,7 +23,7 @@ CPU 8086
   ; Constantes del juego
 
   %define GRAVEDAD 1
-  %define REBOTEY 14
+  %define JUMPFRAMES 10
   %define ANCHOSPRITE 8
   %define ALTOSPRITE 32
   %define ANCHOTILE 8
@@ -392,10 +392,10 @@ playerframe:
   jz .calcdy
 
   ; Ahora sí: Saltar porque estamos parados y con la tecla saltar presionada
-  mov bx, 0 - REBOTEY
+  mov bx, -6
   mov [ds:bp + SPRITEPHYS.deltay], bx
-  mov bx, 0
-  mov [ds:bp + SPRITEPHYS.parado], bx
+  ; mov bx, 0
+  dec byte [ds:bp + SPRITEPHYS.parado]
 
 
   .calcdy:  ; 2.- Calcular delta Y
@@ -415,7 +415,7 @@ playerframe:
   jng .sig5
   mov ax, HEIGHTPX - ALTOSPRITE
   mov bx, 0
-  mov word [ds:bp + SPRITEPHYS.parado], 1
+  mov word [ds:bp + SPRITEPHYS.parado], JUMPFRAMES
   .sig5:
   cmp ax, 0
   jnl .sig6
@@ -482,7 +482,7 @@ spritecollisions:
   shl bh, cl
   sub bh, ALTOSPRITE
   mov [ds:bp + SPRITE.ny], bh
-  mov word [ds:bp + SPRITEPHYS.parado], 1
+  mov word [ds:bp + SPRITEPHYS.parado], JUMPFRAMES
   mov word [ds:bp + SPRITEPHYS.deltay], 0
   
   jmp .horizontal
@@ -525,6 +525,7 @@ spritecollisions:
   shl bh, cl
   add bh, ALTOTILE
   mov [ds:bp + SPRITE.ny], bh
+  mov word [ds:bp + SPRITEPHYS.parado], 0
   mov word [ds:bp + SPRITEPHYS.deltay], 0
 
   .horizontal:
