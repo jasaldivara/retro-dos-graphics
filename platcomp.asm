@@ -23,7 +23,7 @@ CPU 8086
   ; Constantes del juego
 
   %define GRAVEDAD 1
-  %define JUMPFRAMES 10
+  %define JUMPFRAMES 12
   %define ANCHOSPRITE 8
   %define ALTOSPRITE 32
   %define ANCHOTILE 8
