@@ -251,6 +251,18 @@ kb_int_new:
   mov bx, tecla_up
   jmp .guardar
   .sig4:
+  cmp al, KB_DOWN
+  jne .sig5
+
+  mov dx, 03d4h
+  mov al, 0dh
+  out dx, al
+
+  mov dx, 03d5h
+  mov al, 4
+  out dx, al
+
+  .sig5:
 
 
 
