@@ -1,19 +1,16 @@
 
 Inmediatos:
 
-  Bug: Nueva rutina de borrado no borra pixeles del extramo derecho de sprite
-  cuando no está alineado.
-  Falta reorganizar codigo de nueva rutina de borrado para que tanto segmentos
-  horizontales como verticales usen una misma subrutina de borrado, y la unica
-  diferencia sea el calculo de coordenadas de superficies a borrar. Esto debe
-  arreglar el bug de arriba.
+Manejo de multiples Sprites
 
-  Reorganizar código de rutinas anteriores de dibujado ¿y borrado? para no
-  repetir código (lineas pares y lineas impares), y así reducir el tamaño del
-  archovo, además de simplificar futuras modificaciones (no tener que hacerlas
-  dos veces)
+Que los sprites puedan tener dimensiones variables?
 
-  Detección de colisiones
+Sprites animados "spritesheets"
+
+Que las rutinas de borrado copien los tiles que están en el fondo
+
+Que los sprites puedan tener transparencias??
+
 
 Nuevos programas:
 
@@ -59,4 +56,18 @@ Optimizaciones:
 
   Borrado de sprites: Que calculo de coordenadas a borrar se haga de acuerdo a
   bytes y no a pixeles, de esta forma evitamos limpiar dos veces un mismo byte.
+
+
+  Bug: Rutina de borrado optimizado no borra pixeles del extramo derecho de sprite
+  cuando no está alineado.
+  Falta reorganizar codigo de rutina de borrado optimizado para que tanto segmentos
+  horizontales como verticales usen una misma subrutina de borrado, y la unica
+  diferencia sea el calculo de coordenadas de superficies a borrar. Esto debe
+  arreglar el bug de arriba.
+
+  Reorganizar código de rutinas anteriores de dibujado ¿y borrado? para no
+  repetir código (lineas pares y lineas impares), y así reducir el tamaño del
+  archovo, además de simplificar futuras modificaciones (no tener que hacerlas
+  dos veces)
+
 
