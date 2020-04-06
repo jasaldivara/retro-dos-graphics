@@ -1,16 +1,25 @@
 
 Inmediatos:
 
-Manejo de multiples Sprites
+  Manejo de multiples Sprites
 
-Que los sprites puedan tener dimensiones variables?
+  Que los sprites puedan tener dimensiones variables?
 
-Sprites animados "spritesheets"
+  Sprites animados "spritesheets"
 
-Que las rutinas de borrado copien los tiles que están en el fondo
+  Que las rutinas de borrado copien los tiles que están en el fondo
 
-Que los sprites puedan tener transparencias??
+  Que los sprites puedan tener transparencias??
 
+  Agregar musica a juego principal
+    Seleccionar musica encendida o apagada al inicio
+
+  Soporte para tandy sound
+
+Bugs:
+
+  Arreglar error cuando sprite está en lo más alto de la pantalla (lineas en blanco)
+  Errores en deteccion de colisiones con tiles
 
 Nuevos programas:
 
@@ -30,20 +39,14 @@ Text (console) interface for editors:
 
 Nuevas características:
 
-  Música y sonidos por medio del altavoz de la PC.
   Rutinas ¿Simples? de gestion de memoria, para:
 	Inicialización de sprites no alineados
 	¿Otros?
 
-Experimentos:
-
-  Cambio de paleta en modo composite?
-  Usar modo 4 o 5 en modo composite?
 
 Mecánica del juego:
 
   Plataformas.
-  Que Objetos/sprites den la vuelta a la pantalla por las orillas.
   Saltar sólo volviendo a presionar el botón cuando se esté en el suelo (tener
   que soltar el botón)
 
