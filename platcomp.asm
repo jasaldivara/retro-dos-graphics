@@ -347,12 +347,16 @@ kb_int_new:
   cmp al, KB_DOWN
   jne .sig5
 
+  inc byte [hscroll]
+
   mov dx, 03d4h
   mov al, 0dh
   out dx, al
 
+  mov al, [hscroll]
+
   mov dx, 03d5h
-  mov al, 4
+  ; mov al, 1
   out dx, al
 
   .sig5:
@@ -1397,6 +1401,8 @@ section .data
 
   kb_int_old_off: dw  0
   kb_int_old_seg: dw  0
+
+  hscroll: db 1
 
   ; Estado de las teclas:
   tecla_esc: db 0
