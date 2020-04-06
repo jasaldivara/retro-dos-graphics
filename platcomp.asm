@@ -23,7 +23,7 @@ CPU 8086
   ; Constantes del juego
 
   %define GRAVEDAD 1
-  %define JUMPFRAMES 10
+  %define JUMPFRAMES 12
   %define ANCHOSPRITE 8
   %define ALTOSPRITE 32
   %define ANCHOTILE 8
@@ -110,6 +110,8 @@ start:
   mov [kb_int_old_off], bx
   mov [kb_int_old_seg], es
 
+  call videomenu
+
   ; 2 .- Registrar nueva rutina de interrupción del teclado
   mov     al, 9h
   mov     ah, 25h
@@ -118,16 +120,6 @@ start:
   mov     dx, kb_int_new
   int     21h
 
-
-  ; 3 .- Establecer modo de video
-  mov  ah, SETVIDEOMODE   ; Establecer modo de video
-  mov  al, CGA6      ; CGA Modo 6: monocromatico hi-res o composite lo-res
-  int  VIDEOBIOS   ; LLamar a la BIOS para servicios de video
-
-  ; 3.1 .- Entrar en modo de video compuesto
-  mov dx, 03D8h
-  mov al, 00011010b
-  out dx, al
 
 
   ; Inicializar gráficos
@@ -163,6 +155,107 @@ start:
   ; repetir ciclo
   jmp frame
 
+videomenu:
+
+
+  ; 1.- Entrar en video modo 4
+  mov  ah, SETVIDEOMODE   ; Establecer modo de video
+  mov  al, 4      ; CGA Modo 4
+  int  VIDEOBIOS   ; LLamar a la BIOS para servicios de video
+
+
+  mov dh, 1
+  mov dl, 10
+  mov bx, video_menu_title
+  mov cx, 1
+  call writestring
+
+  mov dh, 8
+  mov dl, 1
+  mov bx, video_menu_cga
+  mov cx, 3
+  call writestring
+
+  mov dh, 10
+  mov dl, 1
+  mov bx, video_menu_composite
+  mov cx, 3
+  call writestring
+
+  mov dh, 12
+  mov dl, 1
+  mov bx, video_menu_tandy
+  mov cx, 3
+  call writestring
+
+  .leeteclado:
+  mov ah, 0
+  int 16h
+
+  cmp al, '1'
+  jne .nocga
+  mov ah, SETVIDEOMODE
+  mov al, 4
+  int VIDEOBIOS
+  ret
+  .nocga:
+
+  cmp al, '2'
+  jne .nocomposite
+  mov ah, SETVIDEOMODE
+  mov al, CGA6
+  int VIDEOBIOS
+
+  ; Entrar en modo de video compuesto
+  mov dx, 03D8h
+  mov al, 00011010b
+  out dx, al
+
+  ret
+  .nocomposite:
+
+  cmp al, '3'
+  jne .notandy
+  mov ah, SETVIDEOMODE
+  mov al, 8
+  int VIDEOBIOS
+  ret
+  .notandy:
+
+
+  jmp .leeteclado
+
+writestring:
+  ; dh => row
+  ; dl => col
+  ; bx => zero-terminated string
+  ; cl => Color
+
+  ; 0.- Respaldar registros
+  push si
+  mov si, bx
+  mov bl, cl
+  xor bh, bh
+
+  ; 1.- Establecer posición del cursor
+  .loopchar:
+  mov ah, 2
+  int VIDEOBIOS
+
+  ; 2.- Escribir caracteres
+
+  lodsb
+  test al, al
+  jz .salir
+  mov ah, 10d
+  mov cx, 1
+  int VIDEOBIOS
+  inc dl
+  jmp .loopchar
+
+  .salir:
+  pop si
+  ret
 
 drawmap:
   ; DX = Map data
@@ -1292,6 +1385,15 @@ inicializaspritegrafico:
 
 section .data
   ; program data
+
+  video_menu_title: db 'Select video mode', 0
+
+  video_menu_cga: db '1 CGA RGBI Monitor', 0
+
+  video_menu_composite: db '2 CGA/TANDY Composite Monitor or TV', 0
+
+  video_menu_tandy: db '3 TANDY RGBI Monitor', 0
+
 
   kb_int_old_off: dw  0
   kb_int_old_seg: dw  0
