@@ -121,16 +121,6 @@ start:
   int     21h
 
 
-  ; 3 .- Establecer modo de video
-  mov  ah, SETVIDEOMODE   ; Establecer modo de video
-  mov  al, CGA6      ; CGA Modo 6: monocromatico hi-res o composite lo-res
-  int  VIDEOBIOS   ; LLamar a la BIOS para servicios de video
-
-  ; 3.1 .- Entrar en modo de video compuesto
-  mov dx, 03D8h
-  mov al, 00011010b
-  out dx, al
-
 
   ; Inicializar gráficos
   mov bp, playersprite
@@ -198,9 +188,42 @@ videomenu:
   mov cx, 3
   call writestring
 
+  .leeteclado:
   mov ah, 0
   int 16h
+
+  cmp al, '1'
+  jne .nocga
+  mov ah, SETVIDEOMODE
+  mov al, 4
+  int VIDEOBIOS
   ret
+  .nocga:
+
+  cmp al, '2'
+  jne .nocomposite
+  mov ah, SETVIDEOMODE
+  mov al, CGA6
+  int VIDEOBIOS
+
+  ; Entrar en modo de video compuesto
+  mov dx, 03D8h
+  mov al, 00011010b
+  out dx, al
+
+  ret
+  .nocomposite:
+
+  cmp al, '3'
+  jne .notandy
+  mov ah, SETVIDEOMODE
+  mov al, 8
+  int VIDEOBIOS
+  ret
+  .notandy:
+
+
+  jmp .leeteclado
 
 writestring:
   ; dh => row
