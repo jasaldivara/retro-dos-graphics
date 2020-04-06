@@ -1426,7 +1426,7 @@ section .data
   ; Trabla de equivalencia entre paletas de colores Composite => Tandy
   comp2tdy_table:
 
-  db 0, 2, 1, 3, 4, 7, 5, 11, 8, 10, 8, 10, 12, 14, 13, 15
+  db 0, 2, 1, 3, 4, 7, 5, 11, 6, 10, 8, 10, 12, 14, 13, 15
 
   video_menu_title: db 'Select video mode', 0
 
