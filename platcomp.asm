@@ -139,6 +139,9 @@ start:
 
   frame:
 
+
+
+
   call playerframe
   call spritecollisions
   VSync
@@ -149,8 +152,19 @@ start:
   mov [ds:bp + SPRITE.y], ax
   mov [ds:bp + SPRITE.x], bx
 
-
   call dibujasprite16
+
+  mov al, [tecla_down] ; Revisar si está presionada tecla abajo para hacer scroll
+  test al, al
+  jz .noscroll
+  inc byte [hscroll]
+  mov dx, 03d4h
+  mov al, 0dh
+  out dx, al
+  mov al, [hscroll]
+  mov dx, 03d5h
+  out dx, al
+  .noscroll:
 
   ; repetir ciclo
   jmp frame
@@ -359,18 +373,8 @@ kb_int_new:
   .sig4:
   cmp al, KB_DOWN
   jne .sig5
-
-  inc byte [hscroll]
-
-  mov dx, 03d4h
-  mov al, 0dh
-  out dx, al
-
-  mov al, [hscroll]
-
-  mov dx, 03d5h
-  ; mov al, 1
-  out dx, al
+  mov bx, tecla_down
+  jmp .guardar
 
   .sig5:
 
