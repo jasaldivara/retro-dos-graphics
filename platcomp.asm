@@ -219,6 +219,19 @@ videomenu:
   mov ah, SETVIDEOMODE
   mov al, 8
   int VIDEOBIOS
+
+  mov bx, tilesgraphics
+  mov cx, (64 * 7)
+  call conviertecomposite2tandy
+
+  mov bx, spritemonigote
+  mov cx, 128
+  call conviertecomposite2tandy
+
+  mov bx, colorbackground
+  mov cx, 1
+  call conviertecomposite2tandy
+
   ret
   .notandy:
 
@@ -1240,7 +1253,7 @@ borrasprite16:
 
   ; xor ax, ax  ; Registro AX en ceros
   ; mov ax, 1010101010101010b <= debug
-  mov ax, 77h
+  mov ax, [colorbackground]
 
   .looprenglon:
   mov bx, cx
@@ -1345,6 +1358,42 @@ drawtilesimple:
   pop si
   ret
 
+conviertecomposite2tandy:
+  ; bx => graficos a convertir
+  ; cx => cantidad de bytes a convertir
+  push si
+  push di
+
+  mov ax, cs	; Esto sólo funciona en ejecutables ".com" Cambiar en caso de ".exe"
+  mov ds, ax
+  mov es, ax
+
+  mov si, bx
+  mov di, bx
+
+  mov bx, comp2tdy_table
+
+  .loopbyte:
+  lodsb
+  mov dx, cx
+  mov ah, al
+  and al, 00001111b
+  xlatb
+  xchg ah, al
+  mov cl, 4
+  shr al, cl
+  xlatb
+  mov cl, 4
+  shl al, cl
+  or al, ah
+  stosb
+  mov cx, dx
+  loop .loopbyte
+
+  pop di
+  pop si
+  ret
+
 inicializaspritegrafico:
   ; Parametros:
   ; BP => sprite
@@ -1389,6 +1438,11 @@ inicializaspritegrafico:
 
 section .data
   ; program data
+
+  ; Trabla de equivalencia entre paletas de colores Composite => Tandy
+  comp2tdy_table:
+
+  db 0, 2, 1, 3, 4, 7, 5, 11, 6, 10, 8, 10, 12, 14, 13, 15
 
   video_menu_title: db 'Select video mode', 0
 
@@ -1483,6 +1537,10 @@ map1:
 spritemonigote:
 ;incbin	"mdoble.bin",0,256
 incbin	"mono-alto-8x32.bin",0,128
+
+colorbackground: db 77h
+
+tilesgraphicscount:	db	7
 
 tilesgraphics:
 incbin "img/tile0.bin",0,64

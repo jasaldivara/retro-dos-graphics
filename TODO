@@ -1,19 +1,25 @@
 
 Inmediatos:
 
-  Bug: Nueva rutina de borrado no borra pixeles del extramo derecho de sprite
-  cuando no está alineado.
-  Falta reorganizar codigo de nueva rutina de borrado para que tanto segmentos
-  horizontales como verticales usen una misma subrutina de borrado, y la unica
-  diferencia sea el calculo de coordenadas de superficies a borrar. Esto debe
-  arreglar el bug de arriba.
+  Manejo de multiples Sprites
 
-  Reorganizar código de rutinas anteriores de dibujado ¿y borrado? para no
-  repetir código (lineas pares y lineas impares), y así reducir el tamaño del
-  archovo, además de simplificar futuras modificaciones (no tener que hacerlas
-  dos veces)
+  Que los sprites puedan tener dimensiones variables?
 
-  Detección de colisiones
+  Sprites animados "spritesheets"
+
+  Que las rutinas de borrado copien los tiles que están en el fondo
+
+  Que los sprites puedan tener transparencias??
+
+  Agregar musica a juego principal
+    Seleccionar musica encendida o apagada al inicio
+
+  Soporte para tandy sound
+
+Bugs:
+
+  Arreglar error cuando sprite está en lo más alto de la pantalla (lineas en blanco)
+  Errores en deteccion de colisiones con tiles
 
 Nuevos programas:
 
@@ -33,20 +39,14 @@ Text (console) interface for editors:
 
 Nuevas características:
 
-  Música y sonidos por medio del altavoz de la PC.
   Rutinas ¿Simples? de gestion de memoria, para:
 	Inicialización de sprites no alineados
 	¿Otros?
 
-Experimentos:
-
-  Cambio de paleta en modo composite?
-  Usar modo 4 o 5 en modo composite?
 
 Mecánica del juego:
 
   Plataformas.
-  Que Objetos/sprites den la vuelta a la pantalla por las orillas.
   Saltar sólo volviendo a presionar el botón cuando se esté en el suelo (tener
   que soltar el botón)
 
@@ -59,4 +59,18 @@ Optimizaciones:
 
   Borrado de sprites: Que calculo de coordenadas a borrar se haga de acuerdo a
   bytes y no a pixeles, de esta forma evitamos limpiar dos veces un mismo byte.
+
+
+  Bug: Rutina de borrado optimizado no borra pixeles del extramo derecho de sprite
+  cuando no está alineado.
+  Falta reorganizar codigo de rutina de borrado optimizado para que tanto segmentos
+  horizontales como verticales usen una misma subrutina de borrado, y la unica
+  diferencia sea el calculo de coordenadas de superficies a borrar. Esto debe
+  arreglar el bug de arriba.
+
+  Reorganizar código de rutinas anteriores de dibujado ¿y borrado? para no
+  repetir código (lineas pares y lineas impares), y así reducir el tamaño del
+  archovo, además de simplificar futuras modificaciones (no tener que hacerlas
+  dos veces)
+
 
