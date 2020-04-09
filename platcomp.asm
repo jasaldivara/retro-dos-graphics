@@ -235,8 +235,21 @@ videomenu:
   ret
   .notandy:
 
-
   jmp .leeteclado
+
+  ; Asigna memoria
+malloc:
+  ; parametros:
+  ; cx => Cantidad de memoria en bytes
+  ; retorna:
+  ; bx => direccion de memoria asignada
+
+  mov bx, [allocend]
+  mov ax, bx
+  add ax, cx
+  mov [allocend], ax
+  ret
+
 
 writestring:
   ; dh => row
@@ -1386,8 +1399,11 @@ inicializaspritegrafico:
   mov es, bx
 
   mov si, [ds:bp + SPRITE.gr0]
-  ; mov di, [ds:bp + SPRITE.gr1]
-  mov di, memorialibre	; TODO: Hacer un gestor de memoria
+
+  mov cx, (ALTOSPRITE * ( ANCHOSPRITE / PXB )) + 1
+  call malloc		; Asignar memoria
+  mov di, bx		; Memoria asignada en Destination Index
+  mov [ds:bp + SPRITE.gr1], bx		; Memoria asignada en estructura Sprite
 
   .px0:		; guardar el primer pixel con desplazamiento de bits
 
@@ -1415,7 +1431,6 @@ inicializaspritegrafico:
   shr ax, cl
   stosb
 
-  mov word [ds:bp + SPRITE.gr1], memorialibre
   ret
 
 
