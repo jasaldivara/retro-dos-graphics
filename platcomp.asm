@@ -221,11 +221,11 @@ videomenu:
   int VIDEOBIOS
 
   mov bx, tilesgraphics
-  mov cx, (64 * 7)
+  mov cx, (endtilesgraphics - tilesgraphics)
   call conviertecomposite2tandy
 
-  mov bx, spritemonigote
-  mov cx, 128
+  mov bx, spritesgraphics
+  mov cx, (endspritesgraphics - spritesgraphics)
   call conviertecomposite2tandy
 
   mov bx, colorbackground
@@ -1484,25 +1484,6 @@ section .data
   firstsprite:
   dw playersprite
 
-  align   8,db 0
-
-  spritepelota:
-  db 00000000b, 00000000b, 00000000b, 00000000b
-  db 00000000b, 00101010b, 10101010b, 00000000b
-  db 00000000b, 10101010b, 10101010b, 10000000b
-  db 00000010b, 10101010b, 10111011b, 10100000b
-  db 00001010b, 10101010b, 10101110b, 10101000b
-  db 00101010b, 10101010b, 10111011b, 10101010b
-  db 00101010b, 10101010b, 10101010b, 10101010b
-  db 00101010b, 10101010b, 10101010b, 10101010b
-  db 00101010b, 10101010b, 10101010b, 10101010b
-  db 00101010b, 01100110b, 10101010b, 10101010b
-  db 00101001b, 10011001b, 10101010b, 10101010b
-  db 00101010b, 01010110b, 10101010b, 10101010b
-  db 00001001b, 10011001b, 10101010b, 10101000b
-  db 00000010b, 01100110b, 10101010b, 10100000b
-  db 00000000b, 10101010b, 10101010b, 10000000b
-  db 00000000b, 00101010b, 10101010b, 00000000b
 
 ; map1:
 
@@ -1531,13 +1512,41 @@ map1:
   db 1, 2, 3, 4, 5, 4, 4, 5, 5, 4, 4, 1, 1, 2, 3, 4, 5, 5, 4, 4
 
 
+colorbackground: db 77h
+
+
+align   8,db 0
+
+spritesgraphics:
 spritemonigote:
 ;incbin	"mdoble.bin",0,256
 incbin	"mono-alto-8x32.bin",0,128
 
-colorbackground: db 77h
+
+spritepelota:
+  db 00000000b, 00000000b, 00000000b, 00000000b
+  db 00000000b, 00101010b, 10101010b, 00000000b
+  db 00000000b, 10101010b, 10101010b, 10000000b
+  db 00000010b, 10101010b, 10111011b, 10100000b
+  db 00001010b, 10101010b, 10101110b, 10101000b
+  db 00101010b, 10101010b, 10111011b, 10101010b
+  db 00101010b, 10101010b, 10101010b, 10101010b
+  db 00101010b, 10101010b, 10101010b, 10101010b
+  db 00101010b, 10101010b, 10101010b, 10101010b
+  db 00101010b, 01100110b, 10101010b, 10101010b
+  db 00101001b, 10011001b, 10101010b, 10101010b
+  db 00101010b, 01010110b, 10101010b, 10101010b
+  db 00001001b, 10011001b, 10101010b, 10101000b
+  db 00000010b, 01100110b, 10101010b, 10100000b
+  db 00000000b, 10101010b, 10101010b, 10000000b
+  db 00000000b, 00101010b, 10101010b, 00000000b
+
+endspritesgraphics:
 
 tilesgraphicscount:	db	7
+
+
+align   8,db 0
 
 tilesgraphics:
 incbin "img/tile0.bin",0,64
@@ -1547,6 +1556,8 @@ incbin "img/tile3.bin",0,64
 incbin "img/tile4.bin",0,64
 incbin "img/tile5.bin",0,64
 incbin "img/tile6.bin",0,64
+
+endtilesgraphics:
 
 
 allocinit: dw memorialibre
