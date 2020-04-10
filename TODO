@@ -1,13 +1,15 @@
 
 Inmediatos:
 
-  Manejo de multiples Sprites
+  Sprites autonomos con inteligencia artificial basica
+
+  Revisar flicker de sprites en parte superior de la pantalla
+
+  Nueva rutina de borrado optimizada que copia graficos de tile y solo donde hay movimiento
 
   Que los sprites puedan tener dimensiones variables?
 
   Sprites animados "spritesheets"
-
-  Que las rutinas de borrado copien los tiles que están en el fondo
 
   Que los sprites puedan tener transparencias??
 
