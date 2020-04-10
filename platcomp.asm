@@ -97,6 +97,31 @@ CPU 8086
   shr %1, cl
   %endmacro
 
+  ; SPRITELOOP: Recorrer lista de Sprites
+  %macro SPRITELOOP 0
+
+    %push spriteloop
+    mov bx, [firstsprite]
+    test bx, bx
+    jz %$end
+    mov bp, bx
+    %$begin:
+
+  %endmacro
+
+  %macro SPRITELOOPEND 0
+
+    mov bx, [ds:bp + SPRITE.next]
+    test bx, bx
+    jz %$end
+    mov bp, bx
+    jmp %$begin
+    %$end:
+
+    %pop spriteloop
+
+  %endmacro
+
   org 100h
  
 section .text 
@@ -123,8 +148,10 @@ start:
 
 
   ; Inicializar gráficos
-  mov bp, playersprite
+
+  SPRITELOOP
   call inicializaspritegrafico
+  SPRITELOOPEND
 
 
   ; x .- Draw map
@@ -132,25 +159,36 @@ start:
   call drawmap
 
   ; 4 .- Dibujar sprite en su posicion inicial
-  mov bp, playersprite
+
+  SPRITELOOP
   call dibujasprite16
+  SPRITELOOPEND
 
   ;jmp fin	; Temporal
 
   frame:
 
-  call playerframe
+  SPRITELOOP
+  call [ds:bp + SPRITE.frame]
   call spritecollisions
-  VSync
-  call borrasprite16
+  SPRITELOOPEND
 
+  VSync
+
+  SPRITELOOP
+  call borrasprite16
+  SPRITELOOPEND
+
+  SPRITELOOP
   mov ax, [ds:bp + SPRITE.ny]
   mov bx, [ds:bp + SPRITE.nx]
   mov [ds:bp + SPRITE.y], ax
   mov [ds:bp + SPRITE.x], bx
+  SPRITELOOPEND
 
-
+  SPRITELOOP
   call dibujasprite16
+  SPRITELOOPEND
 
   ; repetir ciclo
   jmp frame
@@ -1474,8 +1512,22 @@ section .data
     at SPRITE.y, dw 16d
     at SPRITE.nx, dw 0
     at SPRITE.ny, dw 0
-    at SPRITE.next, dw 0
+    at SPRITE.next, dw playersprite2
     at SPRITE.gr0, dw spritemonigote
+    at SPRITE.gr1, dw 0
+    at SPRITEPHYS.vuelox, dw 0
+    at SPRITEPHYS.deltay,dw 0
+    at SPRITEPHYS.parado,dw 0
+
+  playersprite2:
+    istruc SPRITEPHYS
+    at SPRITE.frame, dw playerframe
+    at SPRITE.x, dw 40d
+    at SPRITE.y, dw 20d
+    at SPRITE.nx, dw 0
+    at SPRITE.ny, dw 0
+    at SPRITE.next, dw 0
+    at SPRITE.gr0, dw spritemona
     at SPRITE.gr1, dw 0
     at SPRITEPHYS.vuelox, dw 0
     at SPRITEPHYS.deltay,dw 0
@@ -1521,6 +1573,8 @@ spritesgraphics:
 spritemonigote:
 ;incbin	"mdoble.bin",0,256
 incbin	"mono-alto-8x32.bin",0,128
+spritemona:
+incbin	"mona-alta-8x32.bin",0,128
 
 
 spritepelota:

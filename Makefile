@@ -29,7 +29,7 @@ $(BIN)/rebota2.com : rebota-2.asm
 $(BIN)/platform.com : platform.asm
 	$(ASM) $< $(ASMFLAGS) -o $@
 
-$(BIN)/platcomp.com : platcomp.asm mono-alto-8x32.bin
+$(BIN)/platcomp.com : platcomp.asm mono-alto-8x32.bin mona-alta-8x32.bin
 	$(ASM) $< $(ASMFLAGS) -o $@
 
 $(BIN)/compcol.com : compcol.asm
