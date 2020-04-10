@@ -1075,7 +1075,7 @@ borraspritemov:
   .sig1:
   .initlooprow:
   mov cx, dx
-  mov ax, 00h
+  mov ax, [colorbackground]
   test cx, cx
   jz .finlooprow
   .looprenglon:
@@ -1114,7 +1114,7 @@ borraspritemov:
   sub di, BYTESPERSCAN
   .sig2:
   mov cx, dx
-  mov ax, 00h
+  mov ax, [colorbackground]
   test cx, cx
   jz .checkhorizontal
   jmp .looprenglon
@@ -1187,7 +1187,7 @@ borraspritemov:
   .initlooprowh:
   push bx	; ¿Aun es necesario respaldar estas variables?
   ; push dx
-  mov al, 00h
+  mov ax, [colorbackground]
   mov ah, dl	; ah => c.w
   shr ah, 1	; dividir entre dos pixeles por byte
   test dl, 00000001b	; agregar un byte si numero de pixeles es impar
