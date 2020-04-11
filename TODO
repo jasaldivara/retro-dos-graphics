@@ -5,6 +5,8 @@ Inmediatos:
 
   Revisar flicker de sprites en parte superior de la pantalla
 
+  Revisar forma de inicializar sprites para no duplicar gráficos de sprites repetidos
+
   Nueva rutina de borrado optimizada que copia graficos de tile y solo donde hay movimiento
 
   Que los sprites puedan tener dimensiones variables?
