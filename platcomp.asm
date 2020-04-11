@@ -1076,16 +1076,24 @@ borraspritemov:
   .initlooprow:
   mov cx, dx
   mov ax, [colorbackground]
+  push bx
+  mov bl, BWSPRITE
+  mov byte bh, [ds:bp + SPRITE.x]
+  and bh, 00000001b
+  add bl, bh
+  xor bh, bh
   test cx, cx
   jz .finlooprow
   .looprenglon:
   mov dx, cx
-  mov cx, BWSPRITE
+  mov cx, bx
   rep stosb
   mov cx, dx
-  add di, BYTESPERSCAN - ( BWSPRITE )
+  add di, BYTESPERSCAN
+  sub di, bx
   loop .looprenglon
   .finlooprow:
+  pop bx
 
   mov cx, es
   cmp cx, MEMCGAODD
@@ -1113,11 +1121,8 @@ borraspritemov:
   jz .sig2
   sub di, BYTESPERSCAN
   .sig2:
-  mov cx, dx
-  mov ax, [colorbackground]
-  test cx, cx
-  jz .checkhorizontal
-  jmp .looprenglon
+  test dx, dx
+  jnz .initlooprow
 
 
   .checkhorizontal:
@@ -1560,9 +1565,9 @@ map1:
   db 2, 3, 4, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
   db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 6, 0, 0, 0
   db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-  db 0, 0, 0, 0, 0, 0, 0, 5, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 3
-  db 0, 0, 0, 0, 0, 0, 0, 5, 4, 0, 0, 5, 6, 0, 0, 0, 0, 0, 0, 0
-  db 0, 0, 0, 0, 0, 0, 1, 2, 6, 0, 0, 6, 1, 2, 0, 0, 0, 0, 0, 0
+  db 0, 0, 0, 0, 0, 0, 0, 5, 6, 0, 0, 6, 0, 0, 0, 0, 0, 0, 2, 3
+  db 0, 0, 0, 0, 0, 0, 2, 5, 4, 0, 0, 5, 6, 0, 0, 0, 0, 0, 0, 0
+  db 0, 0, 0, 0, 0, 3, 1, 2, 6, 0, 0, 6, 1, 2, 0, 0, 0, 0, 0, 0
   db 1, 2, 3, 4, 5, 4, 4, 5, 5, 4, 4, 1, 1, 2, 3, 4, 5, 5, 4, 4
 
 
