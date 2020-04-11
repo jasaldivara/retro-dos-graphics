@@ -97,6 +97,31 @@ CPU 8086
   shr %1, cl
   %endmacro
 
+  ; SPRITELOOP: Recorrer lista de Sprites
+  %macro SPRITELOOP 0
+
+    %push spriteloop
+    mov bx, [firstsprite]
+    test bx, bx
+    jz %$end
+    mov bp, bx
+    %$begin:
+
+  %endmacro
+
+  %macro SPRITELOOPEND 0
+
+    mov bx, [ds:bp + SPRITE.next]
+    test bx, bx
+    jz %$end
+    mov bp, bx
+    jmp %$begin
+    %$end:
+
+    %pop spriteloop
+
+  %endmacro
+
   org 100h
  
 section .text 
@@ -123,8 +148,10 @@ start:
 
 
   ; Inicializar gráficos
-  mov bp, playersprite
+
+  SPRITELOOP
   call inicializaspritegrafico
+  SPRITELOOPEND
 
 
   ; x .- Draw map
@@ -132,27 +159,36 @@ start:
   call drawmap
 
   ; 4 .- Dibujar sprite en su posicion inicial
-  mov bp, playersprite
+
+  SPRITELOOP
   call dibujasprite16
+  SPRITELOOPEND
 
   ;jmp fin	; Temporal
 
   frame:
 
-
-
-
-  call playerframe
+  SPRITELOOP
+  call [ds:bp + SPRITE.frame]
   call spritecollisions
-  VSync
-  call borrasprite16
+  SPRITELOOPEND
 
+  VSync
+
+  SPRITELOOP
+  call borraspritemov
+  SPRITELOOPEND
+
+  SPRITELOOP
   mov ax, [ds:bp + SPRITE.ny]
   mov bx, [ds:bp + SPRITE.nx]
   mov [ds:bp + SPRITE.y], ax
   mov [ds:bp + SPRITE.x], bx
+  SPRITELOOPEND
 
+  SPRITELOOP
   call dibujasprite16
+  SPRITELOOPEND
 
   mov al, [tecla_down] ; Revisar si está presionada tecla abajo para hacer scroll
   test al, al
@@ -235,11 +271,11 @@ videomenu:
   int VIDEOBIOS
 
   mov bx, tilesgraphics
-  mov cx, (64 * 7)
+  mov cx, (endtilesgraphics - tilesgraphics)
   call conviertecomposite2tandy
 
-  mov bx, spritemonigote
-  mov cx, 128
+  mov bx, spritesgraphics
+  mov cx, (endspritesgraphics - spritesgraphics)
   call conviertecomposite2tandy
 
   mov bx, colorbackground
@@ -249,8 +285,21 @@ videomenu:
   ret
   .notandy:
 
-
   jmp .leeteclado
+
+  ; Asigna memoria
+malloc:
+  ; parametros:
+  ; cx => Cantidad de memoria en bytes
+  ; retorna:
+  ; bx => direccion de memoria asignada
+
+  mov bx, [allocend]
+  mov ax, bx
+  add ax, cx
+  mov [allocend], ax
+  ret
+
 
 writestring:
   ; dh => row
@@ -1044,17 +1093,25 @@ borraspritemov:
   .sig1:
   .initlooprow:
   mov cx, dx
-  mov ax, 00h
+  mov al, [colorbackground]
+  push bx		; TODO ver si podemos optimizar usando ah en lugar de bx y así no hacer push+pop
+  mov bl, BWSPRITE
+  mov byte bh, [ds:bp + SPRITE.x]
+  and bh, 00000001b
+  add bl, bh
+  xor bh, bh
   test cx, cx
   jz .finlooprow
   .looprenglon:
   mov dx, cx
-  mov cx, BWSPRITE
+  mov cx, bx
   rep stosb
   mov cx, dx
-  add di, BYTESPERSCAN - ( BWSPRITE )
+  add di, BYTESPERSCAN
+  sub di, bx
   loop .looprenglon
   .finlooprow:
+  pop bx
 
   mov cx, es
   cmp cx, MEMCGAODD
@@ -1082,11 +1139,8 @@ borraspritemov:
   jz .sig2
   sub di, BYTESPERSCAN
   .sig2:
-  mov cx, dx
-  mov ax, 00h
-  test cx, cx
-  jz .checkhorizontal
-  jmp .looprenglon
+  test dx, dx
+  jnz .initlooprow
 
 
   .checkhorizontal:
@@ -1114,9 +1168,11 @@ borraspritemov:
   jl .mdown
   xchg al, bl	; al => s.ny, bl => s.y
   .mdown:
-  add bh, bl
-  sub bh, al	; bh => c.h, al => c.y
+  mov cl, bl
+  sub bl, al
+  sub bh, bl	; bh => c.h, al => c.y
   je .salir	; ?? Salir en caso de que sea menor o igual a cero ?
+  mov al, cl
   .clearhorizontal:
   ; dh => c.x
   ; dl => c.w
@@ -1126,7 +1182,7 @@ borraspritemov:
   mov cx, MEMCGAEVEN
   mov es, cx
   mov bl, al	; bl => c.y
-  shr ax, 1	; descartar bit de seleccion de banco
+  shr al, 1	; descartar bit de seleccion de banco
   mov ah, BYTESPERSCAN	; multiplicar por ancho de pantalla en bytes
   mul ah	; ax => desplazamiento en bytes del renglon
   xor cx, cx
@@ -1156,13 +1212,13 @@ borraspritemov:
   .initlooprowh:
   push bx	; ¿Aun es necesario respaldar estas variables?
   ; push dx
-  mov al, 00h
+  mov al, [colorbackground]
   mov ah, dl	; ah => c.w
   shr ah, 1	; dividir entre dos pixeles por byte
-  test dl, 00000001b	; agregar un byte si numero de pixeles es impar
-  jz .sig5
-  inc ah	; ah => numero de bytes a escribir horizontalmente
-  .sig5:
+  mov bl, dl
+  or bl, dh
+  and bl, 00000001b	; agregar un byte si numero de pixeles es impar
+  add ah, bl	; ah => numero de bytes a escribir horizontalmente
   test cx, cx
   jz .finlooprowh
   .looprowh:
@@ -1406,8 +1462,11 @@ inicializaspritegrafico:
   mov es, bx
 
   mov si, [ds:bp + SPRITE.gr0]
-  ; mov di, [ds:bp + SPRITE.gr1]
-  mov di, memorialibre	; TODO: Hacer un gestor de memoria
+
+  mov cx, (ALTOSPRITE * ( ANCHOSPRITE / PXB )) + 1
+  call malloc		; Asignar memoria
+  mov di, bx		; Memoria asignada en Destination Index
+  mov [ds:bp + SPRITE.gr1], bx		; Memoria asignada en estructura Sprite
 
   .px0:		; guardar el primer pixel con desplazamiento de bits
 
@@ -1435,7 +1494,6 @@ inicializaspritegrafico:
   shr ax, cl
   stosb
 
-  mov word [ds:bp + SPRITE.gr1], memorialibre
   ret
 
 
@@ -1481,8 +1539,22 @@ section .data
     at SPRITE.y, dw 16d
     at SPRITE.nx, dw 0
     at SPRITE.ny, dw 0
-    at SPRITE.next, dw 0
+    at SPRITE.next, dw playersprite2
     at SPRITE.gr0, dw spritemonigote
+    at SPRITE.gr1, dw 0
+    at SPRITEPHYS.vuelox, dw 0
+    at SPRITEPHYS.deltay,dw 0
+    at SPRITEPHYS.parado,dw 0
+
+  playersprite2:
+    istruc SPRITEPHYS
+    at SPRITE.frame, dw playerframe
+    at SPRITE.x, dw 40d
+    at SPRITE.y, dw 20d
+    at SPRITE.nx, dw 0
+    at SPRITE.ny, dw 0
+    at SPRITE.next, dw 0
+    at SPRITE.gr0, dw spritemona
     at SPRITE.gr1, dw 0
     at SPRITEPHYS.vuelox, dw 0
     at SPRITEPHYS.deltay,dw 0
@@ -1491,25 +1563,6 @@ section .data
   firstsprite:
   dw playersprite
 
-  align   8,db 0
-
-  spritepelota:
-  db 00000000b, 00000000b, 00000000b, 00000000b
-  db 00000000b, 00101010b, 10101010b, 00000000b
-  db 00000000b, 10101010b, 10101010b, 10000000b
-  db 00000010b, 10101010b, 10111011b, 10100000b
-  db 00001010b, 10101010b, 10101110b, 10101000b
-  db 00101010b, 10101010b, 10111011b, 10101010b
-  db 00101010b, 10101010b, 10101010b, 10101010b
-  db 00101010b, 10101010b, 10101010b, 10101010b
-  db 00101010b, 10101010b, 10101010b, 10101010b
-  db 00101010b, 01100110b, 10101010b, 10101010b
-  db 00101001b, 10011001b, 10101010b, 10101010b
-  db 00101010b, 01010110b, 10101010b, 10101010b
-  db 00001001b, 10011001b, 10101010b, 10101000b
-  db 00000010b, 01100110b, 10101010b, 10100000b
-  db 00000000b, 10101010b, 10101010b, 10000000b
-  db 00000000b, 00101010b, 10101010b, 00000000b
 
 ; map1:
 
@@ -1532,19 +1585,49 @@ map1:
   db 2, 3, 4, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
   db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 6, 0, 0, 0
   db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-  db 0, 0, 0, 0, 0, 0, 0, 5, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 3
-  db 0, 0, 0, 0, 0, 0, 0, 5, 4, 0, 0, 5, 6, 0, 0, 0, 0, 0, 0, 0
-  db 0, 0, 0, 0, 0, 0, 1, 2, 6, 0, 0, 6, 1, 2, 0, 0, 0, 0, 0, 0
+  db 0, 0, 0, 0, 0, 0, 0, 5, 6, 0, 0, 6, 0, 0, 0, 0, 0, 0, 2, 3
+  db 0, 0, 0, 0, 0, 0, 2, 5, 4, 0, 0, 5, 6, 0, 0, 0, 0, 0, 0, 0
+  db 0, 0, 0, 0, 0, 3, 1, 2, 6, 0, 0, 6, 1, 2, 0, 0, 0, 0, 0, 0
   db 1, 2, 3, 4, 5, 4, 4, 5, 5, 4, 4, 1, 1, 2, 3, 4, 5, 5, 4, 4
 
 
+colorbackground: db 77h
+
+
+align   8,db 0
+
+spritesgraphics:
 spritemonigote:
 ;incbin	"mdoble.bin",0,256
 incbin	"mono-alto-8x32.bin",0,128
+spritemona:
+incbin	"mona-alta-8x32.bin",0,128
 
-colorbackground: db 77h
+
+spritepelota:
+  db 00000000b, 00000000b, 00000000b, 00000000b
+  db 00000000b, 00101010b, 10101010b, 00000000b
+  db 00000000b, 10101010b, 10101010b, 10000000b
+  db 00000010b, 10101010b, 10111011b, 10100000b
+  db 00001010b, 10101010b, 10101110b, 10101000b
+  db 00101010b, 10101010b, 10111011b, 10101010b
+  db 00101010b, 10101010b, 10101010b, 10101010b
+  db 00101010b, 10101010b, 10101010b, 10101010b
+  db 00101010b, 10101010b, 10101010b, 10101010b
+  db 00101010b, 01100110b, 10101010b, 10101010b
+  db 00101001b, 10011001b, 10101010b, 10101010b
+  db 00101010b, 01010110b, 10101010b, 10101010b
+  db 00001001b, 10011001b, 10101010b, 10101000b
+  db 00000010b, 01100110b, 10101010b, 10100000b
+  db 00000000b, 10101010b, 10101010b, 10000000b
+  db 00000000b, 00101010b, 10101010b, 00000000b
+
+endspritesgraphics:
 
 tilesgraphicscount:	db	7
+
+
+align   8,db 0
 
 tilesgraphics:
 incbin "img/tile0.bin",0,64
@@ -1554,6 +1637,8 @@ incbin "img/tile3.bin",0,64
 incbin "img/tile4.bin",0,64
 incbin "img/tile5.bin",0,64
 incbin "img/tile6.bin",0,64
+
+endtilesgraphics:
 
 
 allocinit: dw memorialibre
