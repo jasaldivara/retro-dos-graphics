@@ -176,7 +176,7 @@ start:
   VSync
 
   SPRITELOOP
-  call borrasprite16
+  call borraspritemov
   SPRITELOOPEND
 
   SPRITELOOP
@@ -1145,9 +1145,11 @@ borraspritemov:
   jl .mdown
   xchg al, bl	; al => s.ny, bl => s.y
   .mdown:
-  add bh, bl
-  sub bh, al	; bh => c.h, al => c.y
+  mov cl, bl
+  sub bl, al
+  sub bh, bl	; bh => c.h, al => c.y
   je .salir	; ?? Salir en caso de que sea menor o igual a cero ?
+  mov al, cl
   .clearhorizontal:
   ; dh => c.x
   ; dl => c.w
