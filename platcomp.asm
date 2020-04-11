@@ -1075,8 +1075,8 @@ borraspritemov:
   .sig1:
   .initlooprow:
   mov cx, dx
-  mov ax, [colorbackground]
-  push bx
+  mov al, [colorbackground]
+  push bx		; TODO ver si podemos optimizar usando ah en lugar de bx y así no hacer push+pop
   mov bl, BWSPRITE
   mov byte bh, [ds:bp + SPRITE.x]
   and bh, 00000001b
@@ -1164,7 +1164,7 @@ borraspritemov:
   mov cx, MEMCGAEVEN
   mov es, cx
   mov bl, al	; bl => c.y
-  shr ax, 1	; descartar bit de seleccion de banco
+  shr al, 1	; descartar bit de seleccion de banco
   mov ah, BYTESPERSCAN	; multiplicar por ancho de pantalla en bytes
   mul ah	; ax => desplazamiento en bytes del renglon
   xor cx, cx
@@ -1194,13 +1194,13 @@ borraspritemov:
   .initlooprowh:
   push bx	; ¿Aun es necesario respaldar estas variables?
   ; push dx
-  mov ax, [colorbackground]
+  mov al, [colorbackground]
   mov ah, dl	; ah => c.w
   shr ah, 1	; dividir entre dos pixeles por byte
-  test dl, 00000001b	; agregar un byte si numero de pixeles es impar
-  jz .sig5
-  inc ah	; ah => numero de bytes a escribir horizontalmente
-  .sig5:
+  mov bl, dl
+  or bl, dh
+  and bl, 00000001b	; agregar un byte si numero de pixeles es impar
+  add ah, bl	; ah => numero de bytes a escribir horizontalmente
   test cx, cx
   jz .finlooprowh
   .looprowh:
