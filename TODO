@@ -3,27 +3,27 @@ Inmediatos:
 
   Sprites autonomos con inteligencia artificial basica
 
-  Revisar flicker de sprites en parte superior de la pantalla
+  Que los sprites puedan tener dimensiones variables?
 
   Revisar forma de inicializar sprites para no duplicar gráficos de sprites repetidos
 
-  Nueva rutina de borrado optimizada que copia graficos de tile y solo donde hay movimiento
-
-  Que los sprites puedan tener dimensiones variables?
-
   Sprites animados "spritesheets"
 
-  Que los sprites puedan tener transparencias??
+  Nueva rutina de borrado optimizada que copia graficos de tile y solo donde hay movimiento
+
+  Trabajar en side-scrolling
 
   Agregar musica a juego principal
     Seleccionar musica encendida o apagada al inicio
 
   Soporte para tandy sound
 
+  Que los sprites puedan tener transparencias??
+
 Bugs:
 
-  Arreglar error cuando sprite está en lo más alto de la pantalla (lineas en blanco)
-  Errores en deteccion de colisiones con tiles
+  Arreglar error flicker cuando sprite está en lo más alto de la pantalla (lineas en blanco)
+  Errores en deteccion de colisiones con tiles (3/4)
 
 Nuevos programas:
 
