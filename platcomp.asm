@@ -1345,12 +1345,13 @@ borrasprite16:
   mov cx, MEMCGAODD ; Dibujar en renglones impar de pantalla CGA 4 Col
   mov es, cx
 
+  mov bx, ax
   mov al, [ds:bp + SPRITE.h]
-  mov dl, al
   shr al,1
   mov ah, BYTESPERSCAN
   mul ah
   sub di, ax	; Retroceder hasta posicion inicial en pantalla ? (pero ahora en renglon impar)
+  mov ax, bx
 
   popf ; ¿Necesario?
   jz .espar2
