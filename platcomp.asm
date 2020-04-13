@@ -25,7 +25,7 @@ CPU 8086
   %define GRAVEDAD 1
   %define JUMPFRAMES 12
   %define ANCHOSPRITE 8
-  %define ALTOSPRITE 32
+  ; %define ALTOSPRITE 32
   %define ANCHOTILE 8
   %define ALTOTILE 16
   %define MAPWIDTH 20
@@ -48,6 +48,8 @@ CPU 8086
     .y		resw 1
     .nx		resw 1
     .ny		resw 1
+    .h		resw 1
+    .w		resw 1
     .next	resw 1	; Pointer to nexts prite in linked list
     .gr0:	resw 1	; Pointer to graphic data
     .gr1:	resw 1	; Pointer to graphic data
@@ -567,10 +569,12 @@ playerframe:
   add ax, bx
 
   ; 1.1.- revisar que no se salga
+  mov dx, HEIGHTPX
+  sub dx, [ds:bp + SPRITE.h]
 
-  cmp ax, HEIGHTPX - ALTOSPRITE
+  cmp ax, dx
   jng .sig5
-  mov ax, HEIGHTPX - ALTOSPRITE
+  mov ax, dx
   mov bx, 0
   mov word [ds:bp + SPRITEPHYS.parado], JUMPFRAMES
   .sig5:
@@ -601,8 +605,10 @@ spritecollisions:
   je .horizontal	; Si y == ny, es que no hay movimiento vertical
   ja .movarriba
   .movabajo:
-  add bh, ALTOSPRITE - 1
-  add bl, ALTOSPRITE - 1
+  mov al, [ds:bp + SPRITE.h]
+  dec al
+  add bh, al
+  add bl, al
   NYT bh
   NYT bl
   cmp bh, bl
@@ -637,7 +643,7 @@ spritecollisions:
   .colabajo:
   mov cl, ( ilog2e( ALTOTILE ) )
   shl bh, cl
-  sub bh, ALTOSPRITE
+  sub bh, [ds:bp + SPRITE.h]
   mov [ds:bp + SPRITE.ny], bh
   mov word [ds:bp + SPRITEPHYS.parado], JUMPFRAMES
   mov word [ds:bp + SPRITEPHYS.deltay], 0
@@ -713,7 +719,8 @@ spritecollisions:
   add si, ax
   mov dl, [ds:bp + SPRITE.ny]
   mov dh, dl
-  add dh, ALTOSPRITE - 1
+  add dh, [ds:bp + SPRITE.h]
+  dec dh
   NYT dl
   NYT dh
   .looptilederecha:
@@ -762,7 +769,8 @@ spritecollisions:
   add si, ax
   mov dl, [ds:bp + SPRITE.ny]
   mov dh, dl
-  add dh, ALTOSPRITE - 1
+  add dh, [ds:bp + SPRITE.h]
+  dec dh
   NYT dl
   NYT dh
   .looptileizquierda:
@@ -848,7 +856,8 @@ dibujasprite16:
   add di, BYTESPERSCAN
   .espar: pushf
 
-  mov cx, ( ALTOSPRITE / 2 )  ; 4 .- Primero dibujamos mitad de renglones (en renglones par de patalla)
+  mov cx, [ds:bp + SPRITE.h]  ; 4 .- Primero dibujamos mitad de renglones (en renglones par de patalla)
+  shr cx, 1
 
   .looprenglon:
 
@@ -866,8 +875,17 @@ dibujasprite16:
   mov cx, MEMCGAODD ; Dibujar en renglones impar de pantalla CGA 4 Col
   mov es, cx
 
-  sub di, BYTESPERSCAN * ( ALTOSPRITE / 2 )  ; Retroceder hasta posicion inicial en pantalla ? (pero ahora en renglon impar)
-  sub si, BWSPRITE * ( ALTOSPRITE - 1 )   ; retrocedemos hasta posicion inicial de sprite + un renglon
+  mov al, [ds:bp + SPRITE.h]
+  mov dl, al
+  shr al,1
+  mov ah, BYTESPERSCAN
+  mul ah
+  sub di, ax	; Retroceder hasta posicion inicial en pantalla ? (pero ahora en renglon impar)
+  mov al, dl
+  dec al
+  mov ah, BWSPRITE
+  mul ah
+  sub si, ax	; retrocedemos hasta posicion inicial de sprite + un renglon
 
   popf ; ¿Necesario?
   jz .espar2
@@ -875,7 +893,8 @@ dibujasprite16:
   sub di, BYTESPERSCAN
   .espar2:
 
-  mov cx, ( ALTOSPRITE / 2 )
+  mov cx, [ds:bp + SPRITE.h]
+  shr cx, 1
 
   .looprenglon2:
 
@@ -924,7 +943,8 @@ dibujasprite16noalineado:
   add di, BYTESPERSCAN
   .espar pushf
 
-  mov cx, ( ALTOSPRITE / 2 )  ; 4 .- Primero dibujamos mitad de renglones (en renglones par de patalla)
+  mov cx, [ds:bp + SPRITE.h]  ; 4 .- Primero dibujamos mitad de renglones (en renglones par de patalla)
+  shr cx, 1
 
 
   .looprenglon:
@@ -968,8 +988,18 @@ dibujasprite16noalineado:
   mov cx, MEMCGAODD ; Dibujar en renglones impar de pantalla CGA 4 Col
   mov es, cx
 
-  sub di, ( BYTESPERSCAN * ( ALTOSPRITE / 2 ) )  ; Retroceder hasta posicion inicial en pantalla ? (pero ahora en renglon impar)
-  sub si, BWSPRITE * ( ALTOSPRITE - 1 )  ; retrocedemos hasta posicion inicial de sprite ?
+  mov al, [ds:bp + SPRITE.h]
+  mov dl, al
+  shr al,1
+  mov ah, BYTESPERSCAN
+  mul ah
+  sub di, ax	; Retroceder hasta posicion inicial en pantalla ? (pero ahora en renglon impar)
+  mov al, dl
+  dec al
+  mov ah, BWSPRITE
+  mul ah
+  sub si, ax	; retrocedemos hasta posicion inicial de sprite + un renglon
+
 
   popf ; ¿Necesario?
   jz .espar2
@@ -977,7 +1007,8 @@ dibujasprite16noalineado:
   sub di, BYTESPERSCAN
   .espar2:
 
-  mov cx, ( ALTOSPRITE / 2 )
+  mov cx, [ds:bp + SPRITE.h]
+  shr cx, 1
 
   .looprenglon2:
 
@@ -1038,7 +1069,7 @@ borraspritemov:
   xchg ax, bx		; ax => s.ny, bx => s.y
   sub bx, ax		; bx => s.ny - s.y	(numero negativo)
   ; neg bx		; bx => c.h = s.y - s.ny (numero positivo)
-  add ax, ALTOSPRITE	; ax => c.y = s.ny + s.h
+  add ax, [ds:bp + SPRITE.h]	; ax => c.y = s.ny + s.h
 
   .clearvertical:
   ; ax => c.y
@@ -1143,7 +1174,7 @@ borraspritemov:
   ; dl => c.w
 
   ; Calcular movimiento vertical para borrado de seccion horizontal
-  mov bh, ALTOSPRITE
+  mov bh, [ds:bp + SPRITE.h]
   mov al, [ds:bp + SPRITE.y]
   mov bl, [ds:bp + SPRITE.ny]
   cmp al, bl
@@ -1291,7 +1322,9 @@ borrasprite16:
   add di, BYTESPERSCAN
   .espar pushf
 
-  mov cx, ( ALTOSPRITE / 2 )  ; Primero borramos mitad de renglones (en renglones par de patalla)
+  ; Primero borramos mitad de renglones (en renglones par de patalla)
+  mov cx, [ds:bp + SPRITE.h]
+  shr cx, 1
 
   ; xor ax, ax  ; Registro AX en ceros
   ; mov ax, 1010101010101010b <= debug
@@ -1312,14 +1345,20 @@ borrasprite16:
   mov cx, MEMCGAODD ; Dibujar en renglones impar de pantalla CGA 4 Col
   mov es, cx
 
-  sub di, BYTESPERSCAN * ( ALTOSPRITE / 2 )  ; Retroceder hasta posicion inicial en pantalla ? (pero ahora en renglon impar)
+  mov al, [ds:bp + SPRITE.h]
+  mov dl, al
+  shr al,1
+  mov ah, BYTESPERSCAN
+  mul ah
+  sub di, ax	; Retroceder hasta posicion inicial en pantalla ? (pero ahora en renglon impar)
 
   popf ; ¿Necesario?
   jz .espar2
   sub di, BYTESPERSCAN
   .espar2:
 
-  mov cx, ( ALTOSPRITE / 2 )
+  mov cx, [ds:bp + SPRITE.h]
+  shr cx, 1
 
   .looprenglon2:
   mov bx, cx
@@ -1445,7 +1484,12 @@ inicializaspritegrafico:
 
   mov si, [ds:bp + SPRITE.gr0]
 
-  mov cx, (ALTOSPRITE * ( ANCHOSPRITE / PXB )) + 1
+  mov ah, ( ANCHOSPRITE / PXB )
+  mov al, [ds:bp + SPRITE.h]
+  mul ah
+  inc ax
+  mov dx, ax
+  mov cx, ax
   call malloc		; Asignar memoria
   mov di, bx		; Memoria asignada en Destination Index
   mov [ds:bp + SPRITE.gr1], bx		; Memoria asignada en estructura Sprite
@@ -1458,7 +1502,10 @@ inicializaspritegrafico:
   shr ax, cl	; desplazar esa cantidad de bits
   stosb		; Escribir byte
 
-  mov cx, (ALTOSPRITE * ( ANCHOSPRITE / PXB )) - 1
+  mov cx, dx
+  dec cx
+  dec cx
+
   .loopbyte:
   mov bx, cx
   dec si
@@ -1519,6 +1566,8 @@ section .data
     at SPRITE.y, dw 16d
     at SPRITE.nx, dw 0
     at SPRITE.ny, dw 0
+    at SPRITE.h, dw 32
+    at SPRITE.w, dw 8
     at SPRITE.next, dw playersprite2
     at SPRITE.gr0, dw spritemonigote
     at SPRITE.gr1, dw 0
@@ -1533,8 +1582,10 @@ section .data
     at SPRITE.y, dw 20d
     at SPRITE.nx, dw 0
     at SPRITE.ny, dw 0
+    at SPRITE.h, dw 16
+    at SPRITE.w, dw 8
     at SPRITE.next, dw 0
-    at SPRITE.gr0, dw spritemona
+    at SPRITE.gr0, dw monochico
     at SPRITE.gr1, dw 0
     at SPRITEPHYS.vuelox, dw 0
     at SPRITEPHYS.deltay,dw 0
@@ -1583,6 +1634,8 @@ incbin	"mono-alto-8x32.bin",0,128
 spritemona:
 incbin	"mona-alta-8x32.bin",0,128
 
+monochico:
+incbin "mono-comp-8x16.bin", 0, 64
 
 spritepelota:
   db 00000000b, 00000000b, 00000000b, 00000000b
