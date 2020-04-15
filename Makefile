@@ -7,7 +7,7 @@ ASMFLAGS = -fbin
 EJECUTABLES = $(BIN)/holacga.com $(BIN)/pixelcga.com $(BIN)/sprite4.com \
               $(BIN)/rebota.com $(BIN)/rebota2.com $(BIN)/platform.com \
               $(BIN)/compcol.com $(BIN)/tdycol.com $(BIN)/platcomp.com $(BIN)/p16doble.com \
-              $(BIN)/speaker.com $(BIN)/mapedit.com
+              $(BIN)/speaker.com $(BIN)/mapedit.com $(BIN)/keyboard.com
 
 ALL : $(EJECUTABLES)
 
@@ -45,6 +45,9 @@ $(BIN)/speaker.com : speaker.asm
 	$(ASM) $< $(ASMFLAGS) -o $@
 
 $(BIN)/mapedit.com : mapedit.asm
+	$(ASM) $< $(ASMFLAGS) -o $@
+
+$(BIN)/keyboard.com : keyboard.asm
 	$(ASM) $< $(ASMFLAGS) -o $@
 
 clean :
