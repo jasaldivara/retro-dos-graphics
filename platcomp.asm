@@ -23,7 +23,8 @@ CPU 8086
   ; Constantes del juego
 
   %define GRAVEDAD 1
-  %define JUMPFRAMES 12
+  %define JUMPFRAMES 18
+  %define FUERZASALTO 5
   %define ANCHOSPRITE 8
   ; %define ALTOSPRITE 32
   %define ANCHOTILE 8
@@ -551,7 +552,7 @@ playerframe:
   jz .calcdy
 
   ; Ahora sí: Saltar porque estamos parados y con la tecla saltar presionada
-  mov bx, -6
+  mov bx, -FUERZASALTO
   mov [ds:bp + SPRITEPHYS.deltay], bx
   ; mov bx, 0
   dec byte [ds:bp + SPRITEPHYS.parado]
