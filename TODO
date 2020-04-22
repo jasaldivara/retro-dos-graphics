@@ -22,6 +22,8 @@ Inmediatos:
 
 Bugs:
 
+  Error: Funcion Spritecollisiones usa campos de la estructura SPRITEPHYS, no existentes en SPRITE
+    ¿Unificar dichas estructuras? ¿reestructurar codigo? ¿Agregar funcion escucha para evento colision?
   Arreglar error flicker cuando sprite está en lo más alto de la pantalla (lineas en blanco)
   Errores en deteccion de colisiones con tiles (3/4)
 
