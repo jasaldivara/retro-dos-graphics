@@ -182,7 +182,7 @@ kb_int_new:
   cmp al, KB_DO
   jnz .sig1
   mov byte [tpresionada], KB_DO
-  mov bx, mus(_DO, 3)
+  mov bx, mus(_DO, 4)
   setFreqSpeak
   SpeakerOn
   jmp .salida
@@ -191,7 +191,7 @@ kb_int_new:
   cmp al, KB_DO#
   jnz .sig2
   mov byte [tpresionada], KB_DO#
-  mov bx, mus(_DO#, 3)
+  mov bx, mus(_DO#, 4)
   setFreqSpeak
   SpeakerOn
   jmp .salida
@@ -200,7 +200,7 @@ kb_int_new:
   cmp al, KB_RE
   jnz .sig3
   mov byte [tpresionada], KB_RE
-  mov bx, mus(_RE, 3)
+  mov bx, mus(_RE, 4)
   setFreqSpeak
   SpeakerOn
   jmp .salida
@@ -209,7 +209,7 @@ kb_int_new:
   cmp al, KB_RE#
   jnz .sig4
   mov byte [tpresionada], KB_RE#
-  mov bx, mus(_RE#, 3)
+  mov bx, mus(_RE#, 4)
   setFreqSpeak
   SpeakerOn
   jmp .salida
@@ -218,7 +218,7 @@ kb_int_new:
   cmp al, KB_MI
   jnz .sig5
   mov byte [tpresionada], KB_MI
-  mov bx, mus(_MI, 3)
+  mov bx, mus(_MI, 4)
   setFreqSpeak
   SpeakerOn
   jmp .salida
@@ -227,7 +227,7 @@ kb_int_new:
   cmp al, KB_FA
   jnz .sig6
   mov byte [tpresionada], KB_FA
-  mov bx, mus(_FA, 3)
+  mov bx, mus(_FA, 4)
   setFreqSpeak
   SpeakerOn
   jmp .salida
@@ -236,7 +236,7 @@ kb_int_new:
   cmp al, KB_FA#
   jnz .sig7
   mov byte [tpresionada], KB_FA#
-  mov bx, mus(_FA#, 3)
+  mov bx, mus(_FA#, 4)
   setFreqSpeak
   SpeakerOn
   jmp .salida
@@ -245,7 +245,7 @@ kb_int_new:
   cmp al, KB_SOL
   jnz .sig8
   mov byte [tpresionada], KB_SOL
-  mov bx, mus(_SOL, 3)
+  mov bx, mus(_SOL, 4)
   setFreqSpeak
   SpeakerOn
   jmp .salida
@@ -254,7 +254,7 @@ kb_int_new:
   cmp al, KB_SOL#
   jnz .sig9
   mov byte [tpresionada], KB_SOL#
-  mov bx, mus(_SOL#, 3)
+  mov bx, mus(_SOL#, 4)
   setFreqSpeak
   SpeakerOn
   jmp .salida
@@ -263,7 +263,7 @@ kb_int_new:
   cmp al, KB_LA
   jnz .sig10
   mov byte [tpresionada], KB_LA
-  mov bx, mus(_LA, 3)
+  mov bx, mus(_LA, 4)
   setFreqSpeak
   SpeakerOn
   jmp .salida
@@ -272,7 +272,7 @@ kb_int_new:
   cmp al, KB_LA#
   jnz .sig11
   mov byte [tpresionada], KB_LA#
-  mov bx, mus(_LA#, 3)
+  mov bx, mus(_LA#, 4)
   setFreqSpeak
   SpeakerOn
   jmp .salida
@@ -281,7 +281,7 @@ kb_int_new:
   cmp al, KB_SI
   jnz .sig12
   mov byte [tpresionada], KB_SI
-  mov bx, mus(_SI, 3)
+  mov bx, mus(_SI, 4)
   setFreqSpeak
   SpeakerOn
   jmp .salida
