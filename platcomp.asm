@@ -35,6 +35,14 @@ CPU 8086
   %define BWSPRITE ( ANCHOSPRITE / PXB )  ; Ancho de Sprite en Bytes
   %define SPRITESUB	4		; Number of reserved memory words for Sprite subclasess
 
+  ; Direcciones
+  ; Para controles y detección de colisiones
+
+  %define UP		00001000b
+  %define DOWN		00000100b
+  %define LEFT		00000010b
+  %define RIGHT		00000001b
+
   ; data structures
 
   ; Game specific constants
@@ -45,6 +53,7 @@ CPU 8086
   struc SPRITE
 
     .frame:	resw 1	; Pointer to function defining per frame logic
+    .control:	resw 1  ; Pointer to control structure. Could be keyboard or joystick player, or A.I.
     .x		resw 1
     .y		resw 1
     .nx		resw 1
@@ -64,6 +73,12 @@ CPU 8086
     .vuelox:	resw 1
     .deltay:	resw 1
     .parado:	resw 1
+
+  endstruc
+
+  struc CONTROL
+
+    .funccontrol:	resw 1	; Puntero a funcion control. Devuelve en AL direcciones y acciones a ejecutar
 
   endstruc
 
@@ -171,7 +186,17 @@ start:
 
   frame:
 
+  mov al, [tecla_esc] ; ¿está presionada esta tecla?
+  test al, al
+  jnz fin
+
   SPRITELOOP
+  xor al, al
+  mov bx, [ds:bp + SPRITE.control]
+  test bx, bx
+  jz .fincontrol
+  call [cs:bx]
+  .fincontrol:
   call [ds:bp + SPRITE.frame]
   call spritecollisions
   SPRITELOOPEND
@@ -466,51 +491,46 @@ playerframe:
 
   ; 1.- Leer el teclado
 
-  mov al, [tecla_esc] ; ¿está presionada esta tecla?
-  test al, al
-  jnz fin
 
   .test_left:
-  mov al, [tecla_left] ; ¿está presionada esta tecla?
-  test al, al
+  test al, LEFT
   jz .sig1
 
   .movizq:
   ; dec word [ds:bp + SPRITEPHYS.vuelox]
-  mov ax, [ds:bp + SPRITEPHYS.vuelox]
-  dec ax
-  cmp ax, -16
+  mov bx, [ds:bp + SPRITEPHYS.vuelox]
+  dec bx
+  cmp bx, -16
   jge .nol1
-  mov ax, -16
+  mov bx, -16
   .nol1:
-  mov [ds:bp + SPRITEPHYS.vuelox], ax
+  mov [ds:bp + SPRITEPHYS.vuelox], bx
   jmp .testright
 
   .sig1:
-  mov ax, [ds:bp + SPRITEPHYS.vuelox]
-  cmp ax, 0
+  mov bx, [ds:bp + SPRITEPHYS.vuelox]
+  cmp bx, 0
   jnl .testright
   inc word [ds:bp + SPRITEPHYS.vuelox]
 
   .testright:
-  mov al, [tecla_right] ; ¿está presionada esta tecla?
-  test al, al
+  test al, RIGHT
   jz .sig2
 
   .movder:
   ; inc word [ds:bp + SPRITEPHYS.vuelox]
-  mov ax, [ds:bp + SPRITEPHYS.vuelox]
-  inc ax
-  cmp ax, 16
+  mov bx, [ds:bp + SPRITEPHYS.vuelox]
+  inc bx
+  cmp bx, 16
   jle .nol2
-  mov ax, 16
+  mov bx, 16
   .nol2:
-  mov [ds:bp + SPRITEPHYS.vuelox], ax
+  mov [ds:bp + SPRITEPHYS.vuelox], bx
   jmp .calcx
 
   .sig2:
-  mov ax, [ds:bp + SPRITEPHYS.vuelox]
-  cmp ax, 0
+  mov bx, [ds:bp + SPRITEPHYS.vuelox]
+  cmp bx, 0
   jng .calcx
   dec word [ds:bp + SPRITEPHYS.vuelox]
 
@@ -518,33 +538,29 @@ playerframe:
 
   .calcx:    ; 2.- calcular x
 
-  mov ax, [ds:bp + SPRITE.x]
-  mov bx, [ds:bp + SPRITEPHYS.vuelox]
-  mov dx, bx
+  mov bx, [ds:bp + SPRITE.x]
+  mov dx, [ds:bp + SPRITEPHYS.vuelox]
   mov cl, 3
   sar dx, cl
-  add ax, dx
+  add bx, dx
 
   ; 1.1.- revisar que no se salga
 
-  cmp ax, WIDTHPX - ANCHOSPRITE
+  cmp bx, WIDTHPX - ANCHOSPRITE
   jng .sig3
-  mov ax, WIDTHPX - ANCHOSPRITE
-  neg bx	; Rebotar, reduciendo velocidad a la mitad
-  sar bx, 1
+  mov bx, WIDTHPX - ANCHOSPRITE
+  mov word [ds:bp + SPRITEPHYS.vuelox], 0
   .sig3:
-  cmp ax, 0
+  cmp bx, 0
   jnl .sig4
-  mov ax, 0
-  neg bx	; Rebotar, reduciendo velocidad a la mitad
-  sar bx, 1
+  mov word [ds:bp + SPRITEPHYS.vuelox], 0
+  mov bx, 0
   .sig4:
-  mov [ds:bp + SPRITE.nx], ax
-  mov [ds:bp + SPRITEPHYS.vuelox], bx
+  mov [ds:bp + SPRITE.nx], bx
 
   .saltar:
-  mov al, [tecla_up] ; ¿está presionada esta tecla?
-  test al, al
+  ; ¿está presionada esta tecla?
+  test al, UP
   jz .calcdy
 
   mov ax, [ds:bp + SPRITEPHYS.parado] ; Tiene que estar parado para poder saltar
@@ -588,6 +604,31 @@ playerframe:
   mov [ds:bp + SPRITEPHYS.deltay], bx
 
   ; Fin de logica del jugador por frame
+  ret
+
+kbcontrolfunc:
+  xor al, al
+  mov ah, [tecla_left]
+  test ah, ah
+  jz .sig1
+  or al, LEFT
+  .sig1:
+  mov ah, [tecla_right]
+  test ah, ah
+  jz .sig2
+  or al, RIGHT
+  .sig2:
+  mov ah, [tecla_up]
+  test ah, ah
+  jz .sig3
+  or al, UP
+  .sig3:
+  mov ah, [tecla_down]
+  test ah, ah
+  jz .sig4
+  or al, DOWN
+  .sig4:
+
   ret
 
 spritecollisions:
@@ -1561,9 +1602,14 @@ section .data
   paleta:
   db 1
 
+  kbplayercontrol:
+    istruc CONTROL
+    at CONTROL.funccontrol, dw kbcontrolfunc
+
   playersprite:
     istruc SPRITEPHYS
     at SPRITE.frame, dw playerframe
+    at SPRITE.control, dw kbplayercontrol
     at SPRITE.x, dw 120d
     at SPRITE.y, dw 16d
     at SPRITE.nx, dw 0
@@ -1580,6 +1626,7 @@ section .data
   playersprite2:
     istruc SPRITEPHYS
     at SPRITE.frame, dw playerframe
+    at SPRITE.control, dw 0
     at SPRITE.x, dw 40d
     at SPRITE.y, dw 20d
     at SPRITE.nx, dw 0
