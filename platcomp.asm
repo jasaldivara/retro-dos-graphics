@@ -195,7 +195,7 @@ start:
   mov bx, [ds:bp + SPRITE.control]
   test bx, bx
   jz .fincontrol
-  call [cs:bx]
+  call [cs:bx + CONTROL.funccontrol]
   .fincontrol:
   call [ds:bp + SPRITE.frame]
   call spritecollisions
