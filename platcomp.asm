@@ -493,42 +493,21 @@ playerframe:
   jz .sig1
 
   .movizq:
-  ; dec word [ds:bp + SPRITEPHYS.vuelox]
-  mov bx, [ds:bp + SPRITEPHYS.vuelox]
-  dec bx
-  cmp bx, -16
-  jge .nol1
-  mov bx, -16
-  .nol1:
-  mov [ds:bp + SPRITEPHYS.vuelox], bx
+  mov word [ds:bp + SPRITEPHYS.vuelox], -1
   jmp .testright
 
   .sig1:
-  mov bx, [ds:bp + SPRITEPHYS.vuelox]
-  cmp bx, 0
+  mov word [ds:bp + SPRITEPHYS.vuelox], 0
   jnl .testright
-  inc word [ds:bp + SPRITEPHYS.vuelox]
 
   .testright:
   test al, RIGHT
   jz .sig2
 
   .movder:
-  ; inc word [ds:bp + SPRITEPHYS.vuelox]
-  mov bx, [ds:bp + SPRITEPHYS.vuelox]
-  inc bx
-  cmp bx, 16
-  jle .nol2
-  mov bx, 16
-  .nol2:
-  mov [ds:bp + SPRITEPHYS.vuelox], bx
-  jmp .calcx
+  mov word [ds:bp + SPRITEPHYS.vuelox], 1
 
   .sig2:
-  mov bx, [ds:bp + SPRITEPHYS.vuelox]
-  cmp bx, 0
-  jng .calcx
-  dec word [ds:bp + SPRITEPHYS.vuelox]
 
 
 
@@ -536,8 +515,7 @@ playerframe:
 
   mov bx, [ds:bp + SPRITE.x]
   mov dx, [ds:bp + SPRITEPHYS.vuelox]
-  mov cl, 3
-  sar dx, cl
+
   add bx, dx
 
   ; 1.1.- revisar que no se salga
@@ -1653,7 +1631,7 @@ section .data
     at SPRITE.frame, dw playerframe
     at SPRITE.control, dw iabasiccontrol
     at SPRITE.ctrlcoll, dw iabasiccoll
-    at SPRITE.iavars, dw RIGHT
+    at SPRITE.iavars, dw LEFT
     at SPRITE.x, dw 40d
     at SPRITE.y, dw 40d
     at SPRITE.nx, dw 0
@@ -1692,10 +1670,10 @@ map1:
   db 2, 3, 4, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
   db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 6, 0, 0, 0
   db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-  db 0, 0, 0, 0, 0, 0, 0, 5, 6, 0, 0, 6, 0, 0, 0, 0, 0, 0, 2, 3
-  db 3, 0, 0, 0, 0, 0, 0, 5, 4, 0, 0, 5, 6, 0, 0, 0, 0, 0, 0, 0
-  db 2, 0, 0, 0, 0, 0, 0, 2, 6, 0, 0, 6, 1, 2, 0, 0, 0, 0, 0, 0
-  db 1, 2, 3, 4, 5, 4, 4, 5, 5, 4, 4, 1, 1, 2, 3, 4, 5, 5, 4, 4
+  db 0, 0, 0, 0, 0, 0, 0, 6, 6, 0, 0, 6, 0, 0, 0, 0, 0, 0, 2, 3
+  db 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 6, 0, 0, 0, 0, 0, 0, 0
+  db 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 1, 2, 0, 0, 0, 0, 0, 0
+  db 1, 4, 5, 4, 5, 4, 4, 5, 5, 4, 4, 1, 1, 2, 3, 4, 5, 5, 4, 4
 
 
 colorbackground: db 77h
