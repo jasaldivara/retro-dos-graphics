@@ -626,6 +626,11 @@ kbcontrolfunc:
 
   ret
 
+iabasiccontrol:
+  mov al, [ds:bp + SPRITE.iavars]
+ret
+
+
 spritecollisions:
   ; parametros:
   ; DS:BP => Sprite
@@ -1601,6 +1606,7 @@ section .data
     istruc SPRITEPHYS
     at SPRITE.frame, dw playerframe
     at SPRITE.control, dw kbcontrolfunc
+    at SPRITE.iavars, dw 0
     at SPRITE.x, dw 120d
     at SPRITE.y, dw 16d
     at SPRITE.nx, dw 0
@@ -1617,9 +1623,10 @@ section .data
   playersprite2:
     istruc SPRITEPHYS
     at SPRITE.frame, dw playerframe
-    at SPRITE.control, dw 0
+    at SPRITE.control, dw iabasiccontrol
+    at SPRITE.iavars, dw LEFT
     at SPRITE.x, dw 40d
-    at SPRITE.y, dw 20d
+    at SPRITE.y, dw 40d
     at SPRITE.nx, dw 0
     at SPRITE.ny, dw 0
     at SPRITE.h, dw 16
