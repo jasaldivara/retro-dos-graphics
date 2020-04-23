@@ -1,29 +1,35 @@
 
 Inmediatos:
 
-  Sprites autonomos con inteligencia artificial basica
+  Trabajar en forma de hacer más lento el movimiento de enemigos
 
-  Revisar flicker de sprites en parte superior de la pantalla
+    Y mejorar mecánica de velocidad y movimiento de jugador
 
-  Revisar forma de inicializar sprites para no duplicar gráficos de sprites repetidos
+  Agregar nueva estructura de Sprite gráfico
+
+    Revisar forma de inicializar sprites para no duplicar gráficos de sprites repetidos
+
+    Sprites animados "spritesheets"
+
+  Trabajar en side-scrolling
+
+  Que los sprites puedan tener ancho variable
 
   Nueva rutina de borrado optimizada que copia graficos de tile y solo donde hay movimiento
-
-  Que los sprites puedan tener dimensiones variables?
-
-  Sprites animados "spritesheets"
-
-  Que los sprites puedan tener transparencias??
 
   Agregar musica a juego principal
     Seleccionar musica encendida o apagada al inicio
 
   Soporte para tandy sound
 
+  Que los sprites puedan tener transparencias??
+
 Bugs:
 
-  Arreglar error cuando sprite está en lo más alto de la pantalla (lineas en blanco)
-  Errores en deteccion de colisiones con tiles
+  Error: Funcion Spritecollisiones usa campos de la estructura SPRITEPHYS, no existentes en SPRITE
+    ¿Unificar dichas estructuras? ¿reestructurar codigo? ¿Agregar funcion escucha para evento colision?
+  Arreglar error flicker cuando sprite está en lo más alto de la pantalla (lineas en blanco)
+  Errores en deteccion de colisiones con tiles (3/4)
 
 Nuevos programas:
 

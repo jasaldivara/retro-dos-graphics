@@ -23,9 +23,10 @@ CPU 8086
   ; Constantes del juego
 
   %define GRAVEDAD 1
-  %define JUMPFRAMES 12
+  %define JUMPFRAMES 18
+  %define FUERZASALTO 5
   %define ANCHOSPRITE 8
-  %define ALTOSPRITE 32
+  ; %define ALTOSPRITE 32
   %define ANCHOTILE 8
   %define ALTOTILE 16
   %define MAPWIDTH 20
@@ -33,6 +34,14 @@ CPU 8086
 
   %define BWSPRITE ( ANCHOSPRITE / PXB )  ; Ancho de Sprite en Bytes
   %define SPRITESUB	4		; Number of reserved memory words for Sprite subclasess
+
+  ; Direcciones
+  ; Para controles y detección de colisiones
+
+  %define UP		00001000b
+  %define DOWN		00000100b
+  %define LEFT		00000010b
+  %define RIGHT		00000001b
 
   ; data structures
 
@@ -44,10 +53,15 @@ CPU 8086
   struc SPRITE
 
     .frame:	resw 1	; Pointer to function defining per frame logic
+    .control:	resw 1  ; Pointer to control function. Could be keyboard or joystick player, or A.I.
+    .ctrlcoll:	resw 1	; Pointer to controll collision event. Called when the sprite have a collision.
+    .iavars	resw 1	; I.A. reserved variables.
     .x		resw 1
     .y		resw 1
     .nx		resw 1
     .ny		resw 1
+    .h		resw 1
+    .w		resw 1
     .next	resw 1	; Pointer to nexts prite in linked list
     .gr0:	resw 1	; Pointer to graphic data
     .gr1:	resw 1	; Pointer to graphic data
@@ -168,7 +182,17 @@ start:
 
   frame:
 
+  mov al, [tecla_esc] ; ¿está presionada esta tecla?
+  test al, al
+  jnz fin
+
   SPRITELOOP
+  xor al, al
+  mov bx, [ds:bp + SPRITE.control]
+  test bx, bx
+  jz .fincontrol
+  call bx
+  .fincontrol:
   call [ds:bp + SPRITE.frame]
   call spritecollisions
   SPRITELOOPEND
@@ -481,85 +505,54 @@ playerframe:
 
   ; 1.- Leer el teclado
 
-  mov al, [tecla_esc] ; ¿está presionada esta tecla?
-  test al, al
-  jnz fin
 
   .test_left:
-  mov al, [tecla_left] ; ¿está presionada esta tecla?
-  test al, al
+  test al, LEFT
   jz .sig1
 
   .movizq:
-  ; dec word [ds:bp + SPRITEPHYS.vuelox]
-  mov ax, [ds:bp + SPRITEPHYS.vuelox]
-  dec ax
-  cmp ax, -16
-  jge .nol1
-  mov ax, -16
-  .nol1:
-  mov [ds:bp + SPRITEPHYS.vuelox], ax
+  mov word [ds:bp + SPRITEPHYS.vuelox], -1
   jmp .testright
 
   .sig1:
-  mov ax, [ds:bp + SPRITEPHYS.vuelox]
-  cmp ax, 0
+  mov word [ds:bp + SPRITEPHYS.vuelox], 0
   jnl .testright
-  inc word [ds:bp + SPRITEPHYS.vuelox]
 
   .testright:
-  mov al, [tecla_right] ; ¿está presionada esta tecla?
-  test al, al
+  test al, RIGHT
   jz .sig2
 
   .movder:
-  ; inc word [ds:bp + SPRITEPHYS.vuelox]
-  mov ax, [ds:bp + SPRITEPHYS.vuelox]
-  inc ax
-  cmp ax, 16
-  jle .nol2
-  mov ax, 16
-  .nol2:
-  mov [ds:bp + SPRITEPHYS.vuelox], ax
-  jmp .calcx
+  mov word [ds:bp + SPRITEPHYS.vuelox], 1
 
   .sig2:
-  mov ax, [ds:bp + SPRITEPHYS.vuelox]
-  cmp ax, 0
-  jng .calcx
-  dec word [ds:bp + SPRITEPHYS.vuelox]
 
 
 
   .calcx:    ; 2.- calcular x
 
-  mov ax, [ds:bp + SPRITE.x]
-  mov bx, [ds:bp + SPRITEPHYS.vuelox]
-  mov dx, bx
-  mov cl, 3
-  sar dx, cl
-  add ax, dx
+  mov bx, [ds:bp + SPRITE.x]
+  mov dx, [ds:bp + SPRITEPHYS.vuelox]
+
+  add bx, dx
 
   ; 1.1.- revisar que no se salga
 
-  cmp ax, WIDTHPX - ANCHOSPRITE
+  cmp bx, WIDTHPX - ANCHOSPRITE
   jng .sig3
-  mov ax, WIDTHPX - ANCHOSPRITE
-  neg bx	; Rebotar, reduciendo velocidad a la mitad
-  sar bx, 1
+  mov bx, WIDTHPX - ANCHOSPRITE
+  mov word [ds:bp + SPRITEPHYS.vuelox], 0
   .sig3:
-  cmp ax, 0
+  cmp bx, 0
   jnl .sig4
-  mov ax, 0
-  neg bx	; Rebotar, reduciendo velocidad a la mitad
-  sar bx, 1
+  mov word [ds:bp + SPRITEPHYS.vuelox], 0
+  mov bx, 0
   .sig4:
-  mov [ds:bp + SPRITE.nx], ax
-  mov [ds:bp + SPRITEPHYS.vuelox], bx
+  mov [ds:bp + SPRITE.nx], bx
 
   .saltar:
-  mov al, [tecla_up] ; ¿está presionada esta tecla?
-  test al, al
+  ; ¿está presionada esta tecla?
+  test al, UP
   jz .calcdy
 
   mov ax, [ds:bp + SPRITEPHYS.parado] ; Tiene que estar parado para poder saltar
@@ -567,7 +560,7 @@ playerframe:
   jz .calcdy
 
   ; Ahora sí: Saltar porque estamos parados y con la tecla saltar presionada
-  mov bx, -6
+  mov bx, -FUERZASALTO
   mov [ds:bp + SPRITEPHYS.deltay], bx
   ; mov bx, 0
   dec byte [ds:bp + SPRITEPHYS.parado]
@@ -585,10 +578,12 @@ playerframe:
   add ax, bx
 
   ; 1.1.- revisar que no se salga
+  mov dx, HEIGHTPX
+  sub dx, [ds:bp + SPRITE.h]
 
-  cmp ax, HEIGHTPX - ALTOSPRITE
+  cmp ax, dx
   jng .sig5
-  mov ax, HEIGHTPX - ALTOSPRITE
+  mov ax, dx
   mov bx, 0
   mov word [ds:bp + SPRITEPHYS.parado], JUMPFRAMES
   .sig5:
@@ -602,6 +597,49 @@ playerframe:
 
   ; Fin de logica del jugador por frame
   ret
+
+kbcontrolfunc:
+  xor al, al
+  mov ah, [tecla_left]
+  test ah, ah
+  jz .sig1
+  or al, LEFT
+  .sig1:
+  mov ah, [tecla_right]
+  test ah, ah
+  jz .sig2
+  or al, RIGHT
+  .sig2:
+  mov ah, [tecla_up]
+  test ah, ah
+  jz .sig3
+  or al, UP
+  .sig3:
+  mov ah, [tecla_down]
+  test ah, ah
+  jz .sig4
+  or al, DOWN
+  .sig4:
+
+  ret
+
+iabasiccontrol:
+  mov al, [ds:bp + SPRITE.iavars]
+ret
+
+iabasiccoll:
+  test al, LEFT
+  jz .sig1
+  mov byte [ds:bp + SPRITE.iavars], RIGHT
+  .sig1:
+  test al, RIGHT
+  jz .sig2
+  mov byte [ds:bp + SPRITE.iavars], LEFT
+  .sig2:
+  ret
+  
+  
+
 
 spritecollisions:
   ; parametros:
@@ -619,8 +657,10 @@ spritecollisions:
   je .horizontal	; Si y == ny, es que no hay movimiento vertical
   ja .movarriba
   .movabajo:
-  add bh, ALTOSPRITE - 1
-  add bl, ALTOSPRITE - 1
+  mov al, [ds:bp + SPRITE.h]
+  dec al
+  add bh, al
+  add bl, al
   NYT bh
   NYT bl
   cmp bh, bl
@@ -655,7 +695,7 @@ spritecollisions:
   .colabajo:
   mov cl, ( ilog2e( ALTOTILE ) )
   shl bh, cl
-  sub bh, ALTOSPRITE
+  sub bh, [ds:bp + SPRITE.h]
   mov [ds:bp + SPRITE.ny], bh
   mov word [ds:bp + SPRITEPHYS.parado], JUMPFRAMES
   mov word [ds:bp + SPRITEPHYS.deltay], 0
@@ -731,7 +771,8 @@ spritecollisions:
   add si, ax
   mov dl, [ds:bp + SPRITE.ny]
   mov dh, dl
-  add dh, ALTOSPRITE - 1
+  add dh, [ds:bp + SPRITE.h]
+  dec dh
   NYT dl
   NYT dh
   .looptilederecha:
@@ -757,6 +798,12 @@ spritecollisions:
   neg dx
   sar dx, 1
   mov word [ds:bp + SPRITEPHYS.vuelox], dx
+  ; Llamar evento colision
+  mov bx, [ds:bp + SPRITE.ctrlcoll]
+  test bx, bx
+  jz .fin
+  mov al, RIGHT
+  call bx
 
   jmp .fin
 
@@ -780,7 +827,8 @@ spritecollisions:
   add si, ax
   mov dl, [ds:bp + SPRITE.ny]
   mov dh, dl
-  add dh, ALTOSPRITE - 1
+  add dh, [ds:bp + SPRITE.h]
+  dec dh
   NYT dl
   NYT dh
   .looptileizquierda:
@@ -807,6 +855,13 @@ spritecollisions:
   ; neg dx
   ;sar dx, 1
   ; mov word [ds:bp + SPRITEPHYS.vuelox], dx
+
+  ; Llamar evento colision
+  mov bx, [ds:bp + SPRITE.ctrlcoll]
+  test bx, bx
+  jz .fin
+  mov al, LEFT
+  call bx
 
   .fin:
   ret
@@ -866,7 +921,8 @@ dibujasprite16:
   add di, BYTESPERSCAN
   .espar: pushf
 
-  mov cx, ( ALTOSPRITE / 2 )  ; 4 .- Primero dibujamos mitad de renglones (en renglones par de patalla)
+  mov cx, [ds:bp + SPRITE.h]  ; 4 .- Primero dibujamos mitad de renglones (en renglones par de patalla)
+  shr cx, 1
 
   .looprenglon:
 
@@ -884,8 +940,17 @@ dibujasprite16:
   mov cx, MEMCGAODD ; Dibujar en renglones impar de pantalla CGA 4 Col
   mov es, cx
 
-  sub di, BYTESPERSCAN * ( ALTOSPRITE / 2 )  ; Retroceder hasta posicion inicial en pantalla ? (pero ahora en renglon impar)
-  sub si, BWSPRITE * ( ALTOSPRITE - 1 )   ; retrocedemos hasta posicion inicial de sprite + un renglon
+  mov al, [ds:bp + SPRITE.h]
+  mov dl, al
+  shr al,1
+  mov ah, BYTESPERSCAN
+  mul ah
+  sub di, ax	; Retroceder hasta posicion inicial en pantalla ? (pero ahora en renglon impar)
+  mov al, dl
+  dec al
+  mov ah, BWSPRITE
+  mul ah
+  sub si, ax	; retrocedemos hasta posicion inicial de sprite + un renglon
 
   popf ; ¿Necesario?
   jz .espar2
@@ -893,7 +958,8 @@ dibujasprite16:
   sub di, BYTESPERSCAN
   .espar2:
 
-  mov cx, ( ALTOSPRITE / 2 )
+  mov cx, [ds:bp + SPRITE.h]
+  shr cx, 1
 
   .looprenglon2:
 
@@ -942,7 +1008,8 @@ dibujasprite16noalineado:
   add di, BYTESPERSCAN
   .espar pushf
 
-  mov cx, ( ALTOSPRITE / 2 )  ; 4 .- Primero dibujamos mitad de renglones (en renglones par de patalla)
+  mov cx, [ds:bp + SPRITE.h]  ; 4 .- Primero dibujamos mitad de renglones (en renglones par de patalla)
+  shr cx, 1
 
 
   .looprenglon:
@@ -986,8 +1053,18 @@ dibujasprite16noalineado:
   mov cx, MEMCGAODD ; Dibujar en renglones impar de pantalla CGA 4 Col
   mov es, cx
 
-  sub di, ( BYTESPERSCAN * ( ALTOSPRITE / 2 ) )  ; Retroceder hasta posicion inicial en pantalla ? (pero ahora en renglon impar)
-  sub si, BWSPRITE * ( ALTOSPRITE - 1 )  ; retrocedemos hasta posicion inicial de sprite ?
+  mov al, [ds:bp + SPRITE.h]
+  mov dl, al
+  shr al,1
+  mov ah, BYTESPERSCAN
+  mul ah
+  sub di, ax	; Retroceder hasta posicion inicial en pantalla ? (pero ahora en renglon impar)
+  mov al, dl
+  dec al
+  mov ah, BWSPRITE
+  mul ah
+  sub si, ax	; retrocedemos hasta posicion inicial de sprite + un renglon
+
 
   popf ; ¿Necesario?
   jz .espar2
@@ -995,7 +1072,8 @@ dibujasprite16noalineado:
   sub di, BYTESPERSCAN
   .espar2:
 
-  mov cx, ( ALTOSPRITE / 2 )
+  mov cx, [ds:bp + SPRITE.h]
+  shr cx, 1
 
   .looprenglon2:
 
@@ -1056,7 +1134,7 @@ borraspritemov:
   xchg ax, bx		; ax => s.ny, bx => s.y
   sub bx, ax		; bx => s.ny - s.y	(numero negativo)
   ; neg bx		; bx => c.h = s.y - s.ny (numero positivo)
-  add ax, ALTOSPRITE	; ax => c.y = s.ny + s.h
+  add ax, [ds:bp + SPRITE.h]	; ax => c.y = s.ny + s.h
 
   .clearvertical:
   ; ax => c.y
@@ -1161,7 +1239,7 @@ borraspritemov:
   ; dl => c.w
 
   ; Calcular movimiento vertical para borrado de seccion horizontal
-  mov bh, ALTOSPRITE
+  mov bh, [ds:bp + SPRITE.h]
   mov al, [ds:bp + SPRITE.y]
   mov bl, [ds:bp + SPRITE.ny]
   cmp al, bl
@@ -1309,7 +1387,9 @@ borrasprite16:
   add di, BYTESPERSCAN
   .espar pushf
 
-  mov cx, ( ALTOSPRITE / 2 )  ; Primero borramos mitad de renglones (en renglones par de patalla)
+  ; Primero borramos mitad de renglones (en renglones par de patalla)
+  mov cx, [ds:bp + SPRITE.h]
+  shr cx, 1
 
   ; xor ax, ax  ; Registro AX en ceros
   ; mov ax, 1010101010101010b <= debug
@@ -1330,14 +1410,21 @@ borrasprite16:
   mov cx, MEMCGAODD ; Dibujar en renglones impar de pantalla CGA 4 Col
   mov es, cx
 
-  sub di, BYTESPERSCAN * ( ALTOSPRITE / 2 )  ; Retroceder hasta posicion inicial en pantalla ? (pero ahora en renglon impar)
+  mov bx, ax
+  mov al, [ds:bp + SPRITE.h]
+  shr al,1
+  mov ah, BYTESPERSCAN
+  mul ah
+  sub di, ax	; Retroceder hasta posicion inicial en pantalla ? (pero ahora en renglon impar)
+  mov ax, bx
 
   popf ; ¿Necesario?
   jz .espar2
   sub di, BYTESPERSCAN
   .espar2:
 
-  mov cx, ( ALTOSPRITE / 2 )
+  mov cx, [ds:bp + SPRITE.h]
+  shr cx, 1
 
   .looprenglon2:
   mov bx, cx
@@ -1463,7 +1550,12 @@ inicializaspritegrafico:
 
   mov si, [ds:bp + SPRITE.gr0]
 
-  mov cx, (ALTOSPRITE * ( ANCHOSPRITE / PXB )) + 1
+  mov ah, ( ANCHOSPRITE / PXB )
+  mov al, [ds:bp + SPRITE.h]
+  mul ah
+  inc ax
+  mov dx, ax
+  mov cx, ax
   call malloc		; Asignar memoria
   mov di, bx		; Memoria asignada en Destination Index
   mov [ds:bp + SPRITE.gr1], bx		; Memoria asignada en estructura Sprite
@@ -1476,7 +1568,10 @@ inicializaspritegrafico:
   shr ax, cl	; desplazar esa cantidad de bits
   stosb		; Escribir byte
 
-  mov cx, (ALTOSPRITE * ( ANCHOSPRITE / PXB )) - 1
+  mov cx, dx
+  dec cx
+  dec cx
+
   .loopbyte:
   mov bx, cx
   dec si
@@ -1535,10 +1630,15 @@ section .data
   playersprite:
     istruc SPRITEPHYS
     at SPRITE.frame, dw playerframe
+    at SPRITE.control, dw kbcontrolfunc
+    at SPRITE.ctrlcoll, dw 0
+    at SPRITE.iavars, dw 0
     at SPRITE.x, dw 120d
     at SPRITE.y, dw 16d
     at SPRITE.nx, dw 0
     at SPRITE.ny, dw 0
+    at SPRITE.h, dw 32
+    at SPRITE.w, dw 8
     at SPRITE.next, dw playersprite2
     at SPRITE.gr0, dw spritemonigote
     at SPRITE.gr1, dw 0
@@ -1549,12 +1649,17 @@ section .data
   playersprite2:
     istruc SPRITEPHYS
     at SPRITE.frame, dw playerframe
+    at SPRITE.control, dw iabasiccontrol
+    at SPRITE.ctrlcoll, dw iabasiccoll
+    at SPRITE.iavars, dw LEFT
     at SPRITE.x, dw 40d
-    at SPRITE.y, dw 20d
+    at SPRITE.y, dw 40d
     at SPRITE.nx, dw 0
     at SPRITE.ny, dw 0
+    at SPRITE.h, dw 16
+    at SPRITE.w, dw 8
     at SPRITE.next, dw 0
-    at SPRITE.gr0, dw spritemona
+    at SPRITE.gr0, dw monochico
     at SPRITE.gr1, dw 0
     at SPRITEPHYS.vuelox, dw 0
     at SPRITEPHYS.deltay,dw 0
@@ -1585,10 +1690,10 @@ map1:
   db 2, 3, 4, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
   db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 6, 0, 0, 0
   db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-  db 0, 0, 0, 0, 0, 0, 0, 5, 6, 0, 0, 6, 0, 0, 0, 0, 0, 0, 2, 3
-  db 0, 0, 0, 0, 0, 0, 2, 5, 4, 0, 0, 5, 6, 0, 0, 0, 0, 0, 0, 0
-  db 0, 0, 0, 0, 0, 3, 1, 2, 6, 0, 0, 6, 1, 2, 0, 0, 0, 0, 0, 0
-  db 1, 2, 3, 4, 5, 4, 4, 5, 5, 4, 4, 1, 1, 2, 3, 4, 5, 5, 4, 4
+  db 0, 0, 0, 0, 0, 0, 0, 6, 6, 0, 0, 6, 0, 0, 0, 0, 0, 0, 2, 3
+  db 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 6, 0, 0, 0, 0, 0, 0, 0
+  db 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 1, 2, 0, 0, 0, 0, 0, 0
+  db 1, 4, 5, 4, 5, 4, 4, 5, 5, 4, 4, 1, 1, 2, 3, 4, 5, 5, 4, 4
 
 
 colorbackground: db 77h
@@ -1603,6 +1708,8 @@ incbin	"mono-alto-8x32.bin",0,128
 spritemona:
 incbin	"mona-alta-8x32.bin",0,128
 
+monochico:
+incbin "mono-comp-8x16.bin", 0, 64
 
 spritepelota:
   db 00000000b, 00000000b, 00000000b, 00000000b
