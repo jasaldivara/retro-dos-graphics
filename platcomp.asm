@@ -53,7 +53,8 @@ CPU 8086
   struc SPRITE
 
     .frame:	resw 1	; Pointer to function defining per frame logic
-    .control:	resw 1  ; Pointer to control structure. Could be keyboard or joystick player, or A.I.
+    .control:	resw 1  ; Pointer to control function. Could be keyboard or joystick player, or A.I.
+    .iavars	resw 1	; I.A. reserved variables.
     .x		resw 1
     .y		resw 1
     .nx		resw 1
@@ -73,12 +74,6 @@ CPU 8086
     .vuelox:	resw 1
     .deltay:	resw 1
     .parado:	resw 1
-
-  endstruc
-
-  struc CONTROL
-
-    .funccontrol:	resw 1	; Puntero a funcion control. Devuelve en AL direcciones y acciones a ejecutar
 
   endstruc
 
@@ -195,7 +190,7 @@ start:
   mov bx, [ds:bp + SPRITE.control]
   test bx, bx
   jz .fincontrol
-  call [cs:bx + CONTROL.funccontrol]
+  call bx
   .fincontrol:
   call [ds:bp + SPRITE.frame]
   call spritecollisions
@@ -1602,14 +1597,10 @@ section .data
   paleta:
   db 1
 
-  kbplayercontrol:
-    istruc CONTROL
-    at CONTROL.funccontrol, dw kbcontrolfunc
-
   playersprite:
     istruc SPRITEPHYS
     at SPRITE.frame, dw playerframe
-    at SPRITE.control, dw kbplayercontrol
+    at SPRITE.control, dw kbcontrolfunc
     at SPRITE.x, dw 120d
     at SPRITE.y, dw 16d
     at SPRITE.nx, dw 0
