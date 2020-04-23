@@ -54,6 +54,7 @@ CPU 8086
 
     .frame:	resw 1	; Pointer to function defining per frame logic
     .control:	resw 1  ; Pointer to control function. Could be keyboard or joystick player, or A.I.
+    .ctrlcoll:	resw 1	; Pointer to controll collision event. Called when the sprite have a collision.
     .iavars	resw 1	; I.A. reserved variables.
     .x		resw 1
     .y		resw 1
@@ -630,6 +631,19 @@ iabasiccontrol:
   mov al, [ds:bp + SPRITE.iavars]
 ret
 
+iabasiccoll:
+  test al, LEFT
+  jz .sig1
+  mov byte [ds:bp + SPRITE.iavars], RIGHT
+  .sig1:
+  test al, RIGHT
+  jz .sig2
+  mov byte [ds:bp + SPRITE.iavars], LEFT
+  .sig2:
+  ret
+  
+  
+
 
 spritecollisions:
   ; parametros:
@@ -788,6 +802,12 @@ spritecollisions:
   neg dx
   sar dx, 1
   mov word [ds:bp + SPRITEPHYS.vuelox], dx
+  ; Llamar evento colision
+  mov bx, [ds:bp + SPRITE.ctrlcoll]
+  test bx, bx
+  jz .fin
+  mov al, RIGHT
+  call bx
 
   jmp .fin
 
@@ -839,6 +859,13 @@ spritecollisions:
   ; neg dx
   ;sar dx, 1
   ; mov word [ds:bp + SPRITEPHYS.vuelox], dx
+
+  ; Llamar evento colision
+  mov bx, [ds:bp + SPRITE.ctrlcoll]
+  test bx, bx
+  jz .fin
+  mov al, LEFT
+  call bx
 
   .fin:
   ret
@@ -1606,6 +1633,7 @@ section .data
     istruc SPRITEPHYS
     at SPRITE.frame, dw playerframe
     at SPRITE.control, dw kbcontrolfunc
+    at SPRITE.ctrlcoll, dw 0
     at SPRITE.iavars, dw 0
     at SPRITE.x, dw 120d
     at SPRITE.y, dw 16d
@@ -1624,7 +1652,8 @@ section .data
     istruc SPRITEPHYS
     at SPRITE.frame, dw playerframe
     at SPRITE.control, dw iabasiccontrol
-    at SPRITE.iavars, dw LEFT
+    at SPRITE.ctrlcoll, dw iabasiccoll
+    at SPRITE.iavars, dw RIGHT
     at SPRITE.x, dw 40d
     at SPRITE.y, dw 40d
     at SPRITE.nx, dw 0
@@ -1664,8 +1693,8 @@ map1:
   db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 6, 0, 0, 0
   db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
   db 0, 0, 0, 0, 0, 0, 0, 5, 6, 0, 0, 6, 0, 0, 0, 0, 0, 0, 2, 3
-  db 0, 0, 0, 0, 0, 0, 2, 5, 4, 0, 0, 5, 6, 0, 0, 0, 0, 0, 0, 0
-  db 0, 0, 0, 0, 0, 3, 1, 2, 6, 0, 0, 6, 1, 2, 0, 0, 0, 0, 0, 0
+  db 3, 0, 0, 0, 0, 0, 0, 5, 4, 0, 0, 5, 6, 0, 0, 0, 0, 0, 0, 0
+  db 2, 0, 0, 0, 0, 0, 0, 2, 6, 0, 0, 6, 1, 2, 0, 0, 0, 0, 0, 0
   db 1, 2, 3, 4, 5, 4, 4, 5, 5, 4, 4, 1, 1, 2, 3, 4, 5, 5, 4, 4
 
 
