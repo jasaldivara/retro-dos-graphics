@@ -688,24 +688,23 @@ spritecollisions:
   inc bh
   .loopnivelabajo:
   mov al, bh	; multiplicar nivel del tile Y
-  mov cl, MAPWIDTH
-  mul cl
-  xor dx, dx
-  mov dl, [ds:bp + SPRITE.nx]
-  NXT dl
-  mov cx, di
-  mov si, cx
+  mov ah, MAPWIDTH
+  mul ah
+  ; xor dx, dx
+  mov dx, [ds:bp + SPRITE.nx]
+  NXT dx
+  mov si, di 
   add ax, dx
   add si, ax
-  mov dh, [ds:bp + SPRITE.nx]
-  add dh, ANCHOSPRITE - 1
-  NXT dh
+  mov cx, [ds:bp + SPRITE.nx]
+  add cx, ANCHOSPRITE - 1
+  NXT cx
   .looptileabajo:
   lodsb
   test al, al
   jnz .colabajo
-  inc dl
-  cmp dh, dl
+  inc dx
+  cmp cx, dx
   jge .looptileabajo
   inc bh	; siguiente renglon/nivel
   cmp bh, bl
@@ -730,24 +729,23 @@ spritecollisions:
   dec bh
   .loopnivelarriba:
   mov al, bh	; Multiplicar nivel de tile Y
-  mov cl, MAPWIDTH
-  mul cl
-  xor dx, dx
-  mov dl, [ds:bp + SPRITE.nx]
-  NXT dl
-  mov cx, di
-  mov si, cx
+  mov ah, MAPWIDTH
+  mul ah
+  ; xor dx, dx
+  mov dx, [ds:bp + SPRITE.nx]
+  NXT dx
+  mov si, di
   add ax, dx
   add si, ax
-  mov dh, [ds:bp + SPRITE.nx]
-  add dh, ANCHOSPRITE - 1
-  NXT dh
+  mov cx, [ds:bp + SPRITE.nx]
+  add cx, ANCHOSPRITE - 1
+  NXT cx
   .looptilearriba:
   lodsb
   test al, al
   jnz .colarriba
-  inc dl
-  cmp dh, dl
+  inc dx
+  cmp cx, dx
   jge .looptilearriba
   dec bh	; renglon / nivel arriba
   cmp bh, bl
