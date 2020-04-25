@@ -9,6 +9,7 @@ CPU 8086
   %define WIDTHPX 160d
   %define HEIGHTPX 200d
   %define PXB 2   ; Pixeles por byte
+  %define BYTESPERHSCROLL 2	; Bytes que se desplazan cada vez que se hace scroll horizontal
   %assign BYTESPERSCAN (WIDTHPX / PXB)
 
   %define MEMCGAEVEN 0xB800
@@ -35,6 +36,8 @@ CPU 8086
 
   %define BWSPRITE ( ANCHOSPRITE / PXB )  ; Ancho de Sprite en Bytes
   %define SPRITESUB	4		; Number of reserved memory words for Sprite subclasess
+  %define HSCROLLSPERTILE ( ANCHOTILE / PXB * BYTESPERHSCROLL )
+
 
   ; Direcciones
   ; Para controles y detección de colisiones
@@ -236,17 +239,89 @@ start:
   mov al, [tecla_down] ; Revisar si está presionada tecla abajo para hacer scroll
   test al, al
   jz .noscroll
-  inc byte [hscroll]
+  call scrollright
+  .noscroll:
+
+  ; repetir ciclo
+  jmp frame
+
+scrollright:
+
+  mov si, map1
+
+  ; 1.- Dibujar extremo derecho de la pantalla
+  mov bx, [hscroll]
+  mov dx, bx
+  
+  %rep ilog2e( HSCROLLSPERTILE )
+  shr dx, 1
+  %endrep
+
+  add dx, MAPSCREENWIDTH	; DX -> Coordenada de tile X a dibujar
+  mov cx, MAPHEIGHT
+  add si, dx	; si => puntero a tile actual en mapa
+  
+  %rep ilog2e( BYTESPERHSCROLL )
+  shl bx, 1
+  %endrep
+  add bx, BYTESPERSCAN
+  mov di, bx
+  
+  .tilerowloop:
+  lodsb
+  mov ah, 64	; TODO: Sustituir con caulculo de tamaño de tile en bytes en preprocesador
+  mul ah
+  push si
+  push cx
+
+  lea si, [tilesgraphics]
+  add si, ax
+  ; drawtile sub
+  mov cx, MEMCGAEVEN
+  mov es, cx
+  ; mov cx, cs
+  ; mov ds, cx
+
+  .draw:
+  mov cx, ( ALTOTILE / 2 ) ; Primero dibujamos mitad de renglones (renglones par de pantalla)
+
+  .scanlineloop:
+  ; mov dx, cx	; respaldar CX
+  ; mov cx,
+  %rep ( BYTESPERHSCROLL / 2 )	; NOTA: Por ahora solo acepta multiplos de 2, por velocidad
+  movsw
+  %endrep
+  add di, BYTESPERSCAN - BYTESPERHSCROLL 
+  add si, ( ANCHOTILE / PXB ) + ( ( ANCHOTILE / PXB ) - BYTESPERHSCROLL )
+  loop .scanlineloop
+  
+
+  mov cx, es
+  cmp cx, MEMCGAODD
+  je .sigtile
+
+  mov cx, MEMCGAODD
+  mov es, cx
+  sub di, BYTESPERSCAN * ( ALTOTILE / 2 )
+  sub si, ( ( ANCHOTILE / PXB ) * ( ALTOTILE - 1 ) ) + ( ( ANCHOTILE / PXB ) - BYTESPERHSCROLL )
+  jmp .draw
+
+  .sigtile:
+  pop cx
+  pop si
+  add si, MAPWIDTH - 1
+  loop .tilerowloop
+  
+  
+  ; Hacer el scroll por harware
+  inc word [hscroll]
   mov dx, 03d4h
   mov al, 0dh
   out dx, al
   mov al, [hscroll]
   mov dx, 03d5h
   out dx, al
-  .noscroll:
-
-  ; repetir ciclo
-  jmp frame
+ret
 
 videomenu:
 
@@ -1614,7 +1689,7 @@ section .data
   kb_int_old_off: dw  0
   kb_int_old_seg: dw  0
 
-  hscroll: db 1
+  hscroll: dw 0
 
   ; Estado de las teclas:
   tecla_esc: db 0
@@ -1683,7 +1758,7 @@ section .data
 map1:
 
 
-  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
   db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
   db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 0, 0, 0, 0, 0
   db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
