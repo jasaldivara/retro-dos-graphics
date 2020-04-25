@@ -219,7 +219,7 @@ start:
   VSync
 
   SPRITELOOP
-  call borraspritemov
+  call borrasprite16
   SPRITELOOPEND
 
   SPRITELOOP
