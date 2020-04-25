@@ -760,59 +760,53 @@ spritecollisions:
   mov word [ds:bp + SPRITEPHYS.deltay], 0
 
   .horizontal:
-  mov bh, [ds:bp + SPRITE.x]
-  mov bl, [ds:bp + SPRITE.nx]
-  cmp bh, bl
+  mov bx, [ds:bp + SPRITE.x]
+  mov dx, [ds:bp + SPRITE.nx]
+  cmp bx, dx
   je .fin
   ja .movizquierda
   .movderecha:
-  add bh, ANCHOSPRITE - 1
-  add bl, ANCHOSPRITE - 1
-  NXT bh
-  NXT bl
-  cmp bh, bl
+  add bx, ANCHOSPRITE - 1
+  add dx, ANCHOSPRITE - 1
+  NXT bx
+  NXT dx
+  cmp bx, dx
   jge .fin
-  inc bh
+  inc bx
   .loopnivelderecha:
   ; Calcular SI
   mov al, [ds:bp + SPRITE.ny]
   NYT al
   mov ah, MAPWIDTH
   mul ah
-  xor dx, dx
-  mov dl, bh
-  add ax, dx
-  mov cx, di
-  mov si, cx
+  ; xor dx, dx
+  add ax, bx
+  mov si, di
   add si, ax
-  mov dl, [ds:bp + SPRITE.ny]
-  mov dh, dl
-  add dh, [ds:bp + SPRITE.h]
-  dec dh
-  NYT dl
-  NYT dh
+  mov cl, [ds:bp + SPRITE.ny]
+  mov ch, cl
+  add ch, [ds:bp + SPRITE.h]
+  dec ch
+  NYT cl
+  NYT ch
   .looptilederecha:
   lodsb
   test al, al
   jnz .colderecha
   add si, MAPWIDTH - 1
-  inc dl
-  cmp dh, dl
+  inc cl
+  cmp ch, cl
   jge .looptilederecha
-  inc bh
-  cmp bh, bl
+  inc bx
+  cmp bx, dx
   jle .loopnivelderecha
   jmp .fin
 
   .colderecha:
-  PXT bh
-  sub bh, ANCHOSPRITE
-  mov [ds:bp + SPRITE.nx], bh
-  ; mov word [ds:bp + SPRITEPHYS.vuelox], 0
-  mov word dx, [ds:bp + SPRITEPHYS.vuelox]
-  neg dx
-  sar dx, 1
-  mov word [ds:bp + SPRITEPHYS.vuelox], dx
+  PXT bx
+  sub bx, ANCHOSPRITE
+  mov [ds:bp + SPRITE.nx], bx
+  mov word [ds:bp + SPRITEPHYS.vuelox], 0
   ; Llamar evento colision
   mov bx, [ds:bp + SPRITE.ctrlcoll]
   test bx, bx
@@ -823,52 +817,45 @@ spritecollisions:
   jmp .fin
 
   .movizquierda:
-  NXT bh
-  NXT bl
-  cmp bh, bl
+  NXT bx
+  NXT dx
+  cmp bx, dx
   jle .fin
-  dec bh
+  dec bx
   .loopnivelizquierda:
   ; Calcular SI
   mov al, [ds:bp + SPRITE.ny]
   NYT al
   mov ah, MAPWIDTH
   mul ah
-  xor dx, dx
-  mov dl, bh
-  add ax, dx
-  mov cx, di
-  mov si, cx
+  add ax, bx
+  mov si, di
   add si, ax
-  mov dl, [ds:bp + SPRITE.ny]
-  mov dh, dl
-  add dh, [ds:bp + SPRITE.h]
-  dec dh
-  NYT dl
-  NYT dh
+  mov cl, [ds:bp + SPRITE.ny]
+  mov ch, cl
+  add ch, [ds:bp + SPRITE.h]
+  dec ch
+  NYT cl
+  NYT ch
   .looptileizquierda:
   lodsb
   test al, al
   jnz .colizquierda
   add si, MAPWIDTH - 1
-  inc dl
-  cmp dh, dl
+  inc cl
+  cmp ch, cl
   jge .looptileizquierda
-  dec bh
-  cmp bh, bl
+  dec bx
+  cmp bx, dx
   jge .loopnivelizquierda
   jmp .fin
 
   .colizquierda:
   ; jmp .fin
-  PXT bh
-  add bh, ANCHOTILE
-  mov [ds:bp + SPRITE.nx], bh
+  PXT bx
+  add bx, ANCHOTILE
+  mov [ds:bp + SPRITE.nx], bx
   mov word [ds:bp + SPRITEPHYS.vuelox], 0
-  ; mov word dx, [ds:bp + SPRITEPHYS.vuelox]
-  ; neg dx
-  ;sar dx, 1
-  ; mov word [ds:bp + SPRITEPHYS.vuelox], dx
 
   ; Llamar evento colision
   mov bx, [ds:bp + SPRITE.ctrlcoll]
