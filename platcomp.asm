@@ -121,15 +121,33 @@ CPU 8086
   ; NYT: Nivel de tile vertical
   ; Calcula el nivel vertical en tiles al que pertenece una coordenada Y en pixeles
   %macro NYT 1
-  mov cl, ilog2e( ALTOTILE )
-  shr %1, cl
+  %rep ilog2e( ALTOTILE )
+  shr %1, 1
+  %endrep
   %endmacro
 
-  ; NYT: Nivel de tile horizontal
+  ; NXT: Nivel de tile horizontal
   ; Calcula el nivel horizontal en tiles al que pertenece una coordenada X en pixeles
   %macro NXT 1
-  mov cl, ilog2e( ANCHOTILE )
-  shr %1, cl
+  %rep ilog2e( ANCHOTILE )
+  shr %1, 1
+  %endrep
+  %endmacro
+
+  ; PYT: Pixel de tile vertical
+  ; Calcula la coordenada Y en pixeles a la que corresponde un nivel Y de Tiles
+  %macro PYT 1
+  %rep ilog2e( ALTOTILE )
+  shl %1, 1
+  %endrep
+  %endmacro
+
+  ; PXT: Nivel de tile horizontal
+  ; Calcula la coordenada X en pixeles a la que corresponde un nivel X de Tiles
+  %macro PXT 1
+  %rep ilog2e( ANCHOTILE )
+  shl %1, 1
+  %endrep
   %endmacro
 
   ; SPRITELOOP: Recorrer lista de Sprites
@@ -931,8 +949,7 @@ spritecollisions:
 
   jmp .horizontal
   .colabajo:
-  mov cl, ( ilog2e( ALTOTILE ) )
-  shl bh, cl
+  PYT bh
   sub bh, [ds:bp + SPRITE.h]
   mov [ds:bp + SPRITE.ny], bh
   mov byte [ds:bp + SPRITEPHYS.parado], JUMPFRAMES
@@ -975,8 +992,7 @@ spritecollisions:
   jmp .horizontal
 
   .colarriba:
-  mov cl, ( ilog2e( ALTOTILE ) )
-  shl bh, cl
+  PYT bh
   add bh, ALTOTILE
   mov [ds:bp + SPRITE.ny], bh
   ; mov byte [ds:bp + SPRITEPHYS.parado], 0
@@ -1029,8 +1045,7 @@ spritecollisions:
   jmp .fin
 
   .colderecha:
-  mov cl, ( ilog2e( ANCHOTILE ) )
-  shl bh, cl
+  PXT bh
   sub bh, ANCHOSPRITE
   mov [ds:bp + SPRITE.nx], bh
   ; mov word [ds:bp + SPRITEPHYS.vuelox], 0
@@ -1086,8 +1101,7 @@ spritecollisions:
 
   .colizquierda:
   ; jmp .fin
-  mov cl, ( ilog2e( ANCHOTILE ) )
-  shl bh, cl
+  PXT bh
   add bh, ANCHOTILE
   mov [ds:bp + SPRITE.nx], bh
   mov word [ds:bp + SPRITEPHYS.vuelox], 0
