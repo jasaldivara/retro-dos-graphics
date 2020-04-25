@@ -36,7 +36,7 @@ CPU 8086
 
   %define BWSPRITE ( ANCHOSPRITE / PXB )  ; Ancho de Sprite en Bytes
   %define SPRITESUB	4		; Number of reserved memory words for Sprite subclasess
-  %define HSCROLLSPERTILE ( ANCHOTILE / PXB * BYTESPERHSCROLL )
+  %define HSCROLLSPERTILE ( ANCHOTILE / ( PXB * BYTESPERHSCROLL ) )
 
 
   ; Direcciones
