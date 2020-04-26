@@ -662,10 +662,10 @@ playerframe:
 
   ; 1.1.- revisar que no se salga
 
-  ;cmp bx, WIDTHPX - ANCHOSPRITE
-  ;jng .sig3
-  ;mov bx, WIDTHPX - ANCHOSPRITE
-  ;mov word [ds:bp + SPRITEPHYS.vuelox], 0
+  cmp bx, ( MAPWIDTH * ANCHOTILE ) - ANCHOSPRITE
+  jng .sig3
+  mov bx, ( MAPWIDTH * ANCHOTILE ) - ANCHOSPRITE
+  mov word [ds:bp + SPRITEPHYS.vuelox], 0
   .sig3:
   cmp bx, 0
   jnl .sig4
