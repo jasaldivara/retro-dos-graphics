@@ -276,6 +276,14 @@ scrollright:
   mov cx, MAPHEIGHT
   add si, dx	; si => puntero a tile actual en mapa
   
+  mov ax, bx
+  and ax, 1	; TODO: cambiar para que funcione para distintos valoes de HSCROLLSPERTILE
+  mov ah, BYTESPERHSCROLL
+  mul ah
+  mov dx, tilesgraphics
+  add dx, ax
+
+
   %rep ilog2e( BYTESPERHSCROLL )
   shl bx, 1
   %endrep
@@ -291,7 +299,8 @@ scrollright:
   push si
   push cx
 
-  lea si, [tilesgraphics]
+  ; lea si, [tilesgraphics]
+  mov si, dx
   add si, ax
   ; drawtile sub
   mov cx, MEMCGAEVEN
