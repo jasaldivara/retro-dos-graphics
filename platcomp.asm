@@ -282,6 +282,8 @@ scrollright:
   add bx, BYTESPERSCAN
   mov di, bx
   
+  ; VSync
+
   .tilerowloop:
   lodsb
   mov ah, 64	; TODO: Sustituir con caulculo de tamaño de tile en bytes en preprocesador
@@ -318,7 +320,7 @@ scrollright:
   mov cx, MEMCGAODD
   mov es, cx
   sub di, BYTESPERSCAN * ( ALTOTILE / 2 )
-  sub si, ( ( ANCHOTILE / PXB ) * ( ALTOTILE - 1 ) ) + ( ( ANCHOTILE / PXB ) - BYTESPERHSCROLL )
+  sub si, ( ( ANCHOTILE / PXB ) * ( ALTOTILE - 1 ) )
   jmp .draw
 
   .sigtile:
