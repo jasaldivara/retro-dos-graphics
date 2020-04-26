@@ -38,6 +38,7 @@ CPU 8086
   %define BWSPRITE ( ANCHOSPRITE / PXB )  ; Ancho de Sprite en Bytes
   %define SPRITESUB	4		; Number of reserved memory words for Sprite subclasess
   %define HSCROLLSPERTILE ( ANCHOTILE / ( PXB * BYTESPERHSCROLL ) )
+  %define MAXHSCROLL ( ( MAPWIDTH - MAPSCREENWIDTH ) * HSCROLLSPERTILE )
 
 
   ; Direcciones
@@ -243,14 +244,16 @@ start:
   call scrollright
   .noscroll:
 
-  mov ax, [playersprite + SPRITE.x]
   mov bx, [hscroll]
+  cmp bx, MAXHSCROLL
+  jge .noscroll2
   %rep ilog2e( BYTESPERHSCROLL * PXB )
   shl bx, 1
   %endrep
   ; neg bx
   add bx, WIDTHPX - SCROLLTHRESHOLD 
   ; mov dx, WIDTHPX - SCROLLTHRESHOLD 
+  mov ax, [playersprite + SPRITE.x]
   cmp ax, bx
   jl .noscroll2
   call scrollright
