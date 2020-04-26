@@ -33,6 +33,7 @@ CPU 8086
   %define MAPWIDTH 40
   %define MAPSCREENWIDTH 20
   %define MAPHEIGHT 12
+  %define SCROLLTHRESHOLD 32
 
   %define BWSPRITE ( ANCHOSPRITE / PXB )  ; Ancho de Sprite en Bytes
   %define SPRITESUB	4		; Number of reserved memory words for Sprite subclasess
@@ -241,6 +242,20 @@ start:
   jz .noscroll
   call scrollright
   .noscroll:
+
+  mov ax, [playersprite + SPRITE.x]
+  mov bx, [hscroll]
+  %rep ilog2e( BYTESPERHSCROLL * PXB )
+  shl bx, 1
+  %endrep
+  ; neg bx
+  add bx, WIDTHPX - SCROLLTHRESHOLD 
+  ; mov dx, WIDTHPX - SCROLLTHRESHOLD 
+  cmp ax, bx
+  jl .noscroll2
+  call scrollright
+  .noscroll2:
+  
 
   ; repetir ciclo
   jmp frame
