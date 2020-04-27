@@ -238,10 +238,18 @@ start:
   call dibujasprite16
   SPRITELOOPEND
 
-  mov al, [tecla_down] ; Revisar si está presionada tecla abajo para hacer scroll
-  test al, al
-  jz .noscroll
-  call scrollright
+  mov bx, [hscroll]
+  cmp bx, 0
+  jle .noscroll
+  %rep ilog2e( BYTESPERHSCROLL * PXB )
+  shl bx, 1
+  %endrep
+  add bx, SCROLLTHRESHOLD
+  mov ax, [playersprite + SPRITE.x]
+  cmp ax, bx
+  jg .noscroll
+  mov cx, 1
+  call doscroll
   .noscroll:
 
   mov bx, [hscroll]
@@ -256,45 +264,61 @@ start:
   mov ax, [playersprite + SPRITE.x]
   cmp ax, bx
   jl .noscroll2
-  call scrollright
+  mov cx, 0
+  call doscroll
   .noscroll2:
   
 
   ; repetir ciclo
   jmp frame
 
-scrollright:
+doscroll:
+  ; CX: Direccion de scroll
+  ; 1 => izquierda
+  ; 0 => derecha
 
   mov si, map1
 
   ; 1.- Dibujar extremo derecho de la pantalla
   mov bx, [hscroll]
   mov dx, bx
+  mov ax, bx
   
   %rep ilog2e( HSCROLLSPERTILE )
   shr dx, 1
   %endrep
 
+  %rep ilog2e( BYTESPERHSCROLL )
+  shl bx, 1
+  %endrep
+  
+  test cx, cx
+  jnz .movleft
+  .movright:
   add dx, MAPSCREENWIDTH	; DX -> Coordenada de tile X a dibujar
-  mov cx, MAPHEIGHT
+
+  add bx, BYTESPERSCAN
+  inc word [hscroll]
+  jmp .sig1
+  .movleft:
+  dec dx
+  sub bx, ( ANCHOTILE / PXB )
+  dec word [hscroll]
+  .sig1:
+  mov di, bx
   add si, dx	; si => puntero a tile actual en mapa
   
-  mov ax, bx
   and ax, 1	; TODO: cambiar para que funcione para distintos valoes de HSCROLLSPERTILE
   mov ah, BYTESPERHSCROLL
   mul ah
   mov dx, tilesgraphics
-  add dx, ax
+  add dx, ax	; DX => Iniciio de Tilesgraphics + Desplazamiento intra-tile
 
 
-  %rep ilog2e( BYTESPERHSCROLL )
-  shl bx, 1
-  %endrep
-  add bx, BYTESPERSCAN
-  mov di, bx
   
   ; VSync
 
+  mov cx, MAPHEIGHT
   .tilerowloop:
   lodsb
   mov ah, 64	; TODO: Sustituir con caulculo de tamaño de tile en bytes en preprocesador
@@ -343,7 +367,6 @@ scrollright:
   
   
   ; Hacer el scroll por harware
-  inc word [hscroll]
   mov dx, 03d4h
   mov al, 0dh
   out dx, al
@@ -1789,16 +1812,16 @@ map1:
 
   db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
   db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 0, 0, 0, 0, 0
+  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
   db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0
+  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 6, 0, 0
   db 2, 3, 4, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 3, 4, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 6, 0, 0, 0
-  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-  db 0, 0, 0, 0, 0, 0, 0, 6, 6, 0, 0, 6, 0, 0, 0, 0, 0, 0, 2, 3, 0, 0, 0, 0, 0, 0, 0, 6, 6, 0, 0, 6, 0, 0, 0, 0, 0, 0, 2, 3
-  db 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 6, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 6, 0, 0, 0, 0, 0, 0, 0
-  db 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 1, 2, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 1, 2, 0, 0, 0, 0, 0, 0
-  db 1, 4, 5, 4, 5, 4, 4, 5, 5, 4, 4, 1, 1, 2, 3, 4, 5, 5, 4, 4, 1, 4, 5, 4, 5, 4, 4, 5, 5, 4, 4, 1, 1, 2, 3, 4, 5, 5, 4, 4
+  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0
+  db 0, 0, 0, 0, 0, 0, 0, 6, 6, 0, 0, 6, 0, 0, 0, 0, 0, 0, 2, 3, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+  db 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 6, 0, 0, 0, 0, 0, 0, 0, 5, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 6, 0, 0, 0, 0, 0, 0, 0
+  db 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 1, 2, 0, 0, 0, 0, 0, 0, 4, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 1, 2, 0, 0, 0, 0, 0, 0
+  db 1, 4, 5, 4, 5, 4, 4, 5, 5, 4, 4, 1, 1, 2, 3, 4, 5, 5, 4, 4, 1, 4, 5, 4, 5, 4, 4, 2, 2, 2, 4, 1, 1, 2, 3, 4, 5, 5, 4, 4
 
 
 colorbackground: db 77h
