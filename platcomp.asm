@@ -279,41 +279,38 @@ doscroll:
 
   mov si, map1
 
-  ; 1.- Dibujar extremo derecho de la pantalla
-  mov bx, [hscroll]
-  mov dx, bx
-  mov ax, bx
-  
-  %rep ilog2e( HSCROLLSPERTILE )
-  shr dx, 1
-  %endrep
-
-  %rep ilog2e( BYTESPERHSCROLL )
-  shl bx, 1
-  %endrep
-  
+  mov ax, [hscroll]
   test cx, cx
-  jnz .movleft
-  .movright:
-  add dx, MAPSCREENWIDTH	; DX -> Coordenada de tile X a dibujar
+  jnz .mleft
+  .mright:
+  mov bx, ( BYTESPERSCAN / BYTESPERHSCROLL )
+  add bx, ax
+  inc ax
+  jmp .sig0
+  .mleft:
+  dec ax
+  mov bx, ax
+  .sig0:
+  mov [hscroll], ax
 
-  add bx, BYTESPERSCAN
-  inc word [hscroll]
-  jmp .sig1
-  .movleft:
-  dec dx
-  sub bx, ( ANCHOTILE / PXB )
-  dec word [hscroll]
-  .sig1:
-  mov di, bx
-  add si, dx	; si => puntero a tile actual en mapa
-  
+  mov ax, bx
+  %rep ilog2e( BYTESPERHSCROLL )
+  shl ax, 1
+  %endrep
+  mov di, ax	; Desplazamiento en memoria de video
+
+  mov ax, bx
+  %rep ilog2e( HSCROLLSPERTILE )
+  shr ax, 1
+  %endrep
+  add si, ax
+
+  mov ax, bx
   and ax, 1	; TODO: cambiar para que funcione para distintos valoes de HSCROLLSPERTILE
   mov ah, BYTESPERHSCROLL
   mul ah
-  mov dx, tilesgraphics
-  add dx, ax	; DX => Iniciio de Tilesgraphics + Desplazamiento intra-tile
-
+  add ax, tilesgraphics
+  mov dx, ax
 
   
   ; VSync
@@ -1814,8 +1811,8 @@ map1:
   db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
   db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
   db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 6, 0, 0
-  db 2, 3, 4, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 3, 4, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 1, 0, 2, 0, 3, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 6, 0, 0
+  db 2, 3, 4, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
   db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
   db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0
   db 0, 0, 0, 0, 0, 0, 0, 6, 6, 0, 0, 6, 0, 0, 0, 0, 0, 0, 2, 3, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
