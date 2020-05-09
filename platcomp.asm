@@ -1752,7 +1752,7 @@ section .data
   paleta:
   db 1
 
-  playersprite:
+  ; playersprite:
     istruc SPRITEPHYS
     at SPRITE.frame, dw playerframe
     at SPRITE.control, dw kbcontrolfunc
@@ -1764,18 +1764,18 @@ section .data
     at SPRITE.ny, dw 0
     at SPRITE.h, dw 32
     at SPRITE.w, dw 8
-    at SPRITE.next, dw playersprite2
+    at SPRITE.next, dw 0
     at SPRITE.gr0, dw spritemonigote
     at SPRITE.gr1, dw 0
     at SPRITEPHYS.vuelox, dw 0
     at SPRITEPHYS.deltay,dw 0
     at SPRITEPHYS.parado,dw 0
 
-  playersprite2:
+  playersprite:
     istruc SPRITEPHYS
     at SPRITE.frame, dw playerframe
-    at SPRITE.control, dw iabasiccontrol
-    at SPRITE.ctrlcoll, dw iabasiccoll
+    at SPRITE.control, dw kbcontrolfunc
+    at SPRITE.ctrlcoll, dw 0
     at SPRITE.iavars, dw LEFT
     at SPRITE.x, dw 40d
     at SPRITE.y, dw 40d
