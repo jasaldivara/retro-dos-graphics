@@ -33,7 +33,7 @@ CPU 8086
   %define MAPWIDTH 40
   %define MAPSCREENWIDTH 20
   %define MAPHEIGHT 12
-  %define SCROLLTHRESHOLD 32
+  %define SCROLLTHRESHOLD 64
 
   %define BWSPRITE ( ANCHOSPRITE / PXB )  ; Ancho de Sprite en Bytes
   %define SPRITESUB	4		; Number of reserved memory words for Sprite subclasess
@@ -655,28 +655,51 @@ playerframe:
   jz .sig1
 
   .movizq:
-  mov word [ds:bp + SPRITEPHYS.vuelox], -1
+  ; dec word [ds:bp + SPRITEPHYS.vuelox]
+  mov bx, [ds:bp + SPRITEPHYS.vuelox]
+  dec bx
+  cmp bx, -32
+  jge .nol1
+  mov bx, -32
+  .nol1:
+  mov [ds:bp + SPRITEPHYS.vuelox], bx
   jmp .testright
 
   .sig1:
-  mov word [ds:bp + SPRITEPHYS.vuelox], 0
+  mov bx, [ds:bp + SPRITEPHYS.vuelox]
+  cmp bx, 0
   jnl .testright
+  inc word [ds:bp + SPRITEPHYS.vuelox]
 
   .testright:
   test al, RIGHT
   jz .sig2
 
   .movder:
-  mov word [ds:bp + SPRITEPHYS.vuelox], 1
+  ; inc word [ds:bp + SPRITEPHYS.vuelox]
+  mov bx, [ds:bp + SPRITEPHYS.vuelox]
+  inc bx
+  cmp bx, 32
+  jle .nol2
+  mov bx, 32
+  .nol2:
+  mov [ds:bp + SPRITEPHYS.vuelox], bx
+  jmp .calcx
 
   .sig2:
-
+  mov bx, [ds:bp + SPRITEPHYS.vuelox]
+  cmp bx, 0
+  jng .calcx
+  dec word [ds:bp + SPRITEPHYS.vuelox]
 
 
   .calcx:    ; 2.- calcular x
 
   mov bx, [ds:bp + SPRITE.x]
   mov dx, [ds:bp + SPRITEPHYS.vuelox]
+  sar dx, 1
+  sar dx, 1
+  sar dx, 1
 
   add bx, dx
 
@@ -1815,9 +1838,9 @@ map1:
   db 2, 3, 4, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
   db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
   db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0
-  db 0, 0, 0, 0, 0, 0, 0, 6, 6, 0, 0, 6, 0, 0, 0, 0, 0, 0, 2, 3, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-  db 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 6, 0, 0, 0, 0, 0, 0, 0, 5, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 6, 0, 0, 0, 0, 0, 0, 0
-  db 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 1, 2, 0, 0, 0, 0, 0, 0, 4, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 1, 2, 0, 0, 0, 0, 0, 0
+  db 0, 0, 0, 0, 0, 0, 0, 6, 6, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+  db 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 6, 0, 0, 0, 0, 0, 0, 0
+  db 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 1, 2, 0, 0, 0, 0, 0, 0
   db 1, 4, 5, 4, 5, 4, 4, 5, 5, 4, 4, 1, 1, 2, 3, 4, 5, 5, 4, 4, 1, 4, 5, 4, 5, 4, 4, 2, 2, 2, 4, 1, 1, 2, 3, 4, 5, 5, 4, 4
 
 
