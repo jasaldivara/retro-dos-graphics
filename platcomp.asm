@@ -224,7 +224,7 @@ start:
   VSync
 
   SPRITELOOP
-  call borrasprite16
+  call borraspritemov
   SPRITELOOPEND
 
   SPRITELOOP
@@ -1320,12 +1320,12 @@ borraspritemov:
   .initlooprow:
   mov cx, dx
   mov al, [colorbackground]
-  push bx		; TODO ver si podemos optimizar usando ah en lugar de bx y así no hacer push+pop
-  mov bl, BWSPRITE
-  mov byte bh, [ds:bp + SPRITE.x]
-  and bh, 00000001b
-  add bl, bh
-  xor bh, bh
+  mov ah, bl	; respaldar ¿altura de Sprite?
+
+  mov bx, [ds:bp + SPRITE.x]
+  and bx, 00000001b
+  add bx, BWSPRITE
+
   test cx, cx
   jz .finlooprow
   .looprenglon:
@@ -1337,7 +1337,8 @@ borraspritemov:
   sub di, bx
   loop .looprenglon
   .finlooprow:
-  pop bx
+  xor bh, bh
+  mov bl, ah
 
   mov cx, es
   cmp cx, MEMCGAODD
@@ -1804,10 +1805,10 @@ section .data
     at SPRITE.y, dw 40d
     at SPRITE.nx, dw 0
     at SPRITE.ny, dw 0
-    at SPRITE.h, dw 16
+    at SPRITE.h, dw 32
     at SPRITE.w, dw 8
     at SPRITE.next, dw 0
-    at SPRITE.gr0, dw monochico
+    at SPRITE.gr0, dw spritemona
     at SPRITE.gr1, dw 0
     at SPRITEPHYS.vuelox, dw 0
     at SPRITEPHYS.deltay,dw 0
