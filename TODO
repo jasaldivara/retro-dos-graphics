@@ -1,5 +1,13 @@
+Side Scroller:
+
+  Volver a usar funcion de borrado con movimiento (arreglar los bugs)
+
+  Que no se muestren ni procesen los sprites que estén fuera del area visible en pantalla
 
 Inmediatos:
+
+  Reestructurar código para separar motor de juegos, de código específico de
+  cada juego
 
   Trabajar en forma de hacer más lento el movimiento de enemigos
 
@@ -10,8 +18,6 @@ Inmediatos:
     Revisar forma de inicializar sprites para no duplicar gráficos de sprites repetidos
 
     Sprites animados "spritesheets"
-
-  Trabajar en side-scrolling
 
   Que los sprites puedan tener ancho variable
 
