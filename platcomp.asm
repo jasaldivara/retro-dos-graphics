@@ -1371,49 +1371,49 @@ borraspritemov:
 
 
   .checkhorizontal:
-  mov dh, [ds:bp + SPRITE.x]
-  mov dl, [ds:bp + SPRITE.nx]
-  cmp dh, dl
+  mov dx, [ds:bp + SPRITE.x]
+  mov bx, [ds:bp + SPRITE.nx]
+  cmp dx, bx
   je .salir
   ja .mizq
-  .mder:	; dh => c.x = s.x
-  sub dl, dh	; dl => c.w = s.nx - s.x
+  .mder:	; dx => c.x = s.x
+  sub bx, dx	; bx => c.w = s.nx - s.x
   jmp .sig3
   .mizq:
-  xchg dh, dl	; dl => s.x, dh = s.nx
-  sub dl, dh	; dl => c.w = s.x - s.nx
-  add dh, ANCHOSPRITE	; dh => c.x = s.nx + s.w
+  xchg dx, bx	; bx => s.x, dx = s.nx
+  sub bx, dx	; bx => c.w = s.x - s.nx
+  add dx, ANCHOSPRITE	; dh => c.x = s.nx + s.w
   .sig3:
-  ; dh => c.x
-  ; dl => c.w
+  ; dx => c.x
+  ; bx => c.w
 
   ; Calcular movimiento vertical para borrado de seccion horizontal
   mov bh, [ds:bp + SPRITE.h]
   mov al, [ds:bp + SPRITE.y]
-  mov bl, [ds:bp + SPRITE.ny]
-  cmp al, bl
+  mov ah, [ds:bp + SPRITE.ny]
+  cmp al, ah
   jl .mdown
-  xchg al, bl	; al => s.ny, bl => s.y
+  xchg al, ah	; al => s.ny, ah => s.y
   .mdown:
-  mov cl, bl
-  sub bl, al
-  sub bh, bl	; bh => c.h, al => c.y
+  mov cl, ah
+  sub ah, al
+  sub bh, ah	; bh => c.h, al => c.y
   je .salir	; ?? Salir en caso de que sea menor o igual a cero ?
   mov al, cl
   .clearhorizontal:
-  ; dh => c.x
-  ; dl => c.w
+  ; dx => c.x
+  ; bl => c.w
   ; bh => c.h
   ; al => c.y
   
   mov cx, MEMCGAEVEN
   mov es, cx
-  mov bl, al	; bl => c.y
+  mov si, ax	; si => c.y
   shr al, 1	; descartar bit de seleccion de banco
   mov ah, BYTESPERSCAN	; multiplicar por ancho de pantalla en bytes
   mul ah	; ax => desplazamiento en bytes del renglon
-  xor cx, cx
-  mov cl, dh	; cx => c.x
+  ; xor cx, cx
+  mov cx, dx	; cx => c.x
   shr cx, 1	; descartar utlimo bit	(posicion de pixel intra-byte)
   add ax, cx	; ax => Direccion de memoria donde empezamos a borrar
   mov di, ax	; Destination index = posicion inicial a borrar
@@ -1422,30 +1422,30 @@ borraspritemov:
   xor ch, ch
   mov cl, bh	; cx => c.h
   shr cx, 1	; dividir numero de renglones entre dos (para escaneo par)
-  test bl, 00000001b	; ver si coordenada y es par
+  test si, 00000001b	; ver si coordenada y es par
   jz .espar3
   add di, BYTESPERSCAN	; Comenzar en un renglón más abajo en caso de coordenada impar
   jmp .sig4
   .espar3:
-  ; mov al, bh	; al => c.h
-  ; and al, 00000001b
-  ; xor ah, ah
-  ; and cx, ax	; incrementar numero de renglones en escaneo par en caso de que
-  		; renglones totales sea impar y coordenada y par
+  ; incrementar numero de renglones en escaneo par en caso de que renglones
+  ; totales sea impar y coordenada y par
+
   test bh, 00000001b
   jz .sig4
   inc cx
   .sig4:
   .initlooprowh:
-  push bx	; ¿Aun es necesario respaldar estas variables?
-  ; push dx
+  ; push bx	; ¿Aun es necesario respaldar estas variables?
+  push dx
+  push bx
   mov al, [colorbackground]
-  mov ah, dl	; ah => c.w
+  ; mov al, 00
+  mov ah, bl	; ah => c.w
   shr ah, 1	; dividir entre dos pixeles por byte
-  mov bl, dl
-  or bl, dh
-  and bl, 00000001b	; agregar un byte si numero de pixeles es impar
-  add ah, bl	; ah => numero de bytes a escribir horizontalmente
+  mov dh, bl
+  or dh, dl
+  and dh, 00000001b	; agregar un byte si numero de pixeles es impar
+  add ah, dh	; ah => numero de bytes a escribir horizontalmente
   test cx, cx
   jz .finlooprowh
   .looprowh:
@@ -1458,9 +1458,11 @@ borraspritemov:
   mov bl, ah
   sub bx, BYTESPERSCAN
   sub di, bx
+  mov bx, cx
   loop .looprowh
   .finlooprowh:
   pop bx
+  pop dx
 
   mov cx, es
   cmp cx, MEMCGAODD
@@ -1470,12 +1472,12 @@ borraspritemov:
   mov es,cx
 
   ; xor ax, ax
-  mov al, bl	; al => c.y
+  mov ax, si	; al => c.y
   shr al, 1
   mov ah, BYTESPERSCAN
   mul ah	; ax => desplazamiento en bytes del renglon
-  xor cx, cx
-  mov cl, dh	; cx => c.x
+  ; xor cx, cx
+  mov cx, dx	; cx => c.x
   shr cx, 1	; descartar utlimo bit (posicion de pixel intra-byte)
   add ax, cx
   mov di, ax
@@ -1483,7 +1485,7 @@ borraspritemov:
   xor cx, cx
   mov cl, bh	; cx => c.h
   shr cx, 1	; dividir numero de renglones entre dos (para escaneo impar)
-  test bl, 00000001b	; ver si coordenada c.y es impar
+  test si, 00000001b	; ver si coordenada c.y es impar
   jz .espar4
   test bh, 00000001b	; y además altura c.h es impar
   jz .espar4
