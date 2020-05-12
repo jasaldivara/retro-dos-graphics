@@ -1024,7 +1024,16 @@ fin:
   mov     ah,25h
   int     21h
 
-  ; 2 .- Salir al sistema
+  ; 2 .- Restablecer desplazamiento horizontal en registros CGA
+
+  mov dx, 03d4h
+  mov al, 0dh
+  out dx, al
+  mov al, 0
+  mov dx, 03d5h
+  out dx, al
+
+  ; 3 .- Salir al sistema
   int 20h
 
 

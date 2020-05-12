@@ -1,7 +1,5 @@
 Side Scroller:
 
-  Reestablecer desplazamiento de hardware al salir del juego
-
   Optimizar funcion de borrado con movimiento (evitar push y pop?)
 
   Que no se muestren ni procesen los sprites que estén fuera del area visible en pantalla
