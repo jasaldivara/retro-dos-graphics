@@ -858,7 +858,15 @@ fin:
   mov     ah,25h
   int     21h
 
-  ; 2 .- Salir al sistema
+  ; 2 .- Restablecer video modo de texto a color
+
+
+  mov  ah, SETVIDEOMODE   ; Establecer modo de video
+  mov  al, 3      ; CGA Modo texto a color, 80 x 25
+  int  VIDEOBIOS   ; LLamar a la BIOS para servicios de video
+
+
+  ; 3 .- Salir al sistema
   int 20h
 
 
