@@ -917,10 +917,20 @@ dibujasprite16:
   jnz dibujasprite16noalineado
   shr bx, 1
 
-  ; 0.- Respaldar cosas que deberíamos consevar
+  ; 0.- Cargar direccion de mapa de bits
 
-  mov dx, [ds:bp + SPRITE.gr0]
-  mov si, dx  ; Cargar direccion de mapa de bits
+  mov ah, [ds:bp + SPRITE.w]
+  %rep ilog2e( PXB )
+  shr ah, 1
+  %endrep
+  ; mov ah, ( ANCHOSPRITE / PXB )
+  mov al, [ds:bp + SPRITE.ssframe]
+  mul ah
+  mov ah, [ds:bp + SPRITE.h]
+  mul ah
+
+  add ax, [ds:bp + SPRITE.gr0]
+  mov si, ax
 
   ; 1.- Seleccionar banco de memoria
 
@@ -1001,10 +1011,21 @@ dibujasprite16:
 
 dibujasprite16noalineado:
 
-  ; 0.- Respaldar cosas que deberíamos consevar
+  ; 0.- Cargar direccion de mapa de bits
 
-  mov dx, [ds:bp + SPRITE.gr1]	; Usar gráfico con bits previamente recorridos
-  mov si, dx  ; Cargar direccion de mapa de bits
+  mov ah, [ds:bp + SPRITE.w]
+  %rep ilog2e( PXB )
+  shr ah, 1
+  %endrep
+  ; mov ah, ( ANCHOSPRITE / PXB )
+  mov al, [ds:bp + SPRITE.ssframe]
+  mul ah
+  mov ah, [ds:bp + SPRITE.h]
+  mul ah
+
+  add ax, [ds:bp + SPRITE.gr1]
+  mov si, ax
+
 
   ; 1.- Seleccionar banco de memoria
 
@@ -1708,6 +1729,7 @@ section .data
     at SPRITE.w, dw 8
     at SPRITE.next, dw playersprite2
     at SPRITE.spritesheet, dw spritesheetmono1
+    at SPRITE.ssframe, dw 1
     at SPRITEPHYS.vuelox, dw 0
     at SPRITEPHYS.deltay,dw 0
     at SPRITEPHYS.parado,dw 0
