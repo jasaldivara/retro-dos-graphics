@@ -49,6 +49,15 @@ CPU 8086
 
 
 
+  struc SPRITESHEET
+    .framescount:	resw 1	; Cantidad de frames que contiene el sprite
+    .h			resw 1
+    .w			resw 1
+    .gr0:		resw 1
+    .gr1:		resw 1
+    .4colgr:		resw 1
+    .16colgr:		resw 1
+  endstruc
 
   struc SPRITE
 
@@ -63,6 +72,8 @@ CPU 8086
     .h		resw 1
     .w		resw 1
     .next	resw 1	; Pointer to nexts prite in linked list
+    .spritesheet	resw 1	; Pointer to SPRITESHEET structure
+    .ssframe	resw 1	; Frame index in sprite sheet
     .gr0:	resw 1	; Pointer to graphic data
     .gr1:	resw 1	; Pointer to graphic data
     ; .sub	resw SPRITESUB	; Subclass properties
@@ -136,6 +147,26 @@ CPU 8086
 
   %endmacro
 
+  %macro SPRITESHEETLOOP 0
+
+    %push spritesheetloop
+
+    mov cx, [spritesheetscount]
+    mov bp, spritesheetsstrucdata
+    %$begin:
+    push cx
+
+  %endmacro
+
+
+  %macro SPRITESHEETLOOPEND 0
+    pop cx
+    add bp, SPRITESHEET_size
+    loop %$begin
+
+    %pop spritesheetloop
+  %endmacro
+
   org 100h
  
 section .text 
@@ -163,10 +194,14 @@ start:
 
   ; Inicializar gráficos
 
-  SPRITELOOP
+  SPRITESHEETLOOP
   call inicializaspritegrafico
-  SPRITELOOPEND
+  SPRITESHEETLOOPEND
 
+
+  SPRITELOOP
+  call conectaspritegraficos
+  SPRITELOOPEND
 
   ; x .- Draw map
   mov dx, map1
@@ -1533,22 +1568,24 @@ conviertecomposite2tandy:
 
 inicializaspritegrafico:
   ; Parametros:
-  ; BP => sprite
+  ; BP => spritegrafico
 
   mov bx, ds
   mov es, bx
 
-  mov si, [ds:bp + SPRITE.gr0]
+  mov si, [ds:bp + SPRITESHEET.gr0]
 
   mov ah, ( ANCHOSPRITE / PXB )
-  mov al, [ds:bp + SPRITE.h]
+  mov al, [ds:bp + SPRITESHEET.framescount]
   mul ah
+  mov ah, [ds:bp + SPRITESHEET.h]	; Precaución: Estamos asumiendo que
+  mul ah		; resultado de multiplicacion cabe en un solo byte (AL)
   inc ax
   mov dx, ax
   mov cx, ax
   call malloc		; Asignar memoria
   mov di, bx		; Memoria asignada en Destination Index
-  mov [ds:bp + SPRITE.gr1], bx		; Memoria asignada en estructura Sprite
+  mov [ds:bp + SPRITESHEET.gr1], bx		; Memoria asignada en estructura Sprite
 
   .px0:		; guardar el primer pixel con desplazamiento de bits
 
@@ -1582,6 +1619,26 @@ inicializaspritegrafico:
   ret
 
 
+conectaspritegraficos:
+  ; Parametros:
+  ; BP => sprite
+
+  mov bx, [ds:bp + SPRITE.spritesheet]
+
+  mov ax, [bx + SPRITESHEET.gr0]
+  mov [ds:bp + SPRITE.gr0], ax
+
+  mov ax, [bx + SPRITESHEET.gr1]
+  mov [ds:bp + SPRITE.gr1], ax
+
+  mov ax, [bx + SPRITESHEET.h]
+  mov [ds:bp + SPRITE.h], ax
+
+  mov ax, [bx + SPRITESHEET.w]
+  mov [ds:bp + SPRITE.w], ax
+
+
+  ret
 
 section .data
   ; program data
@@ -1615,6 +1672,28 @@ section .data
   paleta:
   db 1
 
+  spritesheetscount:	dw 2
+
+  spritesheetsstrucdata:
+
+  spritesheetmono1:
+    istruc SPRITESHEET
+    at SPRITESHEET.framescount, dw 3
+    at SPRITESHEET.h, dw 32
+    at SPRITESHEET.w, dw 8
+    at SPRITESHEET.gr0, dw spritedatamonigote
+    at SPRITESHEET.4colgr, dw spritedatamonigote
+    at SPRITESHEET.16colgr, dw spritedatamonigote
+
+  spritesheetmonochico:
+    istruc SPRITESHEET
+    at SPRITESHEET.framescount, dw 1
+    at SPRITESHEET.h, dw 16
+    at SPRITESHEET.w, dw 8
+    at SPRITESHEET.gr0, dw spritedatamonochico
+    at SPRITESHEET.4colgr, dw spritedatamonochico
+    at SPRITESHEET.16colgr, dw spritedatamonochico
+
   playersprite:
     istruc SPRITEPHYS
     at SPRITE.frame, dw playerframe
@@ -1628,8 +1707,7 @@ section .data
     at SPRITE.h, dw 32
     at SPRITE.w, dw 8
     at SPRITE.next, dw playersprite2
-    at SPRITE.gr0, dw spritemonigote
-    at SPRITE.gr1, dw 0
+    at SPRITE.spritesheet, dw spritesheetmono1
     at SPRITEPHYS.vuelox, dw 0
     at SPRITEPHYS.deltay,dw 0
     at SPRITEPHYS.parado,dw 0
@@ -1647,8 +1725,7 @@ section .data
     at SPRITE.h, dw 16
     at SPRITE.w, dw 8
     at SPRITE.next, dw 0
-    at SPRITE.gr0, dw monochico
-    at SPRITE.gr1, dw 0
+    at SPRITE.spritesheet, dw spritesheetmonochico
     at SPRITEPHYS.vuelox, dw 0
     at SPRITEPHYS.deltay,dw 0
     at SPRITEPHYS.parado,dw 0
@@ -1657,15 +1734,6 @@ section .data
   dw playersprite
 
 
-; map1:
-
-
-  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-  db 1, 2, 0, 0, 0, 0, 0, 0, 0, 0
-  db 0, 0, 0, 0, 6, 0, 5, 2, 0, 0
-  db 0, 0, 0, 4, 0, 1, 4, 3, 1, 0
-  db 6, 5, 4, 3, 2, 1, 2, 3, 4, 5
 
 map1:
 
@@ -1690,13 +1758,15 @@ colorbackground: db 77h
 align   8,db 0
 
 spritesgraphics:
-spritemonigote:
+spritedatamonigote:
 ;incbin	"mdoble.bin",0,256
-incbin	"mono-alto-8x32.bin",0,128
+incbin	"img/mono-alto-8x32-0.bin",0,128
+incbin	"img/mono-alto-8x32-2.bin",0,128
+incbin	"img/mono-alto-8x32-3.bin",0,128
 spritemona:
 incbin	"mona-alta-8x32.bin",0,128
 
-monochico:
+spritedatamonochico:
 incbin "mono-comp-8x16.bin", 0, 64
 
 spritepelota:
