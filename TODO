@@ -1,7 +1,9 @@
 
 Nuevas características:
 
-  Sprites animados "spritesheets"
+  Mejorar animación de frames de jugador
+
+  Restructurar funciones de frames de sprites
 
   Trabajar en forma de hacer más lento el movimiento de enemigos
 
