@@ -640,7 +640,7 @@ playerframe:
 
   mov dx, [ds:bp + SPRITE.ssframe]
   inc dx
-  cmp dx, 3
+  cmp dx, 8
   jl .sig0
   mov dx, 0
   .sig0:
@@ -671,7 +671,7 @@ playerframe:
 
   mov dx, [ds:bp + SPRITE.ssframe]
   inc dx
-  cmp dx, 3
+  cmp dx, 8
   jl .sig10
   mov dx, 0
   .sig10:
@@ -1843,7 +1843,7 @@ section .data
 
   spritesheetmono1:
     istruc SPRITESHEET
-    at SPRITESHEET.framescount, dw 3
+    at SPRITESHEET.framescount, dw 8
     at SPRITESHEET.h, dw 32
     at SPRITESHEET.w, dw 8
     at SPRITESHEET.gr0, dw spritedatamonigote
@@ -1873,7 +1873,7 @@ section .data
     at SPRITE.w, dw 8
     at SPRITE.next, dw playersprite2
     at SPRITE.spritesheet, dw spritesheetmono1
-    at SPRITE.ssframe, dw 1
+    at SPRITE.ssframe, dw 0
     at SPRITEPHYS.vuelox, dw 0
     at SPRITEPHYS.deltay,dw 0
     at SPRITEPHYS.parado,dw 0
@@ -1925,10 +1925,11 @@ align   8,db 0
 
 spritesgraphics:
 spritedatamonigote:
-;incbin	"mdoble.bin",0,256
-incbin	"img/mono-alto-8x32-0.bin",0,128
-incbin	"img/mono-alto-8x32-2.bin",0,128
-incbin	"img/mono-alto-8x32-3.bin",0,128
+
+incbin	"img/jugador-spritesheet-v.bin",0,1024
+;incbin	"img/mono-alto-8x32-0.bin",0,128
+;incbin	"img/mono-alto-8x32-2.bin",0,128
+;incbin	"img/mono-alto-8x32-3.bin",0,128
 spritemona:
 incbin	"mona-alta-8x32.bin",0,128
 
