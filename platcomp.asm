@@ -294,6 +294,15 @@ videomenu:
   mov ah, SETVIDEOMODE
   mov al, 4
   int VIDEOBIOS
+
+  ; Establecer paleta de colores
+  mov dx, 03D9h
+  mov al, 00011011b
+  out dx, al
+
+  mov byte [colorbackground], 0
+
+
   ret
   .nocga:
 
