@@ -30,7 +30,7 @@ $(BIN)/rebota2.com : rebota-2.asm
 $(BIN)/platform.com : platform.asm
 	$(ASM) $< $(ASMFLAGS) -o $@
 
-$(BIN)/platcomp.com : platcomp.asm img/jugador-spritesheet-v.bin mono-comp-8x16.bin
+$(BIN)/platcomp.com : platcomp.asm img/jugador-spritesheet.bin img/jugador-spritesheet-izq.bin mono-comp-8x16.bin
 	$(ASM) $< $(ASMFLAGS) -o $@
 
 $(BIN)/compcol.com : compcol.asm

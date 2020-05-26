@@ -23,7 +23,7 @@ CPU 8086
   ; Constantes del juego
 
   %define GRAVEDAD 1
-  %define JUMPFRAMES 18
+  %define JUMPFRAMES 14
   %define FUERZASALTO 5
   %define ANCHOSPRITE 8
   ; %define ALTOSPRITE 32
@@ -84,8 +84,18 @@ CPU 8086
 
     .sprite:	resb SPRITE_size
     .vuelox:	resw 1
+    .vxmax:	resw 1
     .deltay:	resw 1
-    .parado:	resw 1
+    .saltoframes:	resb 1
+    .parado:	resb 1
+
+  endstruc
+
+  struc ANIMSPRITEPHYS	; Animated Sprite with Physics
+
+    .sprite:	resb SPRITEPHYS_size
+    .direccion: resb 1
+    .aframecount: resb 1
 
   endstruc
 
@@ -525,7 +535,7 @@ cambiapaleta:
   ret
 
 
-enemigoframe:
+sphysicsframe:
   ; Parametros:
   ; BP => sprite
 
@@ -581,15 +591,24 @@ enemigoframe:
   test al, UP
   jz .calcdy
 
-  mov ax, [ds:bp + SPRITEPHYS.parado] ; Tiene que estar parado para poder saltar
-  test ax, ax
+  ; mov al, [ds:bp + SPRITEPHYS.parado] ; Tiene que estar parado para poder saltar
+  ; test al, al
+  ; jnz .sisaltar
+
+
+  mov ah, [ds:bp + SPRITEPHYS.saltoframes] ; Si no está parado, pero aún tiene fuerza para saltar
+  test ah, ah
   jz .calcdy
 
-  ; Ahora sí: Saltar porque estamos parados y con la tecla saltar presionada
+  .sisaltar:
+  ; Ahora sí: Saltar porque estamos parados o tenemos fuerza para saltar y con la tecla saltar presionada
   mov bx, -FUERZASALTO
   mov [ds:bp + SPRITEPHYS.deltay], bx
   ; mov bx, 0
-  dec byte [ds:bp + SPRITEPHYS.parado]
+  dec ah
+  mov [ds:bp + SPRITEPHYS.saltoframes], ah
+  xor ah, ah
+  mov [ds:bp + SPRITEPHYS.parado], ah
 
 
   .calcdy:  ; 2.- Calcular delta Y
@@ -611,7 +630,7 @@ enemigoframe:
   jng .sig5
   mov ax, dx
   mov bx, 0
-  mov word [ds:bp + SPRITEPHYS.parado], JUMPFRAMES
+  mov byte [ds:bp + SPRITEPHYS.saltoframes], JUMPFRAMES
   .sig5:
   cmp ax, 0
   jnl .sig6
@@ -624,7 +643,56 @@ enemigoframe:
   ; Fin de logica del jugador por frame
   ret
 
+playerframe2:
 
+  xor dx, dx
+  test al, LEFT
+  jz .sig0
+  mov [ds:bp + ANIMSPRITEPHYS.direccion], al
+  inc dl
+  jmp .sig00
+  .sig0:
+  test al, RIGHT
+  jz .sig00
+  mov byte [ds:bp + ANIMSPRITEPHYS.direccion], 0
+  inc dl
+  .sig00:
+
+  xor bx, bx
+  mov ah, [ds:bp + ANIMSPRITEPHYS.direccion]
+
+  test ah, ah
+  jnz .sig1
+  add bh, 9
+  .sig1:
+
+  test al, UP
+  jnz .saltar
+  mov bl, [ds:bp + SPRITEPHYS.parado]
+  test bl, bl
+  jz .saltar
+
+  .nosaltar:
+  test dl, dl
+  jz .dibujar
+  mov dh, [ds:bp + ANIMSPRITEPHYS.aframecount]
+  inc dh
+  cmp dh, 8
+  jl .sig2
+  xor dh, dh
+  .sig2:
+  mov [ds:bp + ANIMSPRITEPHYS.aframecount], dh
+  jmp .dibujar
+
+  .saltar:
+  mov dh, 8
+
+  .dibujar:
+  add bh, dh
+  mov [ds:bp + SPRITE.ssframe], bh	; PRECAUCION: Usando solo 8 bits
+
+  call sphysicsframe
+  ret
 
 playerframe:
   ; Parametros:
@@ -649,7 +717,7 @@ playerframe:
 
   mov dx, [ds:bp + SPRITE.ssframe]
   inc dx
-  cmp dx, 8
+  cmp dx, 18
   jl .sig0
   mov dx, 0
   .sig0:
@@ -680,7 +748,7 @@ playerframe:
 
   mov dx, [ds:bp + SPRITE.ssframe]
   inc dx
-  cmp dx, 8
+  cmp dx, 18
   jl .sig10
   mov dx, 0
   .sig10:
@@ -867,7 +935,8 @@ spritecollisions:
   shl bh, cl
   sub bh, [ds:bp + SPRITE.h]
   mov [ds:bp + SPRITE.ny], bh
-  mov word [ds:bp + SPRITEPHYS.parado], JUMPFRAMES
+  mov byte [ds:bp + SPRITEPHYS.parado], JUMPFRAMES
+  mov byte [ds:bp + SPRITEPHYS.saltoframes], JUMPFRAMES
   mov word [ds:bp + SPRITEPHYS.deltay], 0
   
   jmp .horizontal
@@ -910,7 +979,8 @@ spritecollisions:
   shl bh, cl
   add bh, ALTOTILE
   mov [ds:bp + SPRITE.ny], bh
-  mov word [ds:bp + SPRITEPHYS.parado], 0
+  ; mov byte [ds:bp + SPRITEPHYS.parado], 0
+  mov byte [ds:bp + SPRITEPHYS.saltoframes], 0
   mov word [ds:bp + SPRITEPHYS.deltay], 0
 
   .horizontal:
@@ -1852,7 +1922,7 @@ section .data
 
   spritesheetmono1:
     istruc SPRITESHEET
-    at SPRITESHEET.framescount, dw 8
+    at SPRITESHEET.framescount, dw 18
     at SPRITESHEET.h, dw 32
     at SPRITESHEET.w, dw 8
     at SPRITESHEET.gr0, dw spritedatamonigote
@@ -1869,8 +1939,8 @@ section .data
     at SPRITESHEET.16colgr, dw spritedatamonochico
 
   playersprite:
-    istruc SPRITEPHYS
-    at SPRITE.frame, dw playerframe
+    istruc ANIMSPRITEPHYS
+    at SPRITE.frame, dw playerframe2
     at SPRITE.control, dw kbcontrolfunc
     at SPRITE.ctrlcoll, dw 0
     at SPRITE.iavars, dw 0
@@ -1884,12 +1954,15 @@ section .data
     at SPRITE.spritesheet, dw spritesheetmono1
     at SPRITE.ssframe, dw 0
     at SPRITEPHYS.vuelox, dw 0
-    at SPRITEPHYS.deltay,dw 0
-    at SPRITEPHYS.parado,dw 0
+    at SPRITEPHYS.deltay, dw 0
+    at SPRITEPHYS.saltoframes, db 0
+    at SPRITEPHYS.parado, db 0
+    at ANIMSPRITEPHYS.direccion, db 0
+    at ANIMSPRITEPHYS.aframecount, db 0
 
   playersprite2:
     istruc SPRITEPHYS
-    at SPRITE.frame, dw enemigoframe
+    at SPRITE.frame, dw sphysicsframe
     at SPRITE.control, dw iabasiccontrol
     at SPRITE.ctrlcoll, dw iabasiccoll
     at SPRITE.iavars, dw LEFT
@@ -1902,8 +1975,9 @@ section .data
     at SPRITE.next, dw 0
     at SPRITE.spritesheet, dw spritesheetmonochico
     at SPRITEPHYS.vuelox, dw 0
-    at SPRITEPHYS.deltay,dw 0
-    at SPRITEPHYS.parado,dw 0
+    at SPRITEPHYS.deltay, dw 0
+    at SPRITEPHYS.saltoframes, db 0
+    at SPRITEPHYS.parado, db 0
 
   firstsprite:
   dw playersprite
@@ -1935,7 +2009,8 @@ align   8,db 0
 spritesgraphics:
 spritedatamonigote:
 
-incbin	"img/jugador-spritesheet-v.bin",0,1024
+incbin	"img/jugador-spritesheet-izq.bin",0,1152
+incbin	"img/jugador-spritesheet.bin",0,1152
 ;incbin	"img/mono-alto-8x32-0.bin",0,128
 ;incbin	"img/mono-alto-8x32-2.bin",0,128
 ;incbin	"img/mono-alto-8x32-3.bin",0,128
