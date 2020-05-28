@@ -1455,12 +1455,12 @@ borraspritemov:
   .initlooprow:
   mov cx, dx
   mov al, [colorbackground]
-  push bx		; TODO ver si podemos optimizar usando ah en lugar de bx y así no hacer push+pop
-  mov bl, BWSPRITE
-  mov byte bh, [ds:bp + SPRITE.x]
-  and bh, 00000001b
-  add bl, bh
-  xor bh, bh
+  mov ah, bl	; respaldar ¿altura de Sprite?
+
+  mov bx, [ds:bp + SPRITE.x]
+  and bx, 00000001b
+  add bx, BWSPRITE
+
   test cx, cx
   jz .finlooprow
   .looprenglon:
@@ -1472,7 +1472,8 @@ borraspritemov:
   sub di, bx
   loop .looprenglon
   .finlooprow:
-  pop bx
+  xor bh, bh
+  mov bl, ah
 
   mov cx, es
   cmp cx, MEMCGAODD
@@ -1930,7 +1931,7 @@ section .data
   paleta:
   db 1
 
-  spritesheetscount:	dw 2
+  spritesheetscount:	dw 3
 
   spritesheetsstrucdata:
 
@@ -1951,6 +1952,15 @@ section .data
     at SPRITESHEET.gr0, dw spritedatamonochico
     at SPRITESHEET.4colgr, dw spritedatamonochico
     at SPRITESHEET.16colgr, dw spritedatamonochico
+
+  spritesheetmona:
+    istruc SPRITESHEET
+    at SPRITESHEET.framescount, dw 1
+    at SPRITESHEET.h, dw 32
+    at SPRITESHEET.w, dw 8
+    at SPRITESHEET.gr0, dw spritedatamona
+    at SPRITESHEET.4colgr, dw spritedatamona
+    at SPRITESHEET.16colgr, dw spritedatamona
 
   playersprite:
     istruc ANIMSPRITEPHYS
@@ -1984,7 +1994,7 @@ section .data
     at SPRITE.y, dw 40d
     at SPRITE.nx, dw 0
     at SPRITE.ny, dw 0
-    at SPRITE.h, dw 16
+    at SPRITE.h, dw 32
     at SPRITE.w, dw 8
     at SPRITE.next, dw 0
     at SPRITE.spritesheet, dw spritesheetmonochico
@@ -2028,7 +2038,7 @@ incbin	"img/jugador-spritesheet.bin",0,1152
 ;incbin	"img/mono-alto-8x32-0.bin",0,128
 ;incbin	"img/mono-alto-8x32-2.bin",0,128
 ;incbin	"img/mono-alto-8x32-3.bin",0,128
-spritemona:
+spritedatamona:
 incbin	"mona-alta-8x32.bin",0,128
 
 spritedatamonochico:
