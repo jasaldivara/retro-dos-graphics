@@ -24,7 +24,7 @@ CPU 8086
   ; Constantes del juego
 
   %define GRAVEDAD 1
-  %define JUMPFRAMES 18
+  %define JUMPFRAMES 14
   %define FUERZASALTO 5
   %define ANCHOSPRITE 8
   ; %define ALTOSPRITE 32
@@ -55,6 +55,15 @@ CPU 8086
 
 
 
+  struc SPRITESHEET
+    .framescount:	resw 1	; Cantidad de frames que contiene el sprite
+    .h			resw 1
+    .w			resw 1
+    .gr0:		resw 1
+    .gr1:		resw 1
+    .4colgr:		resw 1
+    .16colgr:		resw 1
+  endstruc
 
   struc SPRITE
 
@@ -69,6 +78,8 @@ CPU 8086
     .h		resw 1
     .w		resw 1
     .next	resw 1	; Pointer to nexts prite in linked list
+    .spritesheet	resw 1	; Pointer to SPRITESHEET structure
+    .ssframe	resw 1	; Frame index in sprite sheet
     .gr0:	resw 1	; Pointer to graphic data
     .gr1:	resw 1	; Pointer to graphic data
     ; .sub	resw SPRITESUB	; Subclass properties
@@ -79,8 +90,18 @@ CPU 8086
 
     .sprite:	resb SPRITE_size
     .vuelox:	resw 1
+    .vxmax:	resw 1
     .deltay:	resw 1
-    .parado:	resw 1
+    .saltoframes:	resb 1
+    .parado:	resb 1
+
+  endstruc
+
+  struc ANIMSPRITEPHYS	; Animated Sprite with Physics
+
+    .sprite:	resb SPRITEPHYS_size
+    .direccion: resb 1
+    .aframecount: resb 1
 
   endstruc
 
@@ -160,6 +181,26 @@ CPU 8086
 
   %endmacro
 
+  %macro SPRITESHEETLOOP 0
+
+    %push spritesheetloop
+
+    mov cx, [spritesheetscount]
+    mov bp, spritesheetsstrucdata
+    %$begin:
+    push cx
+
+  %endmacro
+
+
+  %macro SPRITESHEETLOOPEND 0
+    pop cx
+    add bp, SPRITESHEET_size
+    loop %$begin
+
+    %pop spritesheetloop
+  %endmacro
+
   org 100h
  
 section .text 
@@ -187,10 +228,14 @@ start:
 
   ; Inicializar gráficos
 
-  SPRITELOOP
+  SPRITESHEETLOOP
   call inicializaspritegrafico
-  SPRITELOOPEND
+  SPRITESHEETLOOPEND
 
+
+  SPRITELOOP
+  call conectaspritegraficos
+  SPRITELOOPEND
 
   ; x .- Draw map
   mov dx, map1
@@ -414,6 +459,15 @@ videomenu:
   mov ah, SETVIDEOMODE
   mov al, 4
   int VIDEOBIOS
+
+  ; Establecer paleta de colores
+  mov dx, 03D9h
+  mov al, 00011011b
+  out dx, al
+
+  mov byte [colorbackground], 0
+
+
   ret
   .nocga:
 
@@ -643,7 +697,7 @@ cambiapaleta:
   ret
 
 
-playerframe:
+sphysicsframe:
   ; Parametros:
   ; BP => sprite
 
@@ -722,6 +776,208 @@ playerframe:
   test al, UP
   jz .calcdy
 
+  ; mov al, [ds:bp + SPRITEPHYS.parado] ; Tiene que estar parado para poder saltar
+  ; test al, al
+  ; jnz .sisaltar
+
+
+  mov ah, [ds:bp + SPRITEPHYS.saltoframes] ; Si no está parado, pero aún tiene fuerza para saltar
+  test ah, ah
+  jz .calcdy
+
+  .sisaltar:
+  ; Ahora sí: Saltar porque estamos parados o tenemos fuerza para saltar y con la tecla saltar presionada
+  mov bx, -FUERZASALTO
+  mov [ds:bp + SPRITEPHYS.deltay], bx
+  ; mov bx, 0
+  dec ah
+  mov [ds:bp + SPRITEPHYS.saltoframes], ah
+  xor ah, ah
+  mov [ds:bp + SPRITEPHYS.parado], ah
+
+
+  .calcdy:  ; 2.- Calcular delta Y
+  mov dx, [ds:bp + SPRITEPHYS.deltay]
+  add dx, GRAVEDAD
+  mov [ds:bp + SPRITEPHYS.deltay], dx
+
+  .calcy:      ; 3.- calcular y
+
+  mov ax, [ds:bp + SPRITE.y]
+  mov bx, [ds:bp + SPRITEPHYS.deltay]
+  add ax, bx
+
+  ; 1.1.- revisar que no se salga
+  mov dx, HEIGHTPX
+  sub dx, [ds:bp + SPRITE.h]
+
+  cmp ax, dx
+  jng .sig5
+  mov ax, dx
+  mov bx, 0
+  mov byte [ds:bp + SPRITEPHYS.saltoframes], JUMPFRAMES
+  .sig5:
+  cmp ax, 0
+  jnl .sig6
+  mov ax, 0
+  mov bx, 0
+  .sig6:
+  mov [ds:bp + SPRITE.ny], ax
+  mov [ds:bp + SPRITEPHYS.deltay], bx
+
+  ; Fin de logica del jugador por frame
+  ret
+
+playerframe2:
+
+  xor dx, dx
+  test al, LEFT
+  jz .sig0
+  mov [ds:bp + ANIMSPRITEPHYS.direccion], al
+  inc dl
+  jmp .sig00
+  .sig0:
+  test al, RIGHT
+  jz .sig00
+  mov byte [ds:bp + ANIMSPRITEPHYS.direccion], 0
+  inc dl
+  .sig00:
+
+  xor bx, bx
+  mov ah, [ds:bp + ANIMSPRITEPHYS.direccion]
+
+  test ah, ah
+  jnz .sig1
+  add bh, 9
+  .sig1:
+
+  test al, UP
+  jnz .saltar
+  mov bl, [ds:bp + SPRITEPHYS.parado]
+  test bl, bl
+  jz .saltar
+
+  .nosaltar:
+  test dl, dl
+  jz .dibujar
+  mov dh, [ds:bp + ANIMSPRITEPHYS.aframecount]
+  inc dh
+  cmp dh, 8
+  jl .sig2
+  xor dh, dh
+  .sig2:
+  mov [ds:bp + ANIMSPRITEPHYS.aframecount], dh
+  jmp .dibujar
+
+  .saltar:
+  mov dh, 8
+
+  .dibujar:
+  add bh, dh
+  mov [ds:bp + SPRITE.ssframe], bh	; PRECAUCION: Usando solo 8 bits
+
+  call sphysicsframe
+  ret
+
+playerframe:
+  ; Parametros:
+  ; BP => sprite
+
+  ; 1.- Leer el teclado
+
+
+  .test_left:
+  test al, LEFT
+  jz .sig1
+
+  .movizq:
+  ; dec word [ds:bp + SPRITEPHYS.vuelox]
+  mov bx, [ds:bp + SPRITEPHYS.vuelox]
+  dec bx
+  cmp bx, -32
+  jge .nol1
+  mov bx, -32
+  .nol1:
+  mov [ds:bp + SPRITEPHYS.vuelox], bx
+
+  mov dx, [ds:bp + SPRITE.ssframe]
+  inc dx
+  cmp dx, 18
+  jl .sig0
+  mov dx, 0
+  .sig0:
+  mov [ds:bp + SPRITE.ssframe], dx
+
+
+  jmp .testright
+
+  .sig1:
+  mov bx, [ds:bp + SPRITEPHYS.vuelox]
+  cmp bx, 0
+  jnl .testright
+  inc word [ds:bp + SPRITEPHYS.vuelox]
+
+  .testright:
+  test al, RIGHT
+  jz .sig2
+
+  .movder:
+  ; inc word [ds:bp + SPRITEPHYS.vuelox]
+  mov bx, [ds:bp + SPRITEPHYS.vuelox]
+  inc bx
+  cmp bx, 32
+  jle .nol2
+  mov bx, 32
+  .nol2:
+  mov [ds:bp + SPRITEPHYS.vuelox], bx
+
+  mov dx, [ds:bp + SPRITE.ssframe]
+  inc dx
+  cmp dx, 18
+  jl .sig10
+  mov dx, 0
+  .sig10:
+  mov [ds:bp + SPRITE.ssframe], dx
+
+
+  jmp .calcx
+
+  .sig2:
+  mov bx, [ds:bp + SPRITEPHYS.vuelox]
+  cmp bx, 0
+  jng .calcx
+  dec word [ds:bp + SPRITEPHYS.vuelox]
+
+
+  .calcx:    ; 2.- calcular x
+
+  mov bx, [ds:bp + SPRITE.x]
+  mov dx, [ds:bp + SPRITEPHYS.vuelox]
+  sar dx, 1
+  sar dx, 1
+  sar dx, 1
+
+  add bx, dx
+
+  ; 1.1.- revisar que no se salga
+
+  cmp bx, ( MAPWIDTH * ANCHOTILE ) - ANCHOSPRITE
+  jng .sig3
+  mov bx, ( MAPWIDTH * ANCHOTILE ) - ANCHOSPRITE
+  mov word [ds:bp + SPRITEPHYS.vuelox], 0
+  .sig3:
+  cmp bx, 0
+  jnl .sig4
+  mov word [ds:bp + SPRITEPHYS.vuelox], 0
+  mov bx, 0
+  .sig4:
+  mov [ds:bp + SPRITE.nx], bx
+
+  .saltar:
+  ; ¿está presionada esta tecla?
+  test al, UP
+  jz .calcdy
+
   mov ax, [ds:bp + SPRITEPHYS.parado] ; Tiene que estar parado para poder saltar
   test ax, ax
   jz .calcdy
@@ -739,7 +995,7 @@ playerframe:
   mov [ds:bp + SPRITEPHYS.deltay], dx
 
   .calcy:      ; 3.- calcular y
-  
+
   mov ax, [ds:bp + SPRITE.y]
   mov bx, [ds:bp + SPRITEPHYS.deltay]
   add ax, bx
@@ -862,7 +1118,8 @@ spritecollisions:
   PYT bh
   sub bh, [ds:bp + SPRITE.h]
   mov [ds:bp + SPRITE.ny], bh
-  mov word [ds:bp + SPRITEPHYS.parado], JUMPFRAMES
+  mov byte [ds:bp + SPRITEPHYS.parado], JUMPFRAMES
+  mov byte [ds:bp + SPRITEPHYS.saltoframes], JUMPFRAMES
   mov word [ds:bp + SPRITEPHYS.deltay], 0
   
   jmp .horizontal
@@ -903,7 +1160,8 @@ spritecollisions:
   PYT bh
   add bh, ALTOTILE
   mov [ds:bp + SPRITE.ny], bh
-  mov word [ds:bp + SPRITEPHYS.parado], 0
+  ; mov byte [ds:bp + SPRITEPHYS.parado], 0
+  mov byte [ds:bp + SPRITEPHYS.saltoframes], 0
   mov word [ds:bp + SPRITEPHYS.deltay], 0
 
   .horizontal:
@@ -1033,7 +1291,15 @@ fin:
   mov dx, 03d5h
   out dx, al
 
-  ; 3 .- Salir al sistema
+  ; 3 .- Restablecer video modo de texto a color
+
+
+  mov  ah, SETVIDEOMODE   ; Establecer modo de video
+  mov  al, 3      ; CGA Modo texto a color, 80 x 25
+  int  VIDEOBIOS   ; LLamar a la BIOS para servicios de video
+
+
+  ; 4 .- Salir al sistema
   int 20h
 
 
@@ -1049,10 +1315,20 @@ dibujasprite16:
   jnz dibujasprite16noalineado
   shr bx, 1
 
-  ; 0.- Respaldar cosas que deberíamos consevar
+  ; 0.- Cargar direccion de mapa de bits
 
-  mov dx, [ds:bp + SPRITE.gr0]
-  mov si, dx  ; Cargar direccion de mapa de bits
+  mov ah, [ds:bp + SPRITE.w]
+  %rep ilog2e( PXB )
+  shr ah, 1
+  %endrep
+  ; mov ah, ( ANCHOSPRITE / PXB )
+  mov al, [ds:bp + SPRITE.ssframe]
+  mul ah
+  mov ah, [ds:bp + SPRITE.h]
+  mul ah
+
+  add ax, [ds:bp + SPRITE.gr0]
+  mov si, ax
 
   ; 1.- Seleccionar banco de memoria
 
@@ -1133,10 +1409,21 @@ dibujasprite16:
 
 dibujasprite16noalineado:
 
-  ; 0.- Respaldar cosas que deberíamos consevar
+  ; 0.- Cargar direccion de mapa de bits
 
-  mov dx, [ds:bp + SPRITE.gr1]	; Usar gráfico con bits previamente recorridos
-  mov si, dx  ; Cargar direccion de mapa de bits
+  mov ah, [ds:bp + SPRITE.w]
+  %rep ilog2e( PXB )
+  shr ah, 1
+  %endrep
+  ; mov ah, ( ANCHOSPRITE / PXB )
+  mov al, [ds:bp + SPRITE.ssframe]
+  mul ah
+  mov ah, [ds:bp + SPRITE.h]
+  mul ah
+
+  add ax, [ds:bp + SPRITE.gr1]
+  mov si, ax
+
 
   ; 1.- Seleccionar banco de memoria
 
@@ -1703,22 +1990,24 @@ conviertecomposite2tandy:
 
 inicializaspritegrafico:
   ; Parametros:
-  ; BP => sprite
+  ; BP => spritegrafico
 
   mov bx, ds
   mov es, bx
 
-  mov si, [ds:bp + SPRITE.gr0]
+  mov si, [ds:bp + SPRITESHEET.gr0]
 
   mov ah, ( ANCHOSPRITE / PXB )
-  mov al, [ds:bp + SPRITE.h]
+  mov al, [ds:bp + SPRITESHEET.framescount]
   mul ah
+  mov ah, [ds:bp + SPRITESHEET.h]	; Precaución: Estamos asumiendo que
+  mul ah		; resultado de multiplicacion cabe en un solo byte (AL)
   inc ax
   mov dx, ax
   mov cx, ax
   call malloc		; Asignar memoria
   mov di, bx		; Memoria asignada en Destination Index
-  mov [ds:bp + SPRITE.gr1], bx		; Memoria asignada en estructura Sprite
+  mov [ds:bp + SPRITESHEET.gr1], bx		; Memoria asignada en estructura Sprite
 
   .px0:		; guardar el primer pixel con desplazamiento de bits
 
@@ -1752,6 +2041,26 @@ inicializaspritegrafico:
   ret
 
 
+conectaspritegraficos:
+  ; Parametros:
+  ; BP => sprite
+
+  mov bx, [ds:bp + SPRITE.spritesheet]
+
+  mov ax, [bx + SPRITESHEET.gr0]
+  mov [ds:bp + SPRITE.gr0], ax
+
+  mov ax, [bx + SPRITESHEET.gr1]
+  mov [ds:bp + SPRITE.gr1], ax
+
+  mov ax, [bx + SPRITESHEET.h]
+  mov [ds:bp + SPRITE.h], ax
+
+  mov ax, [bx + SPRITESHEET.w]
+  mov [ds:bp + SPRITE.w], ax
+
+
+  ret
 
 section .data
   ; program data
@@ -1787,9 +2096,40 @@ section .data
   paleta:
   db 1
 
-  ; playersprite:
-    istruc SPRITEPHYS
-    at SPRITE.frame, dw playerframe
+  spritesheetscount:	dw 3
+
+  spritesheetsstrucdata:
+
+  spritesheetmono1:
+    istruc SPRITESHEET
+    at SPRITESHEET.framescount, dw 18
+    at SPRITESHEET.h, dw 32
+    at SPRITESHEET.w, dw 8
+    at SPRITESHEET.gr0, dw spritedatamonigote
+    at SPRITESHEET.4colgr, dw spritedatamonigote
+    at SPRITESHEET.16colgr, dw spritedatamonigote
+
+  spritesheetmonochico:
+    istruc SPRITESHEET
+    at SPRITESHEET.framescount, dw 1
+    at SPRITESHEET.h, dw 16
+    at SPRITESHEET.w, dw 8
+    at SPRITESHEET.gr0, dw spritedatamonochico
+    at SPRITESHEET.4colgr, dw spritedatamonochico
+    at SPRITESHEET.16colgr, dw spritedatamonochico
+
+  spritesheetmona:
+    istruc SPRITESHEET
+    at SPRITESHEET.framescount, dw 1
+    at SPRITESHEET.h, dw 32
+    at SPRITESHEET.w, dw 8
+    at SPRITESHEET.gr0, dw spritedatamona
+    at SPRITESHEET.4colgr, dw spritedatamona
+    at SPRITESHEET.16colgr, dw spritedatamona
+
+  playersprite:
+    istruc ANIMSPRITEPHYS
+    at SPRITE.frame, dw playerframe2
     at SPRITE.control, dw kbcontrolfunc
     at SPRITE.ctrlcoll, dw 0
     at SPRITE.iavars, dw 0
@@ -1800,17 +2140,20 @@ section .data
     at SPRITE.h, dw 32
     at SPRITE.w, dw 8
     at SPRITE.next, dw 0
-    at SPRITE.gr0, dw spritemonigote
-    at SPRITE.gr1, dw 0
+    at SPRITE.spritesheet, dw spritesheetmono1
+    at SPRITE.ssframe, dw 0
     at SPRITEPHYS.vuelox, dw 0
-    at SPRITEPHYS.deltay,dw 0
-    at SPRITEPHYS.parado,dw 0
+    at SPRITEPHYS.deltay, dw 0
+    at SPRITEPHYS.saltoframes, db 0
+    at SPRITEPHYS.parado, db 0
+    at ANIMSPRITEPHYS.direccion, db 0
+    at ANIMSPRITEPHYS.aframecount, db 0
 
-  playersprite:
+  playersprite2:
     istruc SPRITEPHYS
-    at SPRITE.frame, dw playerframe
-    at SPRITE.control, dw kbcontrolfunc
-    at SPRITE.ctrlcoll, dw 0
+    at SPRITE.frame, dw sphysicsframe
+    at SPRITE.control, dw iabasiccontrol
+    at SPRITE.ctrlcoll, dw iabasiccoll
     at SPRITE.iavars, dw LEFT
     at SPRITE.x, dw 40d
     at SPRITE.y, dw 40d
@@ -1819,25 +2162,16 @@ section .data
     at SPRITE.h, dw 32
     at SPRITE.w, dw 8
     at SPRITE.next, dw 0
-    at SPRITE.gr0, dw spritemona
-    at SPRITE.gr1, dw 0
+    at SPRITE.spritesheet, dw spritesheetmonochico
     at SPRITEPHYS.vuelox, dw 0
-    at SPRITEPHYS.deltay,dw 0
-    at SPRITEPHYS.parado,dw 0
+    at SPRITEPHYS.deltay, dw 0
+    at SPRITEPHYS.saltoframes, db 0
+    at SPRITEPHYS.parado, db 0
 
   firstsprite:
   dw playersprite
 
 
-; map1:
-
-
-  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-  db 1, 2, 0, 0, 0, 0, 0, 0, 0, 0
-  db 0, 0, 0, 0, 6, 0, 5, 2, 0, 0
-  db 0, 0, 0, 4, 0, 1, 4, 3, 1, 0
-  db 6, 5, 4, 3, 2, 1, 2, 3, 4, 5
 
 map1:
 
@@ -1862,13 +2196,17 @@ colorbackground: db 77h
 align   8,db 0
 
 spritesgraphics:
-spritemonigote:
-;incbin	"mdoble.bin",0,256
-incbin	"mono-alto-8x32.bin",0,128
-spritemona:
+spritedatamonigote:
+
+incbin	"img/jugador-spritesheet-izq.bin",0,1152
+incbin	"img/jugador-spritesheet.bin",0,1152
+;incbin	"img/mono-alto-8x32-0.bin",0,128
+;incbin	"img/mono-alto-8x32-2.bin",0,128
+;incbin	"img/mono-alto-8x32-3.bin",0,128
+spritedatamona:
 incbin	"mona-alta-8x32.bin",0,128
 
-monochico:
+spritedatamonochico:
 incbin "mono-comp-8x16.bin", 0, 64
 
 spritepelota:

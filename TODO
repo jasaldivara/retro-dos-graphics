@@ -4,31 +4,34 @@ Side Scroller:
 
   Que no se muestren ni procesen los sprites que estén fuera del area visible en pantalla
 
-Inmediatos:
+Nuevas características:
+
+  Restructurar funciones de frames de sprites
 
   Reestructurar código para separar motor de juegos, de código específico de
   cada juego
 
-  Trabajar en forma de hacer más lento el movimiento de enemigos
+  Trabajar en forma de hacer más lento el movimiento de enemigos?
 
     Y mejorar mecánica de velocidad y movimiento de jugador
 
-  Agregar nueva estructura de Sprite gráfico
+  Hacer modular y separar coigo de motor y codigo específico de cada juego
 
-    Revisar forma de inicializar sprites para no duplicar gráficos de sprites repetidos
-
-    Sprites animados "spritesheets"
-
-  Que los sprites puedan tener ancho variable
+    Organizar código en carpetas
 
   Nueva rutina de borrado optimizada que copia graficos de tile y solo donde hay movimiento
+
+    ¿Que los sprites puedan tener transparencias?
+
+  Que los sprites puedan tener ancho variable
 
   Agregar musica a juego principal
     Seleccionar musica encendida o apagada al inicio
 
+  Soporte para Joystick
+
   Soporte para tandy sound
 
-  Que los sprites puedan tener transparencias??
 
 Bugs:
 
@@ -53,12 +56,6 @@ Text (console) interface for editors:
   Show DOS error messages
   Menus and message dialogs
 
-Nuevas características:
-
-  Rutinas ¿Simples? de gestion de memoria, para:
-	Inicialización de sprites no alineados
-	¿Otros?
-
 
 Mecánica del juego:
 
@@ -77,8 +74,6 @@ Optimizaciones:
   bytes y no a pixeles, de esta forma evitamos limpiar dos veces un mismo byte.
 
 
-  Bug: Rutina de borrado optimizado no borra pixeles del extramo derecho de sprite
-  cuando no está alineado.
   Falta reorganizar codigo de rutina de borrado optimizado para que tanto segmentos
   horizontales como verticales usen una misma subrutina de borrado, y la unica
   diferencia sea el calculo de coordenadas de superficies a borrar. Esto debe
