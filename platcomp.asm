@@ -33,7 +33,6 @@ CPU 8086
   %define MAPHEIGHT 12
 
   %define BWSPRITE ( ANCHOSPRITE / PXB )  ; Ancho de Sprite en Bytes
-  %define SPRITESUB	4		; Number of reserved memory words for Sprite subclasess
 
   ; Direcciones
   ; Para controles y detección de colisiones
@@ -76,7 +75,6 @@ CPU 8086
     .ssframe	resw 1	; Frame index in sprite sheet
     .gr0:	resw 1	; Pointer to graphic data
     .gr1:	resw 1	; Pointer to graphic data
-    ; .sub	resw SPRITESUB	; Subclass properties
 
   endstruc
 
