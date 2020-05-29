@@ -152,20 +152,20 @@ CPU 8086
   %macro SPRITELOOP 0
 
     %push spriteloop
-    mov bx, [firstsprite]
-    test bx, bx
+    mov ax, [firstsprite]
+    test ax, ax
     jz %$end
-    mov bp, bx
+    mov bp, ax
     %$begin:
 
   %endmacro
 
   %macro SPRITELOOPEND 0
 
-    mov bx, [ds:bp + SPRITE.next]
-    test bx, bx
+    mov ax, [ds:bp + SPRITE.next]
+    test ax, ax
     jz %$end
-    mov bp, bx
+    mov bp, ax
     jmp %$begin
     %$end:
 
@@ -265,10 +265,11 @@ start:
   SPRITELOOPEND
 
   SPRITELOOP
-  mov ax, [ds:bp + SPRITE.ny]
-  mov bx, [ds:bp + SPRITE.nx]
-  mov [ds:bp + SPRITE.y], ax
-  mov [ds:bp + SPRITE.x], bx
+  mov bx, bp
+  mov ax, [bx + SPRITE.ny]
+  mov [bx + SPRITE.y], ax
+  mov ax, [bx + SPRITE.nx]
+  mov [bx + SPRITE.x], ax
   SPRITELOOPEND
 
   SPRITELOOP
