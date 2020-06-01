@@ -255,7 +255,7 @@ start:
   call bx
   .fincontrol:
   call [ds:bp + SPRITE.frame]
-  call spritecollisions
+  ; call spritecollisions
   SPRITELOOPEND
 
   VSync
@@ -658,7 +658,9 @@ sphysicsframe:
   mov [ds:bp + SPRITEPHYS.deltay], bx
 
   ; Fin de logica del jugador por frame
-  ret
+  ; call spritecollisions
+  jmp spritecollisions
+  ; ret
 
 animphysspriteframe:
 
@@ -708,8 +710,8 @@ animphysspriteframe:
   add bh, dh
   mov [ds:bp + SPRITE.ssframe], bh	; PRECAUCION: Usando solo 8 bits
 
-  call sphysicsframe
-  ret
+  jmp sphysicsframe
+  ; ret
 
 
 
