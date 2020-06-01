@@ -3,6 +3,8 @@ Nuevas características:
 
   Restructurar funciones de frames de sprites
 
+    Falta: restructurar detección de salida del escenario
+
   Que los sprites puedan tener ancho variable
 
   Hacer modular y separar coigo de motor y codigo específico de cada juego
