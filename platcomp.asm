@@ -660,7 +660,7 @@ sphysicsframe:
   ; Fin de logica del jugador por frame
   ret
 
-playerframe2:
+animphysspriteframe:
 
   xor dx, dx
   test al, LEFT
@@ -743,17 +743,79 @@ iabasiccontrol:
 ret
 
 iabasiccoll:
-  test al, LEFT
+  test al, al
+  jz .sig2
+  test ah, LEFT
   jz .sig1
   mov byte [ds:bp + SPRITE.iavars], RIGHT
   .sig1:
-  test al, RIGHT
+  test ah, RIGHT
   jz .sig2
   mov byte [ds:bp + SPRITE.iavars], LEFT
   .sig2:
+  ; call spritephyscol
+  ; jmp spritephyscol
+  ; ret
+
+spritephyscol:
+  ; AH => Direccion
+  ; AL => Tile
+  test al, al
+  jnz .nozero
   ret
+
+
+  .nozero:
+  mov ch, bh
+  test ah, DOWN
+  jnz .coldown
+  test ah, UP
+  jnz .colup
+  test ah, RIGHT
+  jnz .colright
+
+  .colleft:
   
+  PXT ch
+  add ch, ANCHOTILE
+  mov [ds:bp + SPRITE.nx], ch
+  mov word [ds:bp + SPRITEPHYS.vuelox], 0
   
+  .return:
+  ret
+
+  .coldown:
+  PYT ch
+  sub ch, [ds:bp + SPRITE.h]
+  mov [ds:bp + SPRITE.ny], ch
+  mov byte [ds:bp + SPRITEPHYS.parado], JUMPFRAMES
+  mov byte [ds:bp + SPRITEPHYS.saltoframes], JUMPFRAMES
+  mov word [ds:bp + SPRITEPHYS.deltay], 0
+
+  ret
+
+  .colup:
+  PYT ch
+  add ch, ALTOTILE
+  mov [ds:bp + SPRITE.ny], ch
+  ; mov byte [ds:bp + SPRITEPHYS.parado], 0
+  mov byte [ds:bp + SPRITEPHYS.saltoframes], 0
+  mov word [ds:bp + SPRITEPHYS.deltay], 0
+
+  ret
+
+  .colright:
+  PXT ch
+  sub ch, ANCHOSPRITE
+  mov [ds:bp + SPRITE.nx], ch
+  mov word [ds:bp + SPRITEPHYS.vuelox], 0
+  ; Activar lo siguiente en caso de querer rebote: (y desactivar linea de arriba)
+  ; mov word dx, [ds:bp + SPRITEPHYS.vuelox]
+  ; neg dx
+  ; sar dx, 1
+  ; mov word [ds:bp + SPRITEPHYS.vuelox], dx
+
+  ret
 
 
 spritecollisions:
@@ -795,10 +857,10 @@ spritecollisions:
   mov dh, [ds:bp + SPRITE.nx]
   add dh, ANCHOSPRITE - 1
   NXT dh
+  mov ah, DOWN
   .looptileabajo:
   lodsb
-  test al, al
-  jnz .colabajo
+  call [ds:bp + SPRITE.ctrlcoll]
   inc dl
   cmp dh, dl
   jge .looptileabajo
@@ -807,15 +869,8 @@ spritecollisions:
   jle .loopnivelabajo
 
   jmp .horizontal
-  .colabajo:
-  PYT bh
-  sub bh, [ds:bp + SPRITE.h]
-  mov [ds:bp + SPRITE.ny], bh
-  mov byte [ds:bp + SPRITEPHYS.parado], JUMPFRAMES
-  mov byte [ds:bp + SPRITEPHYS.saltoframes], JUMPFRAMES
-  mov word [ds:bp + SPRITEPHYS.deltay], 0
-  
-  jmp .horizontal
+
+
   .movarriba:
   mov bh, [ds:bp + SPRITE.y]	; Estas dos lineas están de mas?
   mov bl, [ds:bp + SPRITE.ny]
@@ -838,25 +893,18 @@ spritecollisions:
   mov dh, [ds:bp + SPRITE.nx]
   add dh, ANCHOSPRITE - 1
   NXT dh
+  mov ah, UP
   .looptilearriba:
   lodsb
-  test al, al
-  jnz .colarriba
+  call [ds:bp + SPRITE.ctrlcoll]
   inc dl
   cmp dh, dl
   jge .looptilearriba
   dec bh	; renglon / nivel arriba
   cmp bh, bl
   jge .loopnivelarriba
-  jmp .horizontal
+  ; jmp .horizontal
 
-  .colarriba:
-  PYT bh
-  add bh, ALTOTILE
-  mov [ds:bp + SPRITE.ny], bh
-  ; mov byte [ds:bp + SPRITEPHYS.parado], 0
-  mov byte [ds:bp + SPRITEPHYS.saltoframes], 0
-  mov word [ds:bp + SPRITEPHYS.deltay], 0
 
   .horizontal:
   mov bh, [ds:bp + SPRITE.x]
@@ -890,10 +938,10 @@ spritecollisions:
   dec dh
   NYT dl
   NYT dh
+  mov ah, RIGHT
   .looptilederecha:
   lodsb
-  test al, al
-  jnz .colderecha
+  call [ds:bp + SPRITE.ctrlcoll]
   add si, MAPWIDTH - 1
   inc dl
   cmp dh, dl
@@ -903,23 +951,6 @@ spritecollisions:
   jle .loopnivelderecha
   jmp .fin
 
-  .colderecha:
-  PXT bh
-  sub bh, ANCHOSPRITE
-  mov [ds:bp + SPRITE.nx], bh
-  ; mov word [ds:bp + SPRITEPHYS.vuelox], 0
-  mov word dx, [ds:bp + SPRITEPHYS.vuelox]
-  neg dx
-  sar dx, 1
-  mov word [ds:bp + SPRITEPHYS.vuelox], dx
-  ; Llamar evento colision
-  mov bx, [ds:bp + SPRITE.ctrlcoll]
-  test bx, bx
-  jz .fin
-  mov al, RIGHT
-  call bx
-
-  jmp .fin
 
   .movizquierda:
   NXT bh
@@ -945,10 +976,10 @@ spritecollisions:
   dec dh
   NYT dl
   NYT dh
+  mov ah, LEFT
   .looptileizquierda:
   lodsb
-  test al, al
-  jnz .colizquierda
+  call [ds:bp + SPRITE.ctrlcoll]
   add si, MAPWIDTH - 1
   inc dl
   cmp dh, dl
@@ -956,25 +987,8 @@ spritecollisions:
   dec bh
   cmp bh, bl
   jge .loopnivelizquierda
-  jmp .fin
-
-  .colizquierda:
   ; jmp .fin
-  PXT bh
-  add bh, ANCHOTILE
-  mov [ds:bp + SPRITE.nx], bh
-  mov word [ds:bp + SPRITEPHYS.vuelox], 0
-  ; mov word dx, [ds:bp + SPRITEPHYS.vuelox]
-  ; neg dx
-  ;sar dx, 1
-  ; mov word [ds:bp + SPRITEPHYS.vuelox], dx
 
-  ; Llamar evento colision
-  mov bx, [ds:bp + SPRITE.ctrlcoll]
-  test bx, bx
-  jz .fin
-  mov al, LEFT
-  call bx
 
   .fin:
   ret
@@ -1823,9 +1837,9 @@ section .data
 
   playersprite:
     istruc ANIMSPRITEPHYS
-    at SPRITE.frame, dw playerframe2
+    at SPRITE.frame, dw animphysspriteframe
     at SPRITE.control, dw kbcontrolfunc
-    at SPRITE.ctrlcoll, dw 0
+    at SPRITE.ctrlcoll, dw spritephyscol
     at SPRITE.iavars, dw 0
     at SPRITE.x, dw 120d
     at SPRITE.y, dw 16d
