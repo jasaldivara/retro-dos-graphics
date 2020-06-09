@@ -63,6 +63,7 @@ CPU 8086
     .frame:	resw 1	; Pointer to function defining per frame logic
     .control:	resw 1  ; Pointer to control function. Could be keyboard or joystick player, or A.I.
     .ctrlcoll:	resw 1	; Pointer to controll collision event. Called when the sprite have a collision.
+    .ctrlout:	resw 1	; Pointer tu event handler, when go out of scene
     .iavars	resw 1	; I.A. reserved variables.
     .x		resw 1
     .y		resw 1
@@ -569,7 +570,7 @@ sphysicsframe:
 
   .sig1:
   mov word [ds:bp + SPRITEPHYS.vuelox], 0
-  jnl .testright
+  ; jnl .testright
 
   .testright:
   test al, RIGHT
@@ -586,21 +587,7 @@ sphysicsframe:
 
   mov bx, [ds:bp + SPRITE.x]
   mov dx, [ds:bp + SPRITEPHYS.vuelox]
-
   add bx, dx
-
-  ; 1.1.- revisar que no se salga
-
-  cmp bx, WIDTHPX - ANCHOSPRITE
-  jng .sig3
-  mov bx, WIDTHPX - ANCHOSPRITE
-  mov word [ds:bp + SPRITEPHYS.vuelox], 0
-  .sig3:
-  cmp bx, 0
-  jnl .sig4
-  mov word [ds:bp + SPRITEPHYS.vuelox], 0
-  mov bx, 0
-  .sig4:
   mov [ds:bp + SPRITE.nx], bx
 
   .saltar:
@@ -638,24 +625,8 @@ sphysicsframe:
   mov ax, [ds:bp + SPRITE.y]
   mov bx, [ds:bp + SPRITEPHYS.deltay]
   add ax, bx
-
-  ; 1.1.- revisar que no se salga
-  mov dx, HEIGHTPX
-  sub dx, [ds:bp + SPRITE.h]
-
-  cmp ax, dx
-  jng .sig5
-  mov ax, dx
-  mov bx, 0
-  mov byte [ds:bp + SPRITEPHYS.saltoframes], JUMPFRAMES
-  .sig5:
-  cmp ax, 0
-  jnl .sig6
-  mov ax, 0
-  mov bx, 0
-  .sig6:
   mov [ds:bp + SPRITE.ny], ax
-  mov [ds:bp + SPRITEPHYS.deltay], bx
+  ; mov [ds:bp + SPRITEPHYS.deltay], bx
 
   ; Fin de logica del jugador por frame
   ; call spritecollisions
@@ -756,8 +727,9 @@ iabasiccoll:
   mov byte [ds:bp + SPRITE.iavars], LEFT
   .sig2:
   ; call spritephyscol
-  ; jmp spritephyscol
+  jmp spritephyscol
   ; ret
+
 
 spritephyscol:
   ; AH => Direccion
@@ -819,11 +791,94 @@ spritephyscol:
 
   ret
 
+spritephysout:
+  ; AH => Direccion
+  ; BX => Coordenada x o y, dependiendo de AH
+
+  test ah, DOWN
+  jnz .coldown
+  test ah, UP
+  jnz .colup
+  test ah, RIGHT
+  jnz .colright
+
+  .colleft:
+  mov word [ds:bp + SPRITE.nx], 0
+  mov word [ds:bp + SPRITEPHYS.vuelox], 0
+  ret
+
+  .colright:
+  mov word [ds:bp + SPRITE.nx], WIDTHPX - ANCHOSPRITE
+  mov word [ds:bp + SPRITEPHYS.vuelox], 0
+  ret
+
+  .colup:
+  mov word [ds:bp + SPRITE.ny], 0
+  mov word [ds:bp + SPRITEPHYS.deltay], 0
+  ret
+
+  .coldown:
+  mov dx, HEIGHTPX
+  sub dx, [ds:bp + SPRITE.h]
+  mov [ds:bp + SPRITE.ny], dx
+  mov word [ds:bp + SPRITEPHYS.deltay], 0
+  mov word [ds:bp + SPRITEPHYS.saltoframes], JUMPFRAMES
+
+
+  ret
+
 
 spritecollisions:
   ; parametros:
   ; DS:BP => Sprite
   ; Mapa? TODO: obtener como parámetro
+
+  ; 0 .- Revisar que no se salga
+
+  ; 0.1 .- horizontal
+
+  mov bx, [ds:bp + SPRITE.nx]
+  cmp bx, WIDTHPX - ANCHOSPRITE
+  jng .outxl
+
+  mov ah, RIGHT
+  call [ds:bp + SPRITE.ctrlout]
+  jmp .noutx
+
+  .outxl:
+  cmp bx, 0
+  jnl .noutx
+
+  mov ah, LEFT
+  call [ds:bp + SPRITE.ctrlout]
+
+  .noutx:
+
+  ; 0.2 .- Vertical
+
+
+  ; 1.1.- revisar que no se salga
+  mov bx, [ds:bp + SPRITE.ny]
+  mov dx, HEIGHTPX
+  sub dx, [ds:bp + SPRITE.h]
+
+  cmp bx, dx
+  jng .outyu
+
+  mov ah, DOWN
+  call [ds:bp + SPRITE.ctrlout]
+
+  jmp .nouty
+
+  .outyu:
+  cmp bx, 0
+  jnl .nouty
+
+  mov ah, UP
+  call [ds:bp + SPRITE.ctrlout]
+
+  .nouty:
+
 
   mov bx, map1
   ; mov si, bx
@@ -1842,6 +1897,7 @@ section .data
     at SPRITE.frame, dw animphysspriteframe
     at SPRITE.control, dw kbcontrolfunc
     at SPRITE.ctrlcoll, dw spritephyscol
+    at SPRITE.ctrlout, dw spritephysout
     at SPRITE.iavars, dw 0
     at SPRITE.x, dw 120d
     at SPRITE.y, dw 16d
@@ -1864,9 +1920,10 @@ section .data
     at SPRITE.frame, dw sphysicsframe
     at SPRITE.control, dw iabasiccontrol
     at SPRITE.ctrlcoll, dw iabasiccoll
-    at SPRITE.iavars, dw LEFT
-    at SPRITE.x, dw 40d
-    at SPRITE.y, dw 40d
+    at SPRITE.ctrlout, dw spritephysout
+    at SPRITE.iavars, dw RIGHT
+    at SPRITE.x, dw 56d
+    at SPRITE.y, dw 80d
     at SPRITE.nx, dw 0
     at SPRITE.ny, dw 0
     at SPRITE.h, dw 32
@@ -1897,7 +1954,7 @@ map1:
   db 0, 0, 0, 0, 0, 0, 0, 6, 6, 0, 0, 6, 0, 0, 0, 0, 0, 0, 2, 3
   db 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 6, 0, 0, 0, 0, 0, 0, 0
   db 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 1, 2, 0, 0, 0, 0, 0, 0
-  db 1, 4, 5, 4, 5, 4, 4, 5, 5, 4, 4, 1, 1, 2, 3, 4, 5, 5, 4, 4
+  db 1, 4, 5, 3, 1, 2, 4, 5, 5, 4, 4, 1, 1, 2, 3, 4, 5, 5, 4, 4
 
 
 colorbackground: db 77h
