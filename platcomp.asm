@@ -70,7 +70,8 @@ CPU 8086
     .nx		resw 1
     .ny		resw 1
     .h		resw 1
-    .w		resw 1
+    .pxw		resw 1
+    .bw	resw 1
     .next	resw 1	; Pointer to nexts prite in linked list
     .spritesheet	resw 1	; Pointer to SPRITESHEET structure
     .ssframe	resw 1	; Frame index in sprite sheet
@@ -780,7 +781,7 @@ spritephyscol:
 
   .colright:
   PXT ch
-  sub ch, ANCHOSPRITE
+  sub ch, [ds:bp + SPRITE.pxw]
   mov [ds:bp + SPRITE.nx], ch
   mov word [ds:bp + SPRITEPHYS.vuelox], 0
   ; Activar lo siguiente en caso de querer rebote: (y desactivar linea de arriba)
@@ -808,7 +809,10 @@ spritephysout:
   ret
 
   .colright:
-  mov word [ds:bp + SPRITE.nx], WIDTHPX - ANCHOSPRITE
+  mov ax, WIDTHPX
+  sub ax, [ds:bp + SPRITE.pxw]
+  mov [ds:bp + SPRITE.nx], ax
+  ; mov word [ds:bp + SPRITE.nx], WIDTHPX - ANCHOSPRITE
   mov word [ds:bp + SPRITEPHYS.vuelox], 0
   ret
 
@@ -838,7 +842,9 @@ spritecollisions:
   ; 0.1 .- horizontal
 
   mov bx, [ds:bp + SPRITE.nx]
-  cmp bx, WIDTHPX - ANCHOSPRITE
+  mov cx, bx
+  add cx, [ds:bp + SPRITE.pxw]
+  cmp cx, WIDTHPX
   jng .outxl
 
   mov ah, RIGHT
@@ -912,7 +918,8 @@ spritecollisions:
   add ax, dx
   add si, ax
   mov dh, [ds:bp + SPRITE.nx]
-  add dh, ANCHOSPRITE - 1
+  add dh, [ds:bp + SPRITE.pxw]
+  dec dh
   NXT dh
   mov ah, DOWN
   .looptileabajo:
@@ -948,7 +955,8 @@ spritecollisions:
   add ax, dx
   add si, ax
   mov dh, [ds:bp + SPRITE.nx]
-  add dh, ANCHOSPRITE - 1
+  add dh, [ds:bp + SPRITE.pxw]
+  dec dh
   NXT dh
   mov ah, UP
   .looptilearriba:
@@ -970,8 +978,10 @@ spritecollisions:
   je .fin
   ja .movizquierda
   .movderecha:
-  add bh, ANCHOSPRITE - 1
-  add bl, ANCHOSPRITE - 1
+  mov ch, [ds:bp + SPRITE.pxw]
+  dec ch
+  add bh, ch
+  add bl, ch
   NXT bh
   NXT bl
   cmp bh, bl
@@ -1086,11 +1096,8 @@ dibujasprite16:
 
   ; 0.- Cargar direccion de mapa de bits
 
-  mov ah, [ds:bp + SPRITE.w]
-  %rep ilog2e( PXB )
-  shr ah, 1
-  %endrep
-  ; mov ah, ( ANCHOSPRITE / PXB )
+  mov ah, [ds:bp + SPRITE.bw]
+
   mov al, [ds:bp + SPRITE.ssframe]
   mul ah
   mov ah, [ds:bp + SPRITE.h]
@@ -1180,11 +1187,8 @@ dibujasprite16noalineado:
 
   ; 0.- Cargar direccion de mapa de bits
 
-  mov ah, [ds:bp + SPRITE.w]
-  %rep ilog2e( PXB )
-  shr ah, 1
-  %endrep
-  ; mov ah, ( ANCHOSPRITE / PXB )
+  mov ah, [ds:bp + SPRITE.bw]
+
   mov al, [ds:bp + SPRITE.ssframe]
   mul ah
   mov ah, [ds:bp + SPRITE.h]
@@ -1824,8 +1828,13 @@ conectaspritegraficos:
   mov [ds:bp + SPRITE.h], ax
 
   mov ax, [bx + SPRITESHEET.w]
-  mov [ds:bp + SPRITE.w], ax
+  mov [ds:bp + SPRITE.pxw], ax
 
+  %rep ilog2e( PXB )
+  shr ax, 1
+  %endrep
+
+  mov [ds:bp + SPRITE.bw], ax
 
   ret
 
@@ -1874,6 +1883,15 @@ section .data
     at SPRITESHEET.4colgr, dw spritedatamonigote
     at SPRITESHEET.16colgr, dw spritedatamonigote
 
+  spritesheetgrande:
+    istruc SPRITESHEET
+    at SPRITESHEET.framescount, dw 1
+    at SPRITESHEET.h, dw 32
+    at SPRITESHEET.w, dw 16
+    at SPRITESHEET.gr0, dw spritedatamonogrande
+    at SPRITESHEET.4colgr, dw spritedatamonogrande
+    at SPRITESHEET.16colgr, dw spritedatamonogrande
+
   spritesheetmonochico:
     istruc SPRITESHEET
     at SPRITESHEET.framescount, dw 1
@@ -1903,8 +1921,8 @@ section .data
     at SPRITE.y, dw 16d
     at SPRITE.nx, dw 0
     at SPRITE.ny, dw 0
-    at SPRITE.h, dw 32
-    at SPRITE.w, dw 8
+    ; at SPRITE.h, dw 32
+    ; at SPRITE.pxw, dw 8
     at SPRITE.next, dw playersprite2
     at SPRITE.spritesheet, dw spritesheetmono1
     at SPRITE.ssframe, dw 0
@@ -1921,15 +1939,15 @@ section .data
     at SPRITE.control, dw iabasiccontrol
     at SPRITE.ctrlcoll, dw iabasiccoll
     at SPRITE.ctrlout, dw spritephysout
-    at SPRITE.iavars, dw RIGHT
-    at SPRITE.x, dw 56d
+    at SPRITE.iavars, dw LEFT
+    at SPRITE.x, dw 40d
     at SPRITE.y, dw 80d
     at SPRITE.nx, dw 0
     at SPRITE.ny, dw 0
-    at SPRITE.h, dw 32
-    at SPRITE.w, dw 8
+    ; at SPRITE.h, dw 32
+    ; at SPRITE.pxw, dw 16
     at SPRITE.next, dw 0
-    at SPRITE.spritesheet, dw spritesheetmonochico
+    at SPRITE.spritesheet, dw spritesheetgrande
     at SPRITEPHYS.vuelox, dw 0
     at SPRITEPHYS.deltay, dw 0
     at SPRITEPHYS.saltoframes, db 0
@@ -1975,6 +1993,9 @@ incbin	"mona-alta-8x32.bin",0,128
 
 spritedatamonochico:
 incbin "mono-comp-8x16.bin", 0, 64
+
+spritedatamonogrande:
+incbin "img/enemigo-grande.bin", 0, 256
 
 spritepelota:
   db 00000000b, 00000000b, 00000000b, 00000000b
