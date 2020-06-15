@@ -910,10 +910,10 @@ spritephyscol:
   ret
 
   .coldown:
-  mov ch, bh
-  PYT ch
-  sub ch, [ds:bp + SPRITE.h]
-  mov [ds:bp + SPRITE.ny], ch
+  mov ah, bh
+  PYT ah
+  sub ah, [ds:bp + SPRITE.h]
+  mov [ds:bp + SPRITE.ny], ah
   mov byte [ds:bp + SPRITEPHYS.parado], JUMPFRAMES
   mov byte [ds:bp + SPRITEPHYS.saltoframes], JUMPFRAMES
   mov word [ds:bp + SPRITEPHYS.deltay], 0
@@ -921,10 +921,10 @@ spritephyscol:
   ret
 
   .colup:
-  mov ch, bh
-  PYT ch
-  add ch, ALTOTILE
-  mov [ds:bp + SPRITE.ny], ch
+  mov ah, bh
+  PYT ah
+  add ah, ALTOTILE
+  mov [ds:bp + SPRITE.ny], ah
   ; mov byte [ds:bp + SPRITEPHYS.parado], 0
   mov byte [ds:bp + SPRITEPHYS.saltoframes], 0
   mov word [ds:bp + SPRITEPHYS.deltay], 0
@@ -1071,16 +1071,16 @@ spritecollisions:
   add ax, dx
   add si, ax
 
-  mov dh, [ds:bp + SPRITE.nx]
-  add dh, [ds:bp + SPRITE.pxw]
-  dec dh
-  NXT dh
-  mov ah, DOWN
+  mov cx, [ds:bp + SPRITE.nx]
+  add cx, [ds:bp + SPRITE.pxw]
+  dec cx
+  NXT cx
   .looptileabajo:
+  mov ah, DOWN
   lodsb
   call [ds:bp + SPRITE.ctrlcoll]
-  inc dl
-  cmp dh, dl
+  inc dx
+  cmp cx, dx
 
   jge .looptileabajo
   inc bh	; siguiente renglon/nivel
@@ -1109,16 +1109,16 @@ spritecollisions:
   add ax, dx
   add si, ax
 
-  mov dh, [ds:bp + SPRITE.nx]
-  add dh, [ds:bp + SPRITE.pxw]
-  dec dh
-  NXT dh
-  mov ah, UP
+  mov cx, [ds:bp + SPRITE.nx]
+  add cx, [ds:bp + SPRITE.pxw]
+  dec cx
+  NXT cx
   .looptilearriba:
+  mov ah, UP
   lodsb
   call [ds:bp + SPRITE.ctrlcoll]
-  inc dl
-  cmp dh, dl
+  inc dx
+  cmp cx, dx
 
   jge .looptilearriba
   dec bh	; renglon / nivel arriba
