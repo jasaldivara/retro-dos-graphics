@@ -712,9 +712,9 @@ sphysicsframe:
   ; dec word [ds:bp + SPRITEPHYS.vuelox]
   mov bx, [ds:bp + SPRITEPHYS.vuelox]
   dec bx
-  cmp bx, -32
+  cmp bx, -16
   jge .nol1
-  mov bx, -32
+  mov bx, -16
   .nol1:
   mov [ds:bp + SPRITEPHYS.vuelox], bx
   jmp .testright
@@ -733,9 +733,9 @@ sphysicsframe:
   ; inc word [ds:bp + SPRITEPHYS.vuelox]
   mov bx, [ds:bp + SPRITEPHYS.vuelox]
   inc bx
-  cmp bx, 32
+  cmp bx, 16
   jle .nol2
-  mov bx, 32
+  mov bx, 16
   .nol2:
   mov [ds:bp + SPRITEPHYS.vuelox], bx
   jmp .calcx
