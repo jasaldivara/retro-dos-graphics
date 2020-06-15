@@ -6,32 +6,23 @@ Side Scroller:
 
 Nuevas características:
 
-  Restructurar funciones de frames de sprites
-
-  Reestructurar código para separar motor de juegos, de código específico de
-  cada juego
-
-  Trabajar en forma de hacer más lento el movimiento de enemigos?
-
-    Y mejorar mecánica de velocidad y movimiento de jugador
-
   Hacer modular y separar coigo de motor y codigo específico de cada juego
 
     Organizar código en carpetas
 
   Nueva rutina de borrado optimizada que copia graficos de tile y solo donde hay movimiento
 
-    ¿Que los sprites puedan tener transparencias?
-
-  Que los sprites puedan tener ancho variable
-
-  Agregar musica a juego principal
-    Seleccionar musica encendida o apagada al inicio
+  Mejorar mecánica de velocidad y movimiento de jugador
 
   Soporte para Joystick
 
-  Soporte para tandy sound
+  Agregar musica a juego principal
 
+    Seleccionar musica encendida o apagada al inicio
+
+    Soporte para tandy sound
+
+  ¿Que los sprites puedan tener transparencias?
 
 Bugs:
 
