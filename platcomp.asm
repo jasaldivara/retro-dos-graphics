@@ -9,6 +9,7 @@ CPU 8086
   %define WIDTHPX 160d
   %define HEIGHTPX 200d
   %define PXB 2   ; Pixeles por byte
+  %define BYTESPERHSCROLL 2	; Bytes que se desplazan cada vez que se hace scroll horizontal
   %assign BYTESPERSCAN (WIDTHPX / PXB)
 
   %define MEMCGAEVEN 0xB800
@@ -29,10 +30,16 @@ CPU 8086
   ; %define ALTOSPRITE 32
   %define ANCHOTILE 8
   %define ALTOTILE 16
-  %define MAPWIDTH 20
+  %define MAPWIDTH 40
+  %define MAPSCREENWIDTH 20
   %define MAPHEIGHT 12
+  %define SCROLLTHRESHOLD 64
 
   %define BWSPRITE ( ANCHOSPRITE / PXB )  ; Ancho de Sprite en Bytes
+
+  %define HSCROLLSPERTILE ( ANCHOTILE / ( PXB * BYTESPERHSCROLL ) )
+  %define MAXHSCROLL ( ( MAPWIDTH - MAPSCREENWIDTH ) * HSCROLLSPERTILE )
+
 
   ; Direcciones
   ; Para controles y detección de colisiones
@@ -278,8 +285,139 @@ start:
   call dibujasprite16
   SPRITELOOPEND
 
+  mov bx, [hscroll]
+  cmp bx, 0
+  jle .noscroll
+  %rep ilog2e( BYTESPERHSCROLL * PXB )
+  shl bx, 1
+  %endrep
+  add bx, SCROLLTHRESHOLD
+  mov ax, [playersprite + SPRITE.x]
+  cmp ax, bx
+  jg .noscroll
+  mov cx, 1
+  call doscroll
+  .noscroll:
+
+  mov bx, [hscroll]
+  cmp bx, MAXHSCROLL
+  jge .noscroll2
+  %rep ilog2e( BYTESPERHSCROLL * PXB )
+  shl bx, 1
+  %endrep
+  ; neg bx
+  add bx, WIDTHPX - SCROLLTHRESHOLD 
+  ; mov dx, WIDTHPX - SCROLLTHRESHOLD 
+  mov ax, [playersprite + SPRITE.x]
+  cmp ax, bx
+  jl .noscroll2
+  mov cx, 0
+  call doscroll
+  .noscroll2:
+  
+
   ; repetir ciclo
   jmp frame
+
+doscroll:
+  ; CX: Direccion de scroll
+  ; 1 => izquierda
+  ; 0 => derecha
+
+  mov si, map1
+
+  mov ax, [hscroll]
+  test cx, cx
+  jnz .mleft
+  .mright:
+  mov bx, ( BYTESPERSCAN / BYTESPERHSCROLL )
+  add bx, ax
+  inc ax
+  jmp .sig0
+  .mleft:
+  dec ax
+  mov bx, ax
+  .sig0:
+  mov [hscroll], ax
+
+  mov ax, bx
+  %rep ilog2e( BYTESPERHSCROLL )
+  shl ax, 1
+  %endrep
+  mov di, ax	; Desplazamiento en memoria de video
+
+  mov ax, bx
+  %rep ilog2e( HSCROLLSPERTILE )
+  shr ax, 1
+  %endrep
+  add si, ax
+
+  mov ax, bx
+  and ax, 1	; TODO: cambiar para que funcione para distintos valoes de HSCROLLSPERTILE
+  mov ah, BYTESPERHSCROLL
+  mul ah
+  add ax, tilesgraphics
+  mov dx, ax
+
+  
+  ; VSync
+
+  mov cx, MAPHEIGHT
+  .tilerowloop:
+  lodsb
+  mov ah, 64	; TODO: Sustituir con caulculo de tamaño de tile en bytes en preprocesador
+  mul ah
+  push si
+  push cx
+
+  ; lea si, [tilesgraphics]
+  mov si, dx
+  add si, ax
+  ; drawtile sub
+  mov cx, MEMCGAEVEN
+  mov es, cx
+  ; mov cx, cs
+  ; mov ds, cx
+
+  .draw:
+  mov cx, ( ALTOTILE / 2 ) ; Primero dibujamos mitad de renglones (renglones par de pantalla)
+
+  .scanlineloop:
+  ; mov dx, cx	; respaldar CX
+  ; mov cx,
+  %rep ( BYTESPERHSCROLL / 2 )	; NOTA: Por ahora solo acepta multiplos de 2, por velocidad
+  movsw
+  %endrep
+  add di, BYTESPERSCAN - BYTESPERHSCROLL 
+  add si, ( ANCHOTILE / PXB ) + ( ( ANCHOTILE / PXB ) - BYTESPERHSCROLL )
+  loop .scanlineloop
+  
+
+  mov cx, es
+  cmp cx, MEMCGAODD
+  je .sigtile
+
+  mov cx, MEMCGAODD
+  mov es, cx
+  sub di, BYTESPERSCAN * ( ALTOTILE / 2 )
+  sub si, ( ( ANCHOTILE / PXB ) * ( ALTOTILE - 1 ) )
+  jmp .draw
+
+  .sigtile:
+  pop cx
+  pop si
+  add si, MAPWIDTH - 1
+  loop .tilerowloop
+  
+  
+  ; Hacer el scroll por harware
+  mov dx, 03d4h
+  mov al, 0dh
+  out dx, al
+  mov al, [hscroll]
+  mov dx, 03d5h
+  out dx, al
+ret
 
 videomenu:
 
@@ -432,9 +570,10 @@ drawmap:
   xchg ax, cx
   call drawtilesimple
   inc bx
-  cmp bx, MAPWIDTH
+  cmp bx, MAPSCREENWIDTH
   jl .loopcols
   inc ax
+  add si, MAPWIDTH - MAPSCREENWIDTH
   cmp ax, MAPHEIGHT
   jl .looprows
   ret
@@ -505,6 +644,12 @@ kb_int_new:
   mov bx, tecla_up
   jmp .guardar
   .sig4:
+  cmp al, KB_DOWN
+  jne .sig5
+  mov bx, tecla_down
+  jmp .guardar
+
+  .sig5:
 
 
 
@@ -570,8 +715,9 @@ sphysicsframe:
   jmp .testright
 
   .sig1:
+
   mov word [ds:bp + SPRITEPHYS.vuelox], 0
-  ; jnl .testright
+
 
   .testright:
   test al, RIGHT
@@ -579,16 +725,19 @@ sphysicsframe:
 
   .movder:
   mov word [ds:bp + SPRITEPHYS.vuelox], 1
+  ; jmp .calcx
 
   .sig2:
-
+  ; mov word [ds:bp + SPRITEPHYS.vuelox], 0
 
 
   .calcx:    ; 2.- calcular x
 
   mov bx, [ds:bp + SPRITE.x]
   mov dx, [ds:bp + SPRITEPHYS.vuelox]
+
   add bx, dx
+
   mov [ds:bp + SPRITE.nx], bx
 
   .saltar:
@@ -622,7 +771,7 @@ sphysicsframe:
   mov [ds:bp + SPRITEPHYS.deltay], dx
 
   .calcy:      ; 3.- calcular y
-  
+
   mov ax, [ds:bp + SPRITE.y]
   mov bx, [ds:bp + SPRITEPHYS.deltay]
   add ax, bx
@@ -741,7 +890,6 @@ spritephyscol:
 
 
   .nozero:
-  mov ch, bh
   test ah, DOWN
   jnz .coldown
   test ah, UP
@@ -750,19 +898,22 @@ spritephyscol:
   jnz .colright
 
   .colleft:
-  
-  PXT ch
-  add ch, ANCHOTILE
-  mov [ds:bp + SPRITE.nx], ch
+
+  push bx
+  PXT bx
+  add bx, ANCHOTILE
+  mov [ds:bp + SPRITE.nx], bx
   mov word [ds:bp + SPRITEPHYS.vuelox], 0
+  pop bx
   
   .return:
   ret
 
   .coldown:
-  PYT ch
-  sub ch, [ds:bp + SPRITE.h]
-  mov [ds:bp + SPRITE.ny], ch
+  mov ah, bh
+  PYT ah
+  sub ah, [ds:bp + SPRITE.h]
+  mov [ds:bp + SPRITE.ny], ah
   mov byte [ds:bp + SPRITEPHYS.parado], JUMPFRAMES
   mov byte [ds:bp + SPRITEPHYS.saltoframes], JUMPFRAMES
   mov word [ds:bp + SPRITEPHYS.deltay], 0
@@ -770,9 +921,10 @@ spritephyscol:
   ret
 
   .colup:
-  PYT ch
-  add ch, ALTOTILE
-  mov [ds:bp + SPRITE.ny], ch
+  mov ah, bh
+  PYT ah
+  add ah, ALTOTILE
+  mov [ds:bp + SPRITE.ny], ah
   ; mov byte [ds:bp + SPRITEPHYS.parado], 0
   mov byte [ds:bp + SPRITEPHYS.saltoframes], 0
   mov word [ds:bp + SPRITEPHYS.deltay], 0
@@ -780,15 +932,18 @@ spritephyscol:
   ret
 
   .colright:
-  PXT ch
-  sub ch, [ds:bp + SPRITE.pxw]
-  mov [ds:bp + SPRITE.nx], ch
+  
+  push bx
+  PXT bx
+  sub bx, [ds:bp + SPRITE.pxw]
+  mov [ds:bp + SPRITE.nx], bx
   mov word [ds:bp + SPRITEPHYS.vuelox], 0
   ; Activar lo siguiente en caso de querer rebote: (y desactivar linea de arriba)
   ; mov word dx, [ds:bp + SPRITEPHYS.vuelox]
   ; neg dx
   ; sar dx, 1
   ; mov word [ds:bp + SPRITEPHYS.vuelox], dx
+  pop bx
 
   ret
 
@@ -809,7 +964,7 @@ spritephysout:
   ret
 
   .colright:
-  mov ax, WIDTHPX
+  mov ax, ( MAPWIDTH * ANCHOTILE )
   sub ax, [ds:bp + SPRITE.pxw]
   mov [ds:bp + SPRITE.nx], ax
   mov word [ds:bp + SPRITEPHYS.vuelox], 0
@@ -843,7 +998,7 @@ spritecollisions:
   mov bx, [ds:bp + SPRITE.nx]
   mov cx, bx
   add cx, [ds:bp + SPRITE.pxw]
-  cmp cx, WIDTHPX
+  cmp cx, ( MAPWIDTH * ANCHOTILE )
   jng .outxl
 
   mov ah, RIGHT
@@ -907,25 +1062,26 @@ spritecollisions:
   inc bh
   .loopnivelabajo:
   mov al, bh	; multiplicar nivel del tile Y
-  mov cl, MAPWIDTH
-  mul cl
-  xor dx, dx
-  mov dl, [ds:bp + SPRITE.nx]
-  NXT dl
-  mov cx, di
-  mov si, cx
+  mov ah, MAPWIDTH
+  mul ah
+  ; xor dx, dx
+  mov dx, [ds:bp + SPRITE.nx]
+  NXT dx
+  mov si, di 
   add ax, dx
   add si, ax
-  mov dh, [ds:bp + SPRITE.nx]
-  add dh, [ds:bp + SPRITE.pxw]
-  dec dh
-  NXT dh
-  mov ah, DOWN
+
+  mov cx, [ds:bp + SPRITE.nx]
+  add cx, [ds:bp + SPRITE.pxw]
+  dec cx
+  NXT cx
   .looptileabajo:
+  mov ah, DOWN
   lodsb
   call [ds:bp + SPRITE.ctrlcoll]
-  inc dl
-  cmp dh, dl
+  inc dx
+  cmp cx, dx
+
   jge .looptileabajo
   inc bh	; siguiente renglon/nivel
   cmp bh, bl
@@ -944,25 +1100,26 @@ spritecollisions:
   dec bh
   .loopnivelarriba:
   mov al, bh	; Multiplicar nivel de tile Y
-  mov cl, MAPWIDTH
-  mul cl
-  xor dx, dx
-  mov dl, [ds:bp + SPRITE.nx]
-  NXT dl
-  mov cx, di
-  mov si, cx
+  mov ah, MAPWIDTH
+  mul ah
+  ; xor dx, dx
+  mov dx, [ds:bp + SPRITE.nx]
+  NXT dx
+  mov si, di
   add ax, dx
   add si, ax
-  mov dh, [ds:bp + SPRITE.nx]
-  add dh, [ds:bp + SPRITE.pxw]
-  dec dh
-  NXT dh
-  mov ah, UP
+
+  mov cx, [ds:bp + SPRITE.nx]
+  add cx, [ds:bp + SPRITE.pxw]
+  dec cx
+  NXT cx
   .looptilearriba:
+  mov ah, UP
   lodsb
   call [ds:bp + SPRITE.ctrlcoll]
-  inc dl
-  cmp dh, dl
+  inc dx
+  cmp cx, dx
+
   jge .looptilearriba
   dec bh	; renglon / nivel arriba
   cmp bh, bl
@@ -971,90 +1128,88 @@ spritecollisions:
 
 
   .horizontal:
-  mov bh, [ds:bp + SPRITE.x]
-  mov bl, [ds:bp + SPRITE.nx]
-  cmp bh, bl
+  mov bx, [ds:bp + SPRITE.x]
+  mov dx, [ds:bp + SPRITE.nx]
+  cmp bx, dx
   je .fin
   ja .movizquierda
   .movderecha:
-  mov ch, [ds:bp + SPRITE.pxw]
-  dec ch
-  add bh, ch
-  add bl, ch
-  NXT bh
-  NXT bl
-  cmp bh, bl
+
+  mov cx, [ds:bp + SPRITE.pxw]
+  dec cx
+  add bx, cx
+  add dx, cx
+  NXT bx
+  NXT dx
+  cmp bx, dx
+
   jge .fin
-  inc bh
+  inc bx
   .loopnivelderecha:
   ; Calcular SI
   mov al, [ds:bp + SPRITE.ny]
   NYT al
   mov ah, MAPWIDTH
   mul ah
-  xor dx, dx
-  mov dl, bh
-  add ax, dx
-  mov cx, di
-  mov si, cx
+  ; xor dx, dx
+  add ax, bx
+  mov si, di
   add si, ax
-  mov dl, [ds:bp + SPRITE.ny]
-  mov dh, dl
-  add dh, [ds:bp + SPRITE.h]
-  dec dh
-  NYT dl
-  NYT dh
+  mov cl, [ds:bp + SPRITE.ny]
+  mov ch, cl
+  add ch, [ds:bp + SPRITE.h]
+  dec ch
+  NYT cl
+  NYT ch
   mov ah, RIGHT
+
   .looptilederecha:
   lodsb
   call [ds:bp + SPRITE.ctrlcoll]
   add si, MAPWIDTH - 1
-  inc dl
-  cmp dh, dl
+  inc cl
+  cmp ch, cl
   jge .looptilederecha
-  inc bh
-  cmp bh, bl
+  inc bx
+  cmp bx, dx
   jle .loopnivelderecha
   jmp .fin
 
 
   .movizquierda:
-  NXT bh
-  NXT bl
-  cmp bh, bl
+  NXT bx
+  NXT dx
+  cmp bx, dx
   jle .fin
-  dec bh
+  dec bx
   .loopnivelizquierda:
   ; Calcular SI
   mov al, [ds:bp + SPRITE.ny]
   NYT al
   mov ah, MAPWIDTH
   mul ah
-  xor dx, dx
-  mov dl, bh
-  add ax, dx
-  mov cx, di
-  mov si, cx
+  add ax, bx
+  mov si, di
   add si, ax
-  mov dl, [ds:bp + SPRITE.ny]
-  mov dh, dl
-  add dh, [ds:bp + SPRITE.h]
-  dec dh
-  NYT dl
-  NYT dh
+  mov cl, [ds:bp + SPRITE.ny]
+  mov ch, cl
+  add ch, [ds:bp + SPRITE.h]
+  dec ch
+  NYT cl
+  NYT ch
   mov ah, LEFT
+
   .looptileizquierda:
   lodsb
   call [ds:bp + SPRITE.ctrlcoll]
   add si, MAPWIDTH - 1
-  inc dl
-  cmp dh, dl
+  inc cl
+  cmp ch, cl
   jge .looptileizquierda
-  dec bh
-  cmp bh, bl
+  dec bx
+  cmp bx, dx
   jge .loopnivelizquierda
   ; jmp .fin
-
 
   .fin:
   ret
@@ -1069,7 +1224,16 @@ fin:
   mov     ah,25h
   int     21h
 
-  ; 2 .- Restablecer video modo de texto a color
+  ; 2 .- Restablecer desplazamiento horizontal en registros CGA
+
+  mov dx, 03d4h
+  mov al, 0dh
+  out dx, al
+  mov al, 0
+  mov dx, 03d5h
+  out dx, al
+
+  ; 3 .- Restablecer video modo de texto a color
 
 
   mov  ah, SETVIDEOMODE   ; Establecer modo de video
@@ -1077,7 +1241,7 @@ fin:
   int  VIDEOBIOS   ; LLamar a la BIOS para servicios de video
 
 
-  ; 3 .- Salir al sistema
+  ; 4 .- Salir al sistema
   int 20h
 
 
@@ -1451,49 +1615,51 @@ borraspritemov:
 
 
   .checkhorizontal:
-  mov dh, [ds:bp + SPRITE.x]
-  mov dl, [ds:bp + SPRITE.nx]
-  cmp dh, dl
+  mov dx, [ds:bp + SPRITE.x]
+  mov bx, [ds:bp + SPRITE.nx]
+  cmp dx, bx
   je .salir
   ja .mizq
-  .mder:	; dh => c.x = s.x
-  sub dl, dh	; dl => c.w = s.nx - s.x
+  .mder:	; dx => c.x = s.x
+  sub bx, dx	; bx => c.w = s.nx - s.x
   jmp .sig3
   .mizq:
-  xchg dh, dl	; dl => s.x, dh = s.nx
-  sub dl, dh	; dl => c.w = s.x - s.nx
-  add dh, [ds:bp + SPRITE.pxw]	; dh => c.x = s.nx + s.w
+
+  xchg dx, bx	; bx => s.x, dx = s.nx
+  sub bx, dx	; bx => c.w = s.x - s.nx
+  add dx, [ds:bp + SPRITE.pxw]	; dh => c.x = s.nx + s.w
+
   .sig3:
-  ; dh => c.x
-  ; dl => c.w
+  ; dx => c.x
+  ; bx => c.w
 
   ; Calcular movimiento vertical para borrado de seccion horizontal
   mov bh, [ds:bp + SPRITE.h]
   mov al, [ds:bp + SPRITE.y]
-  mov bl, [ds:bp + SPRITE.ny]
-  cmp al, bl
+  mov ah, [ds:bp + SPRITE.ny]
+  cmp al, ah
   jl .mdown
-  xchg al, bl	; al => s.ny, bl => s.y
+  xchg al, ah	; al => s.ny, ah => s.y
   .mdown:
-  mov cl, bl
-  sub bl, al
-  sub bh, bl	; bh => c.h, al => c.y
+  mov cl, ah
+  sub ah, al
+  sub bh, ah	; bh => c.h, al => c.y
   je .salir	; ?? Salir en caso de que sea menor o igual a cero ?
   mov al, cl
   .clearhorizontal:
-  ; dh => c.x
-  ; dl => c.w
+  ; dx => c.x
+  ; bl => c.w
   ; bh => c.h
   ; al => c.y
   
   mov cx, MEMCGAEVEN
   mov es, cx
-  mov bl, al	; bl => c.y
+  mov si, ax	; si => c.y
   shr al, 1	; descartar bit de seleccion de banco
   mov ah, BYTESPERSCAN	; multiplicar por ancho de pantalla en bytes
   mul ah	; ax => desplazamiento en bytes del renglon
-  xor cx, cx
-  mov cl, dh	; cx => c.x
+  ; xor cx, cx
+  mov cx, dx	; cx => c.x
   shr cx, 1	; descartar utlimo bit	(posicion de pixel intra-byte)
   add ax, cx	; ax => Direccion de memoria donde empezamos a borrar
   mov di, ax	; Destination index = posicion inicial a borrar
@@ -1502,30 +1668,30 @@ borraspritemov:
   xor ch, ch
   mov cl, bh	; cx => c.h
   shr cx, 1	; dividir numero de renglones entre dos (para escaneo par)
-  test bl, 00000001b	; ver si coordenada y es par
+  test si, 00000001b	; ver si coordenada y es par
   jz .espar3
   add di, BYTESPERSCAN	; Comenzar en un renglón más abajo en caso de coordenada impar
   jmp .sig4
   .espar3:
-  ; mov al, bh	; al => c.h
-  ; and al, 00000001b
-  ; xor ah, ah
-  ; and cx, ax	; incrementar numero de renglones en escaneo par en caso de que
-  		; renglones totales sea impar y coordenada y par
+  ; incrementar numero de renglones en escaneo par en caso de que renglones
+  ; totales sea impar y coordenada y par
+
   test bh, 00000001b
   jz .sig4
   inc cx
   .sig4:
   .initlooprowh:
-  push bx	; ¿Aun es necesario respaldar estas variables?
-  ; push dx
+  ; push bx	; ¿Aun es necesario respaldar estas variables?
+  push dx
+  push bx
   mov al, [colorbackground]
-  mov ah, dl	; ah => c.w
+  ; mov al, 00
+  mov ah, bl	; ah => c.w
   shr ah, 1	; dividir entre dos pixeles por byte
-  mov bl, dl
-  or bl, dh
-  and bl, 00000001b	; agregar un byte si numero de pixeles es impar
-  add ah, bl	; ah => numero de bytes a escribir horizontalmente
+  mov dh, bl
+  or dh, dl
+  and dh, 00000001b	; agregar un byte si numero de pixeles es impar
+  add ah, dh	; ah => numero de bytes a escribir horizontalmente
   test cx, cx
   jz .finlooprowh
   .looprowh:
@@ -1538,9 +1704,11 @@ borraspritemov:
   mov bl, ah
   sub bx, BYTESPERSCAN
   sub di, bx
+  mov bx, cx
   loop .looprowh
   .finlooprowh:
   pop bx
+  pop dx
 
   mov cx, es
   cmp cx, MEMCGAODD
@@ -1550,12 +1718,12 @@ borraspritemov:
   mov es,cx
 
   ; xor ax, ax
-  mov al, bl	; al => c.y
+  mov ax, si	; al => c.y
   shr al, 1
   mov ah, BYTESPERSCAN
   mul ah	; ax => desplazamiento en bytes del renglon
-  xor cx, cx
-  mov cl, dh	; cx => c.x
+  ; xor cx, cx
+  mov cx, dx	; cx => c.x
   shr cx, 1	; descartar utlimo bit (posicion de pixel intra-byte)
   add ax, cx
   mov di, ax
@@ -1563,7 +1731,7 @@ borraspritemov:
   xor cx, cx
   mov cl, bh	; cx => c.h
   shr cx, 1	; dividir numero de renglones entre dos (para escaneo impar)
-  test bl, 00000001b	; ver si coordenada c.y es impar
+  test si, 00000001b	; ver si coordenada c.y es impar
   jz .espar4
   test bh, 00000001b	; y además altura c.h es impar
   jz .espar4
@@ -1874,6 +2042,8 @@ section .data
   kb_int_old_off: dw  0
   kb_int_old_seg: dw  0
 
+  hscroll: dw 0
+
   ; Estado de las teclas:
   tecla_esc: db 0
   tecla_up: db 0
@@ -1933,13 +2103,13 @@ section .data
     at SPRITE.ctrlcoll, dw spritephyscol
     at SPRITE.ctrlout, dw spritephysout
     at SPRITE.iavars, dw 0
-    at SPRITE.x, dw 120d
+    at SPRITE.x, dw 40d
     at SPRITE.y, dw 16d
     at SPRITE.nx, dw 0
     at SPRITE.ny, dw 0
-    ; at SPRITE.h, dw 32
-    ; at SPRITE.pxw, dw 8
-    at SPRITE.next, dw playersprite2
+    at SPRITE.h, dw 32
+    ; at SPRITE.w, dw 8
+    at SPRITE.next, dw 0
     at SPRITE.spritesheet, dw spritesheetmono1
     at SPRITE.ssframe, dw 0
     at SPRITEPHYS.vuelox, dw 0
@@ -1977,18 +2147,18 @@ section .data
 map1:
 
 
-  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 0, 0, 0, 0, 0
-  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0
-  db 2, 3, 4, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 6, 0, 0, 0
-  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-  db 0, 0, 0, 0, 0, 0, 0, 6, 6, 0, 0, 6, 0, 0, 0, 0, 0, 0, 2, 3
-  db 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 6, 0, 0, 0, 0, 0, 0, 0
-  db 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 1, 2, 0, 0, 0, 0, 0, 0
-  db 1, 4, 5, 3, 1, 2, 4, 5, 5, 4, 4, 1, 1, 2, 3, 4, 5, 5, 4, 4
+  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 4, 2, 1, 6, 2, 6, 3, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 6, 0, 0
+  db 2, 3, 4, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 6, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+  db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0
+  db 0, 0, 0, 0, 0, 0, 0, 6, 6, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+  db 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 6, 0, 0, 0, 0, 0, 0, 0
+  db 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 1, 2, 0, 0, 0, 0, 0, 0
+  db 1, 4, 5, 4, 5, 4, 4, 5, 5, 4, 4, 1, 1, 2, 3, 4, 5, 5, 4, 4, 1, 4, 5, 4, 5, 4, 4, 2, 2, 2, 4, 1, 1, 2, 3, 4, 5, 5, 4, 4
 
 
 colorbackground: db 77h

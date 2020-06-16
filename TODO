@@ -1,7 +1,10 @@
+Side Scroller:
+
+  Optimizar funcion de borrado con movimiento (evitar push y pop?)
+
+  Que no se muestren ni procesen los sprites que estén fuera del area visible en pantalla
 
 Nuevas características:
-
-  Que los sprites puedan tener ancho variable
 
   Hacer modular y separar coigo de motor y codigo específico de cada juego
 
@@ -9,9 +12,7 @@ Nuevas características:
 
   Nueva rutina de borrado optimizada que copia graficos de tile y solo donde hay movimiento
 
-  Trabajar en forma de hacer más lento el movimiento de enemigos?
-
-    Y mejorar mecánica de velocidad y movimiento de jugador
+  Mejorar mecánica de velocidad y movimiento de jugador
 
   Soporte para Joystick
 
