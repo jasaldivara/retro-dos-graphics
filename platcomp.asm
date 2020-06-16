@@ -2005,10 +2005,10 @@ incbin	"img/jugador-spritesheet.bin",0,1152
 ;incbin	"img/mono-alto-8x32-2.bin",0,128
 ;incbin	"img/mono-alto-8x32-3.bin",0,128
 spritedatamona:
-incbin	"mona-alta-8x32.bin",0,128
+incbin	"img/mona-alta-8x32.bin",0,128
 
 spritedatamonochico:
-incbin "mono-comp-8x16.bin", 0, 64
+incbin "img/mono-comp-8x16.bin", 0, 64
 
 spritedatamonogrande:
 incbin "img/enemigo-grande.bin", 0, 256

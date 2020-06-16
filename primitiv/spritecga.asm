@@ -16,10 +16,10 @@ CPU 8086
   %define KB_LEFT 4Bh
   %define KB_RIGHT 4Dh
 
-  org 100h 
- 
-section .text 
- 
+  org 100h
+
+section .text
+
 start:
   ; program code
   mov  ah, SETVIDEOMODE   ; Establecer modo de video
@@ -62,7 +62,7 @@ start:
   je moverderecha
 
   jmp leerteclado
-  
+
 fin:
   int 20h
 
@@ -317,7 +317,7 @@ dibujasprite16noalineado:
   .looprenglon:
 
   push cx ; guardar contador de renglones
-  
+
   mov dx, bx     ; copiar coordenada subpixel
   shl dx, 1	; Multiplicar c-subpixel por 2 (2 bits por pixel)
   mov cx, dx    ; guardar bits a desplazar en el contador
@@ -385,7 +385,7 @@ dibujasprite16noalineado:
   .looprenglon2:
 
   push cx ; guardar contador de renglones
-  
+
   mov dx, bx     ; copiar coordenada subpixel
   shl dx, 1	; Multiplicar c-subpixel por 2 (2 bits por pixel)
   mov cx, dx    ; guardar bits a desplazar en el contador
@@ -512,7 +512,7 @@ esperatecla:
 
 section .data
   ; program data
- 
+
   msg  db 'Hola amigos!!'
   crlf db 0x0d, 0x0a
   endstr db '$'

@@ -1,45 +1,49 @@
 
 SHELL = /bin/sh
 BIN = ./bin
+BINPRIM = ./bin/prim
 ASM = nasm
 ASMFLAGS = -fbin
 
-EJECUTABLES = $(BIN)/holacga.com $(BIN)/pixelcga.com $(BIN)/sprite4.com \
-              $(BIN)/rebota.com $(BIN)/rebota2.com $(BIN)/platform.com \
-              $(BIN)/compcol.com $(BIN)/tdycol.com $(BIN)/platcomp.com \
-              $(BIN)/p16doble.com $(BIN)/speaker.com $(BIN)/mapedit.com \
+PRIMITIVES = $(BINPRIM)/holacga.com $(BINPRIM)/pixelcga.com $(BINPRIM)/sprite4.com \
+              $(BINPRIM)/rebota.com $(BINPRIM)/rebota2.com $(BINPRIM)/platform.com \
+              $(BINPRIM)/compcol.com $(BINPRIM)/tdycol.com $(BINPRIM)/p16doble.com
+
+
+MAIN = $(BIN)/platcomp.com $(BIN)/speaker.com $(BIN)/mapedit.com \
               $(BIN)/keyboard.com $(BIN)/music.com
 
-ALL : $(EJECUTABLES)
+ALL : $(MAIN) $(PRIMITIVES)
 
-$(BIN)/holacga.com : holacga.asm
+$(BINPRIM)/holacga.com : primitiv/holacga.asm
 	$(ASM) $< $(ASMFLAGS) -o $@
 
-$(BIN)/pixelcga.com : pixelcga.asm
+$(BINPRIM)/pixelcga.com : primitiv/pixelcga.asm
 	$(ASM) $< $(ASMFLAGS) -o $@
 
-$(BIN)/sprite4.com : spritecga.asm moni
+$(BINPRIM)/sprite4.com : primitiv/spritecga.asm primitiv/moni
+	$(ASM) $< $(ASMFLAGS) -i 'primitiv/' -o $@
+
+$(BINPRIM)/rebota.com : primitiv/rebota.asm
 	$(ASM) $< $(ASMFLAGS) -o $@
 
-$(BIN)/rebota.com : rebota.asm
+$(BINPRIM)/rebota2.com : primitiv/rebota-2.asm
 	$(ASM) $< $(ASMFLAGS) -o $@
 
-$(BIN)/rebota2.com : rebota-2.asm
+$(BINPRIM)/platform.com : primitiv/platform.asm primitiv/moni
+	$(ASM) $< $(ASMFLAGS) -i 'primitiv/' -o $@
+
+$(BINPRIM)/compcol.com : primitiv/compcol.asm
 	$(ASM) $< $(ASMFLAGS) -o $@
 
-$(BIN)/platform.com : platform.asm
+$(BINPRIM)/tdycol.com : primitiv/tdycol.asm
 	$(ASM) $< $(ASMFLAGS) -o $@
 
-$(BIN)/platcomp.com : platcomp.asm img/jugador-spritesheet.bin img/jugador-spritesheet-izq.bin mono-comp-8x16.bin
-	$(ASM) $< $(ASMFLAGS) -o $@
+$(BINPRIM)/p16doble.com : primitiv/p16doble.asm primitiv/monocomposite
+	$(ASM) $< $(ASMFLAGS) -i 'primitiv/' -o $@
 
-$(BIN)/compcol.com : compcol.asm
-	$(ASM) $< $(ASMFLAGS) -o $@
 
-$(BIN)/tdycol.com : tdycol.asm
-	$(ASM) $< $(ASMFLAGS) -o $@
-
-$(BIN)/p16doble.com : p16doble.asm monocomposite
+$(BIN)/platcomp.com : platcomp.asm img/jugador-spritesheet.bin img/jugador-spritesheet-izq.bin img/mono-comp-8x16.bin
 	$(ASM) $< $(ASMFLAGS) -o $@
 
 $(BIN)/speaker.com : speaker.asm
@@ -55,6 +59,6 @@ $(BIN)/music.com : music.asm
 	$(ASM) $< $(ASMFLAGS) -o $@
 
 clean :
-	rm bin/*.*
+	rm bin/**/*
 
 
