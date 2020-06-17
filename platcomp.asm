@@ -26,8 +26,6 @@ CPU 8086
   %define GRAVEDAD 1
   %define JUMPFRAMES 14
   %define FUERZASALTO 5
-  %define ANCHOSPRITE 8
-  ; %define ALTOSPRITE 32
   %define ANCHOTILE 8
   %define ALTOTILE 16
   %define MAPWIDTH 40
@@ -35,7 +33,6 @@ CPU 8086
   %define MAPHEIGHT 12
   %define SCROLLTHRESHOLD 64
 
-  %define BWSPRITE ( ANCHOSPRITE / PXB )  ; Ancho de Sprite en Bytes
 
   %define HSCROLLSPERTILE ( ANCHOTILE / ( PXB * BYTESPERHSCROLL ) )
   %define MAXHSCROLL ( ( MAPWIDTH - MAPSCREENWIDTH ) * HSCROLLSPERTILE )

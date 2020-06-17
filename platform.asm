@@ -25,14 +25,11 @@ CPU 8086
   %define GRAVEDAD 1
   %define JUMPFRAMES 14
   %define FUERZASALTO 5
-  %define ANCHOSPRITE 8
-  ; %define ALTOSPRITE 32
   %define ANCHOTILE 8
   %define ALTOTILE 16
   %define MAPWIDTH 20
   %define MAPHEIGHT 12
 
-  %define BWSPRITE ( ANCHOSPRITE / PXB )  ; Ancho de Sprite en Bytes
 
   ; Direcciones
   ; Para controles y detección de colisiones
