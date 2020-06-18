@@ -129,9 +129,6 @@ kbcontrolfunc:
 section .data
 
 
-  kb_int_old_off: dw  0
-  kb_int_old_seg: dw  0
-
 
   ; Estado de las teclas:
   tecla_esc: db 0

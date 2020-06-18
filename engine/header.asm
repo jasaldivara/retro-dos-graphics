@@ -185,3 +185,48 @@
     %pop spritesheetloop
   %endmacro
 
+  %macro SPRITEUPDATECOORD 0
+    mov bx, bp
+    mov ax, [bx + SPRITE.ny]
+    mov [bx + SPRITE.y], ax
+    mov ax, [bx + SPRITE.nx]
+    mov [bx + SPRITE.x], ax
+  %endmacro
+
+
+  %macro SAVEINT 2
+    ; %1 => Interrupt Number
+    ; %2 => Double Word, space in memory to save it
+    mov al, %1
+    mov ah, 35h
+    int 21h
+    mov [%2], bx
+    mov [%2 + 2], es
+  %endmacro
+
+  %macro REGISTERINT 3
+    ; %1 => Interrupt Number
+    ; %2 => New Interrupt Segment
+    ; %3 => New Interrupt Address
+    mov al, %1
+    mov ah, 25h
+    mov bx, %2
+    mov dx, %3
+    mov ds, bx
+    int 21h
+  %endmacro
+
+  %macro REGISTERINTMEMORY 2
+    ; %1 => Interrupt Number
+    ; %2 => Double Word, space in memory to load it
+    mov al, %1
+    mov ah, 25h
+    mov dx, [%2]
+    mov bx, [%2 + 2]
+    mov ds, bx
+    int 21h
+  %endmacro
+
+
+
+

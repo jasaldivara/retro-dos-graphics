@@ -26,22 +26,11 @@ section .text
 
 start:
 
-  ; 1 .- Guardar Rutina de interrupcion del teclado del sistema (BIOS)
-  mov     al,9h
-  mov     ah,35h
-  int     21h
-  mov [kb_int_old_off], bx
-  mov [kb_int_old_seg], es
-
   call videomenu
 
-  ; 2 .- Registrar nueva rutina de interrupción del teclado
-  mov     al, 9h
-  mov     ah, 25h
-  mov     bx, cs
-  mov     ds, bx
-  mov     dx, kb_int_new
-  int     21h
+  SAVEINT 9h,kb_int_old	; Guardar Rutina de interrupcion del teclado del sistema (BIOS)
+
+  REGISTERINT 9h,cs,kb_int_new	; Registrar nueva rutina de interrupción del teclado
 
 
   ; Inicializar gráficos
@@ -92,11 +81,7 @@ start:
   SPRITELOOPEND
 
   SPRITELOOP
-  mov bx, bp
-  mov ax, [bx + SPRITE.ny]
-  mov [bx + SPRITE.y], ax
-  mov ax, [bx + SPRITE.nx]
-  mov [bx + SPRITE.x], ax
+  SPRITEUPDATECOORD
   SPRITELOOPEND
 
   SPRITELOOP
@@ -140,12 +125,8 @@ start:
 
 fin:
   ; 1 .- Reestablecer rutina original de manejo de teclado
-  mov     dx,[kb_int_old_off]
-  mov     ax,[kb_int_old_seg]
-  mov     ds,ax
-  mov     al,9h
-  mov     ah,25h
-  int     21h
+
+  REGISTERINTMEMORY 9h, kb_int_old
 
   ; 2 .- Restablecer desplazamiento horizontal en registros CGA
 
@@ -203,6 +184,9 @@ iabasiccoll:
 section .data
   ; program data
 
+
+
+  kb_int_old: dd  0
 
   ; Variables del programa:
 
@@ -324,9 +308,7 @@ spritedatamonigote:
 
 incbin	"img/jugador-spritesheet-izq.bin",0,1152
 incbin	"img/jugador-spritesheet.bin",0,1152
-;incbin	"img/mono-alto-8x32-0.bin",0,128
-;incbin	"img/mono-alto-8x32-2.bin",0,128
-;incbin	"img/mono-alto-8x32-3.bin",0,128
+
 spritedatamona:
 incbin	"img/mona-alta-8x32.bin",0,128
 
@@ -335,24 +317,6 @@ incbin "img/mono-comp-8x16.bin", 0, 64
 
 spritedatamonogrande:
 incbin "img/enemigo-grande.bin", 0, 256
-
-spritepelota:
-  db 00000000b, 00000000b, 00000000b, 00000000b
-  db 00000000b, 00101010b, 10101010b, 00000000b
-  db 00000000b, 10101010b, 10101010b, 10000000b
-  db 00000010b, 10101010b, 10111011b, 10100000b
-  db 00001010b, 10101010b, 10101110b, 10101000b
-  db 00101010b, 10101010b, 10111011b, 10101010b
-  db 00101010b, 10101010b, 10101010b, 10101010b
-  db 00101010b, 10101010b, 10101010b, 10101010b
-  db 00101010b, 10101010b, 10101010b, 10101010b
-  db 00101010b, 01100110b, 10101010b, 10101010b
-  db 00101001b, 10011001b, 10101010b, 10101010b
-  db 00101010b, 01010110b, 10101010b, 10101010b
-  db 00001001b, 10011001b, 10101010b, 10101000b
-  db 00000010b, 01100110b, 10101010b, 10100000b
-  db 00000000b, 10101010b, 10101010b, 10000000b
-  db 00000000b, 00101010b, 10101010b, 00000000b
 
 endspritesgraphics:
 
