@@ -10,8 +10,8 @@ PRIMITIVES = $(BINPRIM)/holacga.com $(BINPRIM)/pixelcga.com $(BINPRIM)/sprite4.c
               $(BINPRIM)/compcol.com $(BINPRIM)/tdycol.com $(BINPRIM)/p16doble.com
 
 
-MAIN = $(BIN)/platcomp.com $(BIN)/platform.com $(BIN)/speaker.com $(BIN)/mapedit.com \
-              $(BIN)/keyboard.com $(BIN)/music.com
+MAIN = $(BIN)/platcomp.com $(BIN)/sscroll.com $(BIN)/platform.com $(BIN)/speaker.com \
+	$(BIN)/mapedit.com $(BIN)/keyboard.com $(BIN)/music.com
 
 ALL : $(MAIN) $(PRIMITIVES)
 
@@ -46,7 +46,10 @@ $(BINPRIM)/p16doble.com : primitiv/p16doble.asm primitiv/monocomposite
 $(BIN)/platcomp.com : platcomp.asm img/jugador-spritesheet.bin img/jugador-spritesheet-izq.bin img/mono-comp-8x16.bin
 	$(ASM) $< $(ASMFLAGS) -o $@
 
-$(BIN)/platform.com : platform.asm img/jugador-spritesheet.bin img/jugador-spritesheet-izq.bin img/mono-comp-8x16.bin
+$(BIN)/platform.com : games/platform.asm img/jugador-spritesheet.bin img/jugador-spritesheet-izq.bin img/enemigo-grande.bin
+	$(ASM) $< $(ASMFLAGS) -o $@
+
+$(BIN)/sscroll.com : games/sscroll.asm img/jugador-spritesheet.bin img/jugador-spritesheet-izq.bin img/enemigo-grande.bin
 	$(ASM) $< $(ASMFLAGS) -o $@
 
 $(BIN)/speaker.com : speaker.asm
@@ -62,6 +65,6 @@ $(BIN)/music.com : music.asm
 	$(ASM) $< $(ASMFLAGS) -o $@
 
 clean :
-	rm bin/**/*
+	rm bin/*.* -R
 
 
