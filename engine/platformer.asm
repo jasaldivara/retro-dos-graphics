@@ -13,12 +13,23 @@ sphysicsframe:
   jz .sig1
 
   .movizq:
-  mov word [ds:bp + SPRITEPHYS.vuelox], -1
+  ; mov word [ds:bp + SPRITEPHYS.vuelox], -3
+  mov bx, [ds:bp + SPRITEPHYS.vuelox]
+  dec bx
+  cmp bx, -24
+  jge .nol1
+  mov bx, -24
+  .nol1:
+  mov [ds:bp + SPRITEPHYS.vuelox], bx
   jmp .testright
 
   .sig1:
 
-  mov word [ds:bp + SPRITEPHYS.vuelox], 0
+  ; mov word [ds:bp + SPRITEPHYS.vuelox], 0
+  mov bx, [ds:bp + SPRITEPHYS.vuelox]
+  cmp bx, 0
+  jnl .testright
+  inc word [ds:bp + SPRITEPHYS.vuelox]
 
 
   .testright:
@@ -26,18 +37,31 @@ sphysicsframe:
   jz .sig2
 
   .movder:
-  mov word [ds:bp + SPRITEPHYS.vuelox], 1
-  ; jmp .calcx
+  ; mov word [ds:bp + SPRITEPHYS.vuelox], 3
+  mov bx, [ds:bp + SPRITEPHYS.vuelox]
+  inc bx
+  cmp bx, 24
+  jle .nol2
+  mov bx, 24
+  .nol2:
+  mov [ds:bp + SPRITEPHYS.vuelox], bx
+  jmp .calcx
 
   .sig2:
   ; mov word [ds:bp + SPRITEPHYS.vuelox], 0
+  mov bx, [ds:bp + SPRITEPHYS.vuelox]
+  cmp bx, 0
+  jng .calcx
+  dec word [ds:bp + SPRITEPHYS.vuelox]
 
 
   .calcx:    ; 2.- calcular x
 
   mov bx, [ds:bp + SPRITE.x]
   mov dx, [ds:bp + SPRITEPHYS.vuelox]
-
+  sar dx, 1
+  sar dx, 1
+  sar dx, 1
   add bx, dx
 
   mov [ds:bp + SPRITE.nx], bx
