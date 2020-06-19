@@ -13,6 +13,10 @@ PRIMITIVES = $(BINPRIM)/holacga.com $(BINPRIM)/pixelcga.com $(BINPRIM)/sprite4.c
 MAIN =  $(BIN)/sscroll.com $(BIN)/platform.com $(BIN)/speaker.com \
 	$(BIN)/mapedit.com $(BIN)/keyboard.com $(BIN)/music.com
 
+
+ENGINE = engine/base.asm engine/graphics.asm engine/header.asm engine/collisions.asm \
+         engine/platformer.asm engine/keyboard.asm engine/util.asm
+
 ALL : $(MAIN) $(PRIMITIVES)
 
 $(BINPRIM)/holacga.com : primitiv/holacga.asm
@@ -42,10 +46,10 @@ $(BINPRIM)/tdycol.com : primitiv/tdycol.asm
 $(BINPRIM)/p16doble.com : primitiv/p16doble.asm primitiv/monocomposite
 	$(ASM) $< $(ASMFLAGS) -i 'primitiv/' -o $@
 
-$(BIN)/platform.com : games/platform.asm img/jugador-spritesheet.bin img/jugador-spritesheet-izq.bin img/enemigo-grande.bin
+$(BIN)/platform.com : games/platform.asm img/jugador-spritesheet.bin img/jugador-spritesheet-izq.bin img/enemigo-grande.bin $(ENGINE)
 	$(ASM) $< $(ASMFLAGS) -o $@
 
-$(BIN)/sscroll.com : games/sscroll.asm img/jugador-spritesheet.bin img/jugador-spritesheet-izq.bin img/enemigo-grande.bin
+$(BIN)/sscroll.com : games/sscroll.asm img/jugador-spritesheet.bin img/jugador-spritesheet-izq.bin img/enemigo-grande.bin $(ENGINE)
 	$(ASM) $< $(ASMFLAGS) -o $@
 
 $(BIN)/speaker.com : speaker.asm
