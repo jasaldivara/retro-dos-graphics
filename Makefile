@@ -10,7 +10,7 @@ PRIMITIVES = $(BINPRIM)/holacga.com $(BINPRIM)/pixelcga.com $(BINPRIM)/sprite4.c
               $(BINPRIM)/compcol.com $(BINPRIM)/tdycol.com $(BINPRIM)/p16doble.com
 
 
-MAIN = $(BIN)/platcomp.com $(BIN)/sscroll.com $(BIN)/platform.com $(BIN)/speaker.com \
+MAIN =  $(BIN)/sscroll.com $(BIN)/platform.com $(BIN)/speaker.com \
 	$(BIN)/mapedit.com $(BIN)/keyboard.com $(BIN)/music.com
 
 ALL : $(MAIN) $(PRIMITIVES)
@@ -41,10 +41,6 @@ $(BINPRIM)/tdycol.com : primitiv/tdycol.asm
 
 $(BINPRIM)/p16doble.com : primitiv/p16doble.asm primitiv/monocomposite
 	$(ASM) $< $(ASMFLAGS) -i 'primitiv/' -o $@
-
-
-$(BIN)/platcomp.com : platcomp.asm img/jugador-spritesheet.bin img/jugador-spritesheet-izq.bin img/mono-comp-8x16.bin
-	$(ASM) $< $(ASMFLAGS) -o $@
 
 $(BIN)/platform.com : games/platform.asm img/jugador-spritesheet.bin img/jugador-spritesheet-izq.bin img/enemigo-grande.bin
 	$(ASM) $< $(ASMFLAGS) -o $@
