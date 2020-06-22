@@ -112,16 +112,21 @@ sphysicsframe:
 animphysspriteframe:
 
   xor dx, dx
+
+  mov ah, [ds:bp + SPRITEPHYS.vuelox]
+  test ah, ah
+  jz .fincamina
+  inc dl
+  .fincamina:
+
   test al, LEFT
   jz .sig0
   mov [ds:bp + ANIMSPRITEPHYS.direccion], al
-  inc dl
   jmp .sig00
   .sig0:
   test al, RIGHT
   jz .sig00
   mov byte [ds:bp + ANIMSPRITEPHYS.direccion], 0
-  inc dl
   .sig00:
 
   xor bx, bx
