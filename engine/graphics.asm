@@ -159,18 +159,20 @@ dibujasprite16noalineado:
   ; 2.- Multiplicar
   mov dl, BYTESPERSCAN
   mul dl    ; multiplicar por ancho de pantalla en bytes
-  mov bx, [ds:bp + SPRITE.x]
-  mov dx, bx  ; Copiar coordenada X
-  shr dx, 1   ; Descartar ultimo bit
-  add ax, dx  ; Desplazamiento del byte que vamos a manipular
+  ; mov bx, [ds:bp + SPRITE.x]
+  ; mov dx, bx  ; Copiar coordenada X
+  shr bx, 1   ; Descartar ultimo bit
+  add ax, bx  ; Desplazamiento del byte que vamos a manipular
   mov di, ax
-  and bx, 00000001b	; Usar solo ultimo bit para posicion sub-byte
+  ; and bx, 00000001b	; Usar solo ultimo bit para posicion sub-byte
+
+  mov bx, [ds:bp + SPRITE.bw]
 
   ; 3.- En caso de que coordenada Y sea impar, comenzar a dibujar sprite desde
   ; la segunda fila de pixeles del mapa de bits en coordenada par de pantalla.
   test cx, 00000001b
   jz .espar
-  add si, [ds:bp + SPRITE.bw]
+  add si, bx
   add di, BYTESPERSCAN
   .espar pushf
 
@@ -192,7 +194,7 @@ dibujasprite16noalineado:
   or al, ah
   stosb
 
-  mov cx, [ds:bp + SPRITE.bw]	; numero de bytes a copiar
+  mov cx, bx	; numero de bytes a copiar
   dec cx
 
   ; ultimo pixel del renglón
@@ -208,9 +210,9 @@ dibujasprite16noalineado:
 
 
   add di, BYTESPERSCAN ; Agregar suficientes bytes para que sea siguiente renglon
-  sub di, [ds:bp + SPRITE.bw]
+  sub di, bx
   dec di
-  add si, [ds:bp + SPRITE.bw]	; Saltar renglones de sprite.mapa de bits
+  add si, bx	; Saltar renglones de sprite.mapa de bits
   dec si
 
   mov cx, dx  ; contador de renglones
@@ -223,26 +225,27 @@ dibujasprite16noalineado:
   mov cx, MEMCGAODD ; Dibujar en renglones impar de pantalla CGA 4 Col
   mov es, cx
 
-  mov al, [ds:bp + SPRITE.h]
+  mov ax, [ds:bp + SPRITE.h]
+  mov cx, ax
   mov dl, al
   shr al,1
   mov ah, BYTESPERSCAN
   mul ah
   sub di, ax	; Retroceder hasta posicion inicial en pantalla ? (pero ahora en renglon impar)
   dec dl
-  mov al, [ds:bp + SPRITE.bw]
+  mov al, bl
   mul dl
   sub si, ax	; retrocedemos hasta posicion inicial de sprite + un renglon
 
 
   popf ; ¿Necesario?
   jz .espar2
-  sub si, [ds:bp + SPRITE.bw]
-  sub si, [ds:bp + SPRITE.bw]
+  sub si, bx
+  sub si, bx
   sub di, BYTESPERSCAN
   .espar2:
 
-  mov cx, [ds:bp + SPRITE.h]
+  ; mov cx, [ds:bp + SPRITE.h]
   shr cx, 1
 
   .looprenglon2:
@@ -259,7 +262,7 @@ dibujasprite16noalineado:
   or al, ah
   stosb
 
-  mov cx, [ds:bp + SPRITE.bw]	; numero de bytes a copiar
+  mov cx, bx	; numero de bytes a copiar
   dec cx
   rep movsb
 
@@ -276,9 +279,9 @@ dibujasprite16noalineado:
 
 
   add di, BYTESPERSCAN	; Agregar suficientes bytes para que sea siguiente renglon
-  sub di, [ds:bp + SPRITE.bw]
+  sub di, bx
   dec di
-  add si, [ds:bp + SPRITE.bw] ; Saltar renglones de ssprite.mapa de bits
+  add si, bx ; Saltar renglones de ssprite.mapa de bits
   dec si
   mov cx, dx  ; contador de renglones
   loop .looprenglon2
