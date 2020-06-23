@@ -114,7 +114,7 @@ animphysspriteframe:
   xor dx, dx
 
   mov ah, [ds:bp + SPRITEPHYS.vuelox]
-  test ah, ah
+  test ah, 11111000b
   jz .fincamina
   inc dl
   .fincamina:
