@@ -61,28 +61,32 @@ dibujasprite16:
   add ax, bx  ; Desplazamiento del byte que vamos a manipular
   mov di, ax
 
+
+  mov ax, [ds:bp + SPRITE.bw]
+
   ; 3.- En caso de que coordenada Y sea impar, comenzar a dibujar sprite desde
   ; la segunda fila de pixeles del mapa de bits en coordenada par de pantalla.
   ; mov cx, [ds:bp + SPRITE.y]
   test cx, 00000001b
   jz .espar
-  add si, [ds:bp + SPRITE.bw]
+  add si, ax
   add di, BYTESPERSCAN
   .espar: pushf
 
   mov cx, [ds:bp + SPRITE.h]  ; 4 .- Primero dibujamos mitad de renglones (en renglones par de patalla)
   shr cx, 1
 
+
   .looprenglon:
 
   mov dx, cx	; respaldar conteo de renglones
-  mov cx, [ds:bp + SPRITE.bw]	; Bytes a copiar por renglon
+  mov cx, ax	; Bytes a copiar por renglon
   rep movsb
   mov cx, dx	; restaurar conteo de renglones
 
   add di, BYTESPERSCAN; Agregar suficientes bytes para que sea siguiente renglon
-  sub di, [ds:bp + SPRITE.bw] ; TODO: ¿Optimizar para acceder solo una vez a ancho de sprite?
-  add si, [ds:bp + SPRITE.bw] ; Saltar renglones de ssprite.mapa de bits
+  sub di, ax
+  add si, ax ; Saltar renglones de ssprite.mapa de bits
   loop .looprenglon
 
   ; 5 .- Después dibujamos otra mitad de renglones de sprite, ahora en renglones impar de pantalla
@@ -90,22 +94,23 @@ dibujasprite16:
   mov cx, MEMCGAODD ; Dibujar en renglones impar de pantalla CGA 4 Col
   mov es, cx
 
+  mov bx, ax
+
   mov al, [ds:bp + SPRITE.h]
   mov dl, al
   shr al,1
   mov ah, BYTESPERSCAN
   mul ah
   sub di, ax	; Retroceder hasta posicion inicial en pantalla ? (pero ahora en renglon impar)
-  mov al, dl
-  dec al
-  mov ah, [ds:bp + SPRITE.bw]
-  mul ah
+  dec dl
+  mov al, bl
+  mul dl
   sub si, ax	; retrocedemos hasta posicion inicial de sprite + un renglon
 
   popf ; ¿Necesario?
   jz .espar2
-  sub si, [ds:bp + SPRITE.bw]
-  sub si, [ds:bp + SPRITE.bw]
+  sub si, bx
+  sub si, bx
   sub di, BYTESPERSCAN
   .espar2:
 
@@ -115,13 +120,13 @@ dibujasprite16:
   .looprenglon2:
 
   mov dx, cx	; respaldar conteo de renglones
-  mov cx, [ds:bp + SPRITE.bw]	; Bytes a copiar por renglon
+  mov cx, bx	; Bytes a copiar por renglon
   rep movsb
   mov cx, dx	; restaurar conteo de renglones
 
   add di, BYTESPERSCAN ; Agregar suficientes bytes para que sea siguiente renglon
-  sub di, [ds:bp + SPRITE.bw]
-  add si, [ds:bp + SPRITE.bw] ; Saltar renglones de ssprite.mapa de bits
+  sub di, bx
+  add si, bx ; Saltar renglones de ssprite.mapa de bits
   loop .looprenglon2
 
   ret
@@ -224,10 +229,9 @@ dibujasprite16noalineado:
   mov ah, BYTESPERSCAN
   mul ah
   sub di, ax	; Retroceder hasta posicion inicial en pantalla ? (pero ahora en renglon impar)
-  mov al, dl
-  dec al
-  mov ah, [ds:bp + SPRITE.bw]
-  mul ah
+  dec dl
+  mov al, [ds:bp + SPRITE.bw]
+  mul dl
   sub si, ax	; retrocedemos hasta posicion inicial de sprite + un renglon
 
 
