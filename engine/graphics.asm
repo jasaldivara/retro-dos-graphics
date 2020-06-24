@@ -349,7 +349,7 @@ borraspritemov:
   .initlooprow:
   mov cx, dx
   mov al, [colorbackground]
-  mov ah, bl	; respaldar ¿altura de Sprite?
+  mov ah, bl	; respaldar altura de area a borrar
 
   mov bx, [ds:bp + SPRITE.x]
   and bx, 00000001b
@@ -377,8 +377,8 @@ borraspritemov:
   mov es, cx
   mov ax, bx
   shr ax, 1
-  mov dl, BYTESPERSCAN
-  mul dl
+  mov ah, BYTESPERSCAN
+  mul ah
   sub di, ax ; TODO: Ver como optimizar esto, junto con el siguiente 'jz .espar2'
   ; sub di, BYTESPERSCAN * ( ALTOSPRITE / 2 )
   mov dx, bx
