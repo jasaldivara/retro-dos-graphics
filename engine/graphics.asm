@@ -266,10 +266,9 @@ dibujasprite16noalineado:
   dec cx
   rep movsb
 
-  ; ultimp pixel del renglón
+  ; Último pixel del renglón
   ; Conservar el pixel de la derecha, que pertenece al fondo?
 
-  rep movsb ; ???
   mov ah, [es:di]
   and ah, 00001111b
   lodsb
