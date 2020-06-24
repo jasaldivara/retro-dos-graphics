@@ -96,15 +96,17 @@
 
   MOV	DX, 03DAH
 
-  %%Retrace1:
-	IN	AL,DX			; AL := Port[03DAH]
-	TEST	AL,8			; Is bit 3 set?
-	JZ	%%Retrace1		; No, continue waiting
 
 	%%Retrace2:				;	IN	AL,DX
 	IN	AL,DX		; AL := Port[03DAH]
 	TEST	AL,8			; Is bit 3 unset?
 	JNZ	%%Retrace2		; No, continue waiting
+
+  %%Retrace1:
+	IN	AL,DX			; AL := Port[03DAH]
+	TEST	AL,8			; Is bit 3 set?
+	JZ	%%Retrace1		; No, continue waiting
+
 
   %endmacro
 
