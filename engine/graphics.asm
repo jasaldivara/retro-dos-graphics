@@ -137,10 +137,12 @@ dibujasprite16noalineado:
   ; 0.- Cargar direccion de mapa de bits
 
   mov ah, [ds:bp + SPRITE.bw]
+  mov dh, ah
 
   mov al, [ds:bp + SPRITE.ssframe]
   mul ah
   mov ah, [ds:bp + SPRITE.h]
+  mov dl, ah
   mul ah
 
   add ax, [ds:bp + SPRITE.gr1]
@@ -153,30 +155,31 @@ dibujasprite16noalineado:
   mov es, cx
 
   mov ax, [ds:bp + SPRITE.y]
-  mov cx, ax  ; Copiar / respaldar coordenada Y
+  mov cl, al  ; Copiar / respaldar coordenada Y
   shr ax, 1 ; Descartar el bit de selección de banco
 
   ; 2.- Multiplicar
+  mov ch, dl
   mov dl, BYTESPERSCAN
   mul dl    ; multiplicar por ancho de pantalla en bytes
-  ; mov bx, [ds:bp + SPRITE.x]
-  ; mov dx, bx  ; Copiar coordenada X
+
   shr bx, 1   ; Descartar ultimo bit
   add ax, bx  ; Desplazamiento del byte que vamos a manipular
   mov di, ax
-  ; and bx, 00000001b	; Usar solo ultimo bit para posicion sub-byte
 
-  mov bx, [ds:bp + SPRITE.bw]
+  xor bx, bx
+  mov bl, dh
 
   ; 3.- En caso de que coordenada Y sea impar, comenzar a dibujar sprite desde
   ; la segunda fila de pixeles del mapa de bits en coordenada par de pantalla.
-  test cx, 00000001b
+  test cl, 00000001b
   jz .espar
-  add si, bx
+  add si, bx	; bx = SPRITE.bw
   add di, BYTESPERSCAN
   .espar pushf
 
-  mov cx, [ds:bp + SPRITE.h]  ; 4 .- Primero dibujamos mitad de renglones (en renglones par de patalla)
+  mov cl, ch  ; 4 .- Primero dibujamos mitad de renglones (en renglones par de patalla)
+  xor ch, ch
   shr cx, 1
 
 
