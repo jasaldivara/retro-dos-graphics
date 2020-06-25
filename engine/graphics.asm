@@ -184,16 +184,17 @@ dibujasprite16noalineado:
   xor ch, ch
   shr cx, 1
 
+  mov al, [colorbackground]
+  mov dh, al
 
   .looprenglon:
 
-  mov dx, cx ; guardar contador de renglones
+  mov dl, cl ; guardar contador de renglones
 
   ; primer pixel del renglón
   ; Conservar el pixel de la izquierda, que pertenece al fondo?
 
-  mov al, [es:di]
-  mov ah, al
+  mov ah, dh
   and ah, 11110000b
   lodsb
   and al, 00001111b
@@ -207,8 +208,8 @@ dibujasprite16noalineado:
   ; Conservar el pixel de la derecha, que pertenece al fondo?
 
   rep movsb
-  mov al, [es:di]
-  mov ah, al
+
+  mov ah, dh
   and ah, 00001111b
   lodsb
   and al, 11110000b
@@ -222,7 +223,8 @@ dibujasprite16noalineado:
   add si, bx	; Saltar renglones de sprite.mapa de bits
   dec si
 
-  mov cx, dx  ; contador de renglones
+  xor cx, cx
+  mov cl, dl  ; contador de renglones
   loop .looprenglon
 
   ;popf	; Salir por mientras
@@ -257,13 +259,12 @@ dibujasprite16noalineado:
 
   .looprenglon2:
 
-  mov dx, cx ; guardar contador de renglones
+  mov dl, cl ; guardar contador de renglones
 
   ; primer pixel del renglón
   ; Conservar el pixel de la izquierda, que pertenece al fondo?
 
-  mov al, [es:di]
-  mov ah, al
+  mov ah, dh
   and ah, 11110000b
   lodsb
   and al, 00001111b
@@ -277,8 +278,7 @@ dibujasprite16noalineado:
   ; Último pixel del renglón
   ; Conservar el pixel de la derecha, que pertenece al fondo?
 
-  mov al, [es:di]
-  mov ah, al
+  mov ah, dh
   and ah, 00001111b
   lodsb
   and al, 11110000b
@@ -291,7 +291,9 @@ dibujasprite16noalineado:
   dec di
   add si, bx ; Saltar renglones de ssprite.mapa de bits
   dec si
-  mov cx, dx  ; contador de renglones
+
+  xor cx, cx
+  mov cl, dl  ; contador de renglones
   loop .looprenglon2
 
 
