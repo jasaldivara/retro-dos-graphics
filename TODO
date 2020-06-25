@@ -6,15 +6,11 @@ Side Scroller:
 
 Nuevas características:
 
-  Hacer modular y separar coigo de motor y codigo específico de cada juego
-
-    Organizar código en carpetas
-
   Nueva rutina de borrado optimizada que copia graficos de tile y solo donde hay movimiento
 
-  Mejorar mecánica de velocidad y movimiento de jugador
-
   Soporte para Joystick
+
+  Mejorar mecánica de velocidad y movimiento de jugador y sprites físicos
 
   Agregar musica a juego principal
 
@@ -26,10 +22,8 @@ Nuevas características:
 
 Bugs:
 
-  Error: Funcion Spritecollisiones usa campos de la estructura SPRITEPHYS, no existentes en SPRITE
-    ¿Unificar dichas estructuras? ¿reestructurar codigo? ¿Agregar funcion escucha para evento colision?
-  Arreglar error flicker cuando sprite está en lo más alto de la pantalla (lineas en blanco)
-  Errores en deteccion de colisiones con tiles (3/4)
+  Arreglar glitch flicker cuando sprite está en lo más alto de la pantalla (lineas en blanco)
+
 
 Nuevos programas:
 
