@@ -176,7 +176,9 @@ dibujasprite16noalineado:
   jz .espar
   add si, bx	; bx = SPRITE.bw
   add di, BYTESPERSCAN
-  .espar pushf
+  .espar:
+
+  pushf
 
   mov cl, ch  ; 4 .- Primero dibujamos mitad de renglones (en renglones par de patalla)
   xor ch, ch
@@ -190,7 +192,8 @@ dibujasprite16noalineado:
   ; primer pixel del renglón
   ; Conservar el pixel de la izquierda, que pertenece al fondo?
 
-  mov ah, [es:di]
+  mov al, [es:di]
+  mov ah, al
   and ah, 11110000b
   lodsb
   and al, 00001111b
@@ -204,7 +207,8 @@ dibujasprite16noalineado:
   ; Conservar el pixel de la derecha, que pertenece al fondo?
 
   rep movsb
-  mov ah, [es:di]
+  mov al, [es:di]
+  mov ah, al
   and ah, 00001111b
   lodsb
   and al, 11110000b
@@ -258,7 +262,8 @@ dibujasprite16noalineado:
   ; primer pixel del renglón
   ; Conservar el pixel de la izquierda, que pertenece al fondo?
 
-  mov ah, [es:di]
+  mov al, [es:di]
+  mov ah, al
   and ah, 11110000b
   lodsb
   and al, 00001111b
@@ -272,7 +277,8 @@ dibujasprite16noalineado:
   ; Último pixel del renglón
   ; Conservar el pixel de la derecha, que pertenece al fondo?
 
-  mov ah, [es:di]
+  mov al, [es:di]
+  mov ah, al
   and ah, 00001111b
   lodsb
   and al, 11110000b
