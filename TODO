@@ -1,6 +1,5 @@
 Side Scroller:
 
-  Optimizar funcion de borrado con movimiento (evitar push y pop?)
 
   Que no se muestren ni procesen los sprites que estén fuera del area visible en pantalla
 
@@ -22,7 +21,6 @@ Nuevas características:
 
 Bugs:
 
-  Arreglar glitch flicker cuando sprite está en lo más alto de la pantalla (lineas en blanco)
 
 
 Nuevos programas:
@@ -49,6 +47,9 @@ Mecánica del juego:
   que soltar el botón)
 
 Optimizaciones:
+
+
+  Optimizar funcion de borrado con movimiento (evitar push y pop?)
 
   Dibujado de sprites:
 
