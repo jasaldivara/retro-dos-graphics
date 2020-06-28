@@ -77,13 +77,7 @@ start:
 
   SPRITELOOP
   call borraspritemov
-  SPRITELOOPEND
-
-  SPRITELOOP
   SPRITEUPDATECOORD
-  SPRITELOOPEND
-
-  SPRITELOOP
   call dibujasprite16
   SPRITELOOPEND
 
