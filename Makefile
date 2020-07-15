@@ -7,7 +7,8 @@ ASMFLAGS = -fbin
 
 PRIMITIVES = $(BINPRIM)/holacga.com $(BINPRIM)/pixelcga.com $(BINPRIM)/sprite4.com \
               $(BINPRIM)/rebota.com $(BINPRIM)/rebota2.com $(BINPRIM)/platform.com \
-              $(BINPRIM)/compcol.com $(BINPRIM)/tdycol.com $(BINPRIM)/p16doble.com
+              $(BINPRIM)/compcol.com $(BINPRIM)/tdycol.com $(BINPRIM)/p16doble.com \
+							$(BINPRIM)/joystick.com
 
 
 MAIN =  $(BIN)/sscroll.com $(BIN)/platform.com $(BIN)/speaker.com \
@@ -44,6 +45,9 @@ $(BINPRIM)/tdycol.com : primitiv/tdycol.asm
 	$(ASM) $< $(ASMFLAGS) -o $@
 
 $(BINPRIM)/p16doble.com : primitiv/p16doble.asm primitiv/monocomposite
+	$(ASM) $< $(ASMFLAGS) -i 'primitiv/' -o $@
+
+$(BINPRIM)/joystick.com : primitiv/joystick.asm
 	$(ASM) $< $(ASMFLAGS) -i 'primitiv/' -o $@
 
 $(BIN)/platform.com : games/platform.asm img/jugador-spritesheet.bin img/jugador-spritesheet-izq.bin img/enemigo-grande.bin $(ENGINE)
