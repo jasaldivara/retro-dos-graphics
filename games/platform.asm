@@ -25,6 +25,13 @@ section .text
 
 start:
 
+
+  call inputMenu
+  test al, al
+  jz .endinput
+  mov word [playersprite + SPRITE.control], jscontrolfunc
+  .endinput:
+
   call videomenu
 
   SAVEINT 9h,kb_int_old	; Guardar Rutina de interrupcion del teclado del sistema (BIOS)
@@ -138,6 +145,7 @@ iabasiccoll:
 
 %include 'engine/base.asm'
 %include 'engine/keyboard.asm'
+%include 'engine/joystick.asm'
 %include 'engine/graphics.asm'
 %include 'engine/collisions.asm'
 %include 'engine/platformer.asm'

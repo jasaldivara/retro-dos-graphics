@@ -5,10 +5,7 @@ videomenu:
 
 
   ; 1.- Entrar en video modo 4
-  mov  ah, SETVIDEOMODE   ; Establecer modo de video
-  mov  al, 4      ; CGA Modo 4
-  int  VIDEOBIOS   ; LLamar a la BIOS para servicios de video
-
+  mSetVideoMode 4
 
   mov dh, 1
   mov dl, 10
@@ -126,6 +123,186 @@ writestring:
   ret
 
 
+inputMenu:
+
+  mSetVideoMode 3
+
+  lea bx, [input_menu_title]
+  mEscribeStringzColor  00001111b, 2, 1
+
+  lea bx, [input_menu_keyboard]
+  mEscribeStringzColor  00001111b, 2, 3
+
+  lea bx, [input_menu_joystick]
+  mEscribeStringzColor  00001111b, 2, 5
+
+  .leeteclado:
+  mov ah, 0
+  int 16h
+
+  xor ah, ah
+  cmp al, '2'
+  jne .return
+
+  call calibrateJoystick
+  mov ah, 1
+
+  .return:
+  mov al, ah
+
+ret
+
+esperatiempo:
+
+
+  .preloop:
+
+  mov cx, 18
+
+  .loop:
+
+  VSync
+
+  loop .loop
+
+  ret
+
+escribepalabradecimal:
+  ; bx = valor a escribir en pantalla
+  ; dh = coord y
+  ; dl = coord x
+
+  mov cx, cs	; Use code segment in .com executable, because is the same as data segment
+  mov ds, cx
+
+  mov cx, MEMCGAEVEN
+  mov es, cx
+
+
+  mov al, BYTESPERROW
+  mul dh
+  xor dh, dh
+  shl dx, 1	; multiplicar x * 2
+  add ax, dx
+  mov di, ax	; Destino en pantalla en es:di
+
+  mov ax, bx
+  mov cx, 5   ; 5 dígitos máximo
+  std
+
+  .ciclodigito:
+  xor dx, dx
+  mov bx, 10d
+  div bx
+
+
+  xchg ax, dx
+  add al, '0'
+  mov ah, 00001111b
+  stosw
+  mov ax, dx
+  dec cx
+  test ax, ax
+
+  jnz .ciclodigito
+
+  .cicloceros:
+  cmp cx, 0
+  jna .salir
+  mov al, 0
+  mov ah, 00001111b
+  rep stosw
+
+  .salir:
+  cld
+  ret
+
+escribecaracter:
+  ; bh = atributos / colores
+  ; bl = caracter ascii
+  ; dh = coord y
+  ; dl = coord x
+
+  mov cx, cs	; Use code segment in .com executable, because is the same as data segment
+  mov ds, cx
+
+  mov cx, MEMCGAEVEN
+  mov es, cx
+
+
+  mov al, BYTESPERROW
+  mul dh
+  xor dh, dh
+  shl dx, 1	; multiplicar x * 2
+  add ax, dx
+  mov di, ax	; Destino en pantalla en es:di
+
+  mov ax, bx
+
+  stosw
+
+  ret
+
+borratexto:
+  ; cx = Cantidad de caracteres a borrar
+  ; dh = coord y
+  ; dl = coord x
+
+  mov ax, cs	; Use code segment in .com executable, because is the same as data segment
+  mov ds, ax
+
+  mov ax, MEMCGAEVEN
+  mov es, ax
+
+
+  mov al, BYTESPERROW
+  mul dh
+  xor dh, dh
+  shl dx, 1	; multiplicar x * 2
+  add ax, dx
+  mov di, ax	; Destino en pantalla en es:di
+
+  xor ax, ax
+
+  rep stosw
+
+  ret
+
+escribestringz:
+  ; escribe en pantalla cadena de caracteres terminada en cero
+  ; bx = puntero a cadena
+  ; dh = coord y
+  ; dl = coord x
+  ; ch = atributos/colores
+
+  mov ax, cs	; Use code segment in .com executable, because is the same as data segment
+  mov ds, ax
+
+  mov ax, MEMCGAEVEN
+  mov es, ax
+
+  mov si, bx	; cadena origen en si
+
+  mov al, BYTESPERROW
+  mul dh
+  xor dh, dh
+  shl dx, 1	; multiplicar x * 2
+  add ax, dx
+  mov di, ax	; Destino en pantalla en es:di
+
+  mov ah, ch	; atributos en byte alto
+
+  .ciclo:
+  lodsb		; Cargar caracter en al
+  test al, al	; si es caracter es cero, terminar de escribir
+  jz .fin
+  ; mov ah, ch
+  stosw		;  Escribir en pantalla, caracter + atributos
+  jmp .ciclo
+
+  .fin:
+  ret
+
 
 section .data
 
@@ -137,4 +314,8 @@ section .data
 
   video_menu_tandy: db '3 TANDY RGBI Monitor', 0
 
+  input_menu_title: db 'Select input method', 0
 
+  input_menu_keyboard: db '1 Keyboard', 0
+
+  input_menu_joystick: db '2 Joystick', 0

@@ -16,7 +16,7 @@ MAIN =  $(BIN)/sscroll.com $(BIN)/platform.com $(BIN)/speaker.com \
 
 
 ENGINE = engine/base.asm engine/graphics.asm engine/header.asm engine/collisions.asm \
-         engine/platformer.asm engine/keyboard.asm engine/util.asm
+         engine/platformer.asm engine/keyboard.asm engine/joystick.asm engine/util.asm
 
 ALL : $(MAIN) $(PRIMITIVES)
 

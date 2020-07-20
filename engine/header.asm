@@ -13,16 +13,34 @@
   %define MEMCGAEVEN 0xB800
   %define MEMCGAODD 0xBA00
 
+  ; Keyboard constants
+
   %define KB_ESC 01
   %define KB_UP 48h
   %define KB_DOWN 50h
   %define KB_LEFT 4Bh
   %define KB_RIGHT 4Dh
 
+  ; Joystick constants
+
+  %define JOYSTICKPORT	201h
+  %define JS2B	10000000b
+  %define JS2A	01000000b
+  %define JS1B	00100000b
+  %define JS1A	00010000b
+  %define JS2Y	00001000b
+  %define JS2X	00000100b
+  %define JS1Y	00000010b
+  %define JS1X	00000001b
+
+
 
   %define HSCROLLSPERTILE ( ANCHOTILE / ( PXB * BYTESPERHSCROLL ) )
   %define MAXHSCROLL ( ( MAPWIDTH - MAPSCREENWIDTH ) * HSCROLLSPERTILE )
 
+
+  ; Warning: Olny 80-column text mode!
+  %define BYTESPERROW	160d
 
   ; Direcciones
   ; Para controles y detección de colisiones
@@ -91,6 +109,15 @@
 
   ; Macros
 
+
+  %macro mSetVideoMode 1
+
+  mov  ah, 0   ; Establecer modo de video
+  mov  al, %1      ; Modo de video
+  int  10h   ; LLamar a la BIOS para servicios de video
+
+  %endmacro
+
   ; vsync: Esperar retrazo vertical
   %macro VSync 0
 
@@ -107,6 +134,49 @@
 	TEST	AL,8			; Is bit 3 set?
 	JZ	%%Retrace1		; No, continue waiting
 
+  %endmacro
+
+
+  %macro mEscribeStringzColor 3
+
+  ; ds:bx = stringz
+  ; %1 = atributos (colores)
+  ; %2 = x
+  ; %3 = y
+
+  mov dh, %3
+  mov dl, %2
+  mov ch, %1
+  call escribestringz
+
+  %endmacro
+
+
+  %macro mBorraTexto 3
+
+  ; %1 = cantidad de caracteres
+  ; %2 = x
+  ; %3 = y
+
+  mov cx, %1
+  mov dl, %2
+  mov dh, %3
+
+  call borratexto
+
+  %endmacro
+
+  %macro readJoystick 0
+
+  mov dx, JOYSTICKPORT
+  in al, dx
+
+  %endmacro
+
+
+  %macro EsperaTiempo 0
+
+  call esperatiempo
 
   %endmacro
 
