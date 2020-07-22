@@ -5,70 +5,45 @@ sphysicsframe:
   ; Parametros:
   ; BP => sprite
 
-  ; 1.- Leer el teclado
+  ; 1.- Leer el control X
 
 
-  .test_left:
-  test al, LEFT
-  jz .sig1
+  xor bx, bx
+  mov bl, al
+  and bl, 00000011b
+  test al, 00000100b
+  jz .endxsign
+  neg bx
+  .endxsign:
 
-  .movizq:
-  ; mov word [ds:bp + SPRITEPHYS.vuelox], -3
-  mov bx, [ds:bp + SPRITEPHYS.vuelox]
-  dec bx
-  cmp bx, -24
-  jge .nol1
-  mov bx, -24
-  .nol1:
-  mov [ds:bp + SPRITEPHYS.vuelox], bx
-  jmp .testright
+  mov dx, [ds:bp + SPRITEPHYS.vuelox]
+  sal bx, 1
+  sal bx, 1
+  sal bx, 1
+  cmp dx, bx
+  je .endvx
+  jg .decvx
+  inc dx
+  jmp .endvx
+  .decvx:
+  dec dx
+  .endvx:
 
-  .sig1:
-
-  ; mov word [ds:bp + SPRITEPHYS.vuelox], 0
-  mov bx, [ds:bp + SPRITEPHYS.vuelox]
-  cmp bx, 0
-  jnl .testright
-  inc word [ds:bp + SPRITEPHYS.vuelox]
-
-
-  .testright:
-  test al, RIGHT
-  jz .sig2
-
-  .movder:
-  ; mov word [ds:bp + SPRITEPHYS.vuelox], 3
-  mov bx, [ds:bp + SPRITEPHYS.vuelox]
-  inc bx
-  cmp bx, 24
-  jle .nol2
-  mov bx, 24
-  .nol2:
-  mov [ds:bp + SPRITEPHYS.vuelox], bx
-  jmp .calcx
-
-  .sig2:
-  ; mov word [ds:bp + SPRITEPHYS.vuelox], 0
-  mov bx, [ds:bp + SPRITEPHYS.vuelox]
-  cmp bx, 0
-  jng .calcx
-  dec word [ds:bp + SPRITEPHYS.vuelox]
+  mov [ds:bp + SPRITEPHYS.vuelox], dx
+  sar dx, 1
+  sar dx, 1
+  sar dx, 1
 
 
   .calcx:    ; 2.- calcular x
 
-  mov bx, [ds:bp + SPRITE.x]
-  mov dx, [ds:bp + SPRITEPHYS.vuelox]
-  sar dx, 1
-  sar dx, 1
-  sar dx, 1
-  add bx, dx
-
-  mov [ds:bp + SPRITE.nx], bx
+  mov cx, [ds:bp + SPRITE.x]
+  add cx, dx
+  mov [ds:bp + SPRITE.nx], cx
 
   .saltar:
   ; ¿está presionada esta tecla?
-  test al, UP
+  test al, ABTN
   jz .calcdy
 
   ; mov al, [ds:bp + SPRITEPHYS.parado] ; Tiene que estar parado para poder saltar
@@ -119,13 +94,13 @@ animphysspriteframe:
   inc dl
   .fincamina:
 
-  test al, LEFT
+  test al, 00000011b
+  jz .sig00
+  test al, 00000100b
   jz .sig0
-  mov [ds:bp + ANIMSPRITEPHYS.direccion], al
+  mov byte [ds:bp + ANIMSPRITEPHYS.direccion], 1
   jmp .sig00
   .sig0:
-  test al, RIGHT
-  jz .sig00
   mov byte [ds:bp + ANIMSPRITEPHYS.direccion], 0
   .sig00:
 
@@ -137,7 +112,7 @@ animphysspriteframe:
   add bh, 9
   .sig1:
 
-  test al, UP
+  test al, ABTN
   jnz .saltar
   mov bl, [ds:bp + SPRITEPHYS.parado]
   test bl, bl

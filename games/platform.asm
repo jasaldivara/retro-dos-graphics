@@ -130,11 +130,11 @@ iabasiccoll:
   jz .sig2
   test ah, LEFT
   jz .sig1
-  mov byte [ds:bp + SPRITE.iavars], RIGHT
+  mov byte [ds:bp + SPRITE.iavars], 00000001b
   .sig1:
   test ah, RIGHT
   jz .sig2
-  mov byte [ds:bp + SPRITE.iavars], LEFT
+  mov byte [ds:bp + SPRITE.iavars], 00000101b
   .sig2:
   ; call spritephyscol
   jmp spritephyscol

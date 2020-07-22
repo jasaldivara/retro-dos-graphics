@@ -9,30 +9,73 @@ jscontrolfunc:
   xor cl, cl
 
   .cmplx:
-
+  .cmplx1:
   mov ax, [js1xcount]
+  mov bx, [js1xtb1]
+
+  cmp ax, bx
+  jge .cmplx2
+
+  or cl, 00000111b
+  jmp .btn
+
+  .cmplx2:
+
   mov bx, [js1xtb2]
+  cmp ax, bx
+  jge .cmplx3
+
+  or cl, 00000110b
+  jmp .btn
+
+  .cmplx3:
+
+  mov bx, [js1xtb3]
   cmp ax, bx
   jge .cmpgx
 
-  or cl, LEFT
+  or cl, 00000101b
   jmp .btn
 
   .cmpgx:
-
+  .cmpgx1:
   mov bx, [js1xte3]
+  cmp ax, bx
+  jle .cmpgx2
+
+  or cl, 00000011b
+  jmp .btn
+
+  .cmpgx2:
+  mov bx, [js1xte2]
+  cmp ax, bx
+  jle .cmpgx3
+
+  or cl, 00000010b
+  jmp .btn
+
+  .cmpgx3:
+  mov bx, [js1xte1]
   cmp ax, bx
   jle .btn
 
-  or cl, RIGHT
+  or cl, 00000001b
+  ;jmp .btn
 
   .btn:
   
   readJoystick
   test al, JS1A
+  jnz .bbtn
+
+  or cl, ABTN
+
+  .bbtn:
+
+  test al, JS1B
   jnz .return
 
-  or cl, UP
+  or cl, BBTN
 
   .return:
   mov al, cl

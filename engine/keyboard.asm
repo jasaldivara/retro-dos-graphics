@@ -69,8 +69,17 @@ kb_int_new:
   jne .sig5
   mov bx, tecla_down
   jmp .guardar
-
   .sig5:
+  cmp al, KB_SALTA
+  jne .sig6
+  mov bx, tecla_salta
+  jmp .guardar
+  .sig6:
+  cmp al, KB_ACCION
+  jne .sig7
+  mov bx, tecla_accion
+  jmp .guardar
+  .sig7:
 
 
   jmp .salida
@@ -106,22 +115,22 @@ kbcontrolfunc:
   mov ah, [tecla_left]
   test ah, ah
   jz .sig1
-  or al, LEFT
+  or al, 00000111b
   .sig1:
   mov ah, [tecla_right]
   test ah, ah
   jz .sig2
-  or al, RIGHT
+  or al, 00000011b
   .sig2:
-  mov ah, [tecla_up]
+  mov ah, [tecla_salta]
   test ah, ah
   jz .sig3
-  or al, UP
+  or al, ABTN
   .sig3:
-  mov ah, [tecla_down]
+  mov ah, [tecla_accion]
   test ah, ah
   jz .sig4
-  or al, DOWN
+  or al, BBTN
   .sig4:
 
   ret
@@ -136,4 +145,6 @@ section .data
   tecla_down: db 0
   tecla_left: db 0
   tecla_right: db 0
+  tecla_salta: db 0
+  tecla_accion: db 0
 

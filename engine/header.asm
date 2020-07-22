@@ -20,6 +20,8 @@
   %define KB_DOWN 50h
   %define KB_LEFT 4Bh
   %define KB_RIGHT 4Dh
+  %define KB_SALTA 44d
+  %define KB_ACCION 45d
 
   ; Joystick constants
 
@@ -43,12 +45,19 @@
   %define BYTESPERROW	160d
 
   ; Direcciones
-  ; Para controles y detección de colisiones
+  ; Para detección de colisiones
 
   %define UP		00001000b
   %define DOWN		00000100b
   %define LEFT		00000010b
   %define RIGHT		00000001b
+
+
+  ; Constantes de controles:
+
+  %define BBTN   10000000b
+  %define ABTN   01000000b
+
 
   ; data structures
 
