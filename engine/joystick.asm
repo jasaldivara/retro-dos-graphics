@@ -115,19 +115,23 @@ calibrateJoystick:
 
   EsperaTiempo
 
+  mBorraTexto 80d, 0, 3
+
+  EsperaTiempo
+
   lea bx, [msgsuelte]
   mEscribeStringzColor  00001111b, 2, 9
-
-  mBorraTexto 80d, 0, 3
 
   call esperajoystick
 
   EsperaTiempo
 
+  mBorraTexto 80d, 0, 9
+
+  EsperaTiempo
+
   lea bx, [msgjcenter]
   mEscribeStringzColor  00001111b, 2, 3
-
-  mBorraTexto 80d, 0, 9
 
   call ciclomuestrajoystick
 
@@ -141,19 +145,25 @@ calibrateJoystick:
 
   EsperaTiempo
 
+  mBorraTexto 80d, 0, 3
+
+  EsperaTiempo
+
   lea bx, [msgsuelte]
   mEscribeStringzColor  00001111b, 2, 9
 
-  mBorraTexto 80d, 0, 3
 
   call esperajoystick
+
+  EsperaTiempo
+
+  mBorraTexto 80d, 0, 9
 
   EsperaTiempo
 
   lea bx, [msgjend]
   mEscribeStringzColor  00001111b, 2, 3
 
-  mBorraTexto 80d, 0, 9
 
   call ciclomuestrajoystick
 
@@ -167,10 +177,13 @@ calibrateJoystick:
 
   EsperaTiempo
 
+  mBorraTexto 80d, 0, 3
+
+  EsperaTiempo
+
   lea bx, [msgsuelte]
   mEscribeStringzColor  00001111b, 2, 9
 
-  mBorraTexto 80d, 0, 3
 
   call esperajoystick
 
@@ -412,8 +425,8 @@ js1yte2:      dw 30d
 js1yte3:      dw 35d
 js1yend:     dw 40d
 
-msgcalibra: db 'Calibracion de Joystick', 0x00
-msgsuelte: db 'Suelte el boton A del Joytick', 0x00
-msgjbegin:     db 'Mantenga su joystick en la posicion Arriba e Izquierda y presione el boton A', 0x00   ; message
-msgjcenter:     db 'Mantenga su joystick en posicion Centrado y presione el boton A', 0x00   ; message
-msgjend:     db 'Mantenga su joystick en posicion Abajo y a la Derecha y presione el boton A', 0x00   ; message
+msgcalibra: db 'Joystick Calibration', 0x00
+msgsuelte: db 'Release joystick A button', 0x00
+msgjbegin:     db 'Hold joystick on TOP LEFT position and press A button', 0x00   ; message
+msgjcenter:     db 'Hold joystick on CENTER position and press A button', 0x00   ; message
+msgjend:     db 'Hold joystick on BOTTOM RIGHT position and press A button', 0x00   ; message
