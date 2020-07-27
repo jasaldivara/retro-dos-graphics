@@ -125,6 +125,8 @@ writestring:
 
 inputMenu:
 
+  .init:
+
   mSetVideoMode 3
 
   lea bx, [input_menu_title]
@@ -145,6 +147,10 @@ inputMenu:
   jne .return
 
   call calibrateJoystick
+
+  test al, al
+  jnz .init
+
   mov ah, 1
 
   .return:

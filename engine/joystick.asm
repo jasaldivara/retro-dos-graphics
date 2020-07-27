@@ -105,6 +105,11 @@ calibrateJoystick:
 
   call ciclomuestrajoystick
 
+  test al, al
+  jz .rjsp1
+  ret
+
+  .rjsp1:
   call readjoystickpos
 
   mov ax, [js1ycount]
@@ -135,6 +140,11 @@ calibrateJoystick:
 
   call ciclomuestrajoystick
 
+  test al, al
+  jz .rjsp2
+  ret
+  
+  .rjsp2:
   call readjoystickpos
 
   mov ax, [js1ycount]
@@ -167,6 +177,11 @@ calibrateJoystick:
 
   call ciclomuestrajoystick
 
+  test al, al
+  jz .rjsp3
+  ret
+  
+  .rjsp3:
   call readjoystickpos
 
   mov ax, [js1ycount]
@@ -190,6 +205,8 @@ calibrateJoystick:
   EsperaTiempo
 
   call calculalimites
+
+  mov al, 0
 
   ret
 
@@ -258,6 +275,23 @@ ciclomuestrajoystick:
 
   .mainloop:
 
+  .readkeyboard:
+  mov ah, 1
+  int 16h
+  jz .rjs
+
+
+  mov ah, 0
+  int 16h
+  cmp ah, KB_ESC  ; Comprobar si es tecla ESC
+  jne .rjs
+
+  mov al, 0ffh   ; AL == ffh ---> Error
+
+  ret
+
+  .rjs:
+
   readJoystick
 
   push ax
@@ -267,6 +301,8 @@ ciclomuestrajoystick:
   jnz .noa
 
   pop ax
+
+  mov al, 00
 
   ret
 
@@ -328,6 +364,8 @@ ciclomuestrajoystick:
   jmp .mainloop
 
   .return:
+
+  mov al, 00
 
   ret
 

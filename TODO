@@ -7,8 +7,6 @@ Nuevas características:
 
   Nueva rutina de borrado optimizada que copia graficos de tile y solo donde hay movimiento
 
-  Soporte para Joystick
-
   Mejorar mecánica de velocidad y movimiento de jugador y sprites físicos
 
   Agregar musica a juego principal
