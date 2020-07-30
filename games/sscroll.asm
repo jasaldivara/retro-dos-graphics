@@ -85,13 +85,7 @@ start:
 
   SPRITELOOP
   call borraspritemov
-  SPRITELOOPEND
-
-  SPRITELOOP
   SPRITEUPDATECOORD
-  SPRITELOOPEND
-
-  SPRITELOOP
   call dibujasprite16
   SPRITELOOPEND
 
@@ -154,28 +148,6 @@ fin:
 
   ; 4 .- Salir al sistema
   int 20h
-
-
-
-iabasiccontrol:
-  mov al, [ds:bp + SPRITE.iavars]
-ret
-
-iabasiccoll:
-  test al, al
-  jz .sig2
-  test ah, LEFT
-  jz .sig1
-  mov byte [ds:bp + SPRITE.iavars], RIGHT
-  .sig1:
-  test ah, RIGHT
-  jz .sig2
-  mov byte [ds:bp + SPRITE.iavars], LEFT
-  .sig2:
-  ; call spritephyscol
-  jmp spritephyscol
-  ; ret
-
 
 
 
@@ -254,7 +226,7 @@ section .data
     at SPRITE.ny, dw 0
     at SPRITE.h, dw 32
     ; at SPRITE.w, dw 8
-    at SPRITE.next, dw 0
+    at SPRITE.next, dw playersprite2
     at SPRITE.spritesheet, dw spritesheetmono1
     at SPRITE.ssframe, dw 0
     at SPRITEPHYS.vuelox, dw 0
@@ -301,8 +273,8 @@ map1:
   db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 6, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
   db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0
   db 0, 0, 0, 0, 0, 0, 0, 6, 6, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-  db 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 6, 0, 0, 0, 0, 0, 0, 0
-  db 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 1, 2, 0, 0, 0, 0, 0, 0
+  db 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 6, 0, 0, 0, 0, 0, 0, 0
+  db 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 1, 2, 0, 0, 0, 0, 0, 0
   db 1, 4, 5, 4, 5, 4, 4, 5, 5, 4, 4, 1, 1, 2, 3, 4, 5, 5, 4, 4, 1, 4, 5, 4, 5, 4, 4, 2, 2, 2, 4, 1, 1, 2, 3, 4, 5, 5, 4, 4
 
 
