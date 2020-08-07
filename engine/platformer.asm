@@ -251,9 +251,11 @@ spritephysout:
 
 iabasiccontrol:
   mov al, [ds:bp + SPRITE.iavars]
+  mov al, ABTN
 ret
 
 iabasiccoll:
+
   test al, al
   jz .sig2
   test ah, LEFT

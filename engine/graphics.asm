@@ -1,4 +1,35 @@
 
+%macro CHECKVISIBLE 0
+
+
+  mov bx, [ds:bp + SPRITE.x]
+  mov ax, [hscroll]
+
+  %rep ilog2e( BYTESPERHSCROLL  * PXB )
+  shl ax, 1
+  %endrep
+
+  mov cx, ax
+  sub cx, [ds:bp + SPRITE.pxw]
+  cmp cx, bx
+  jle %%NoLeft
+
+  ret
+
+  %%NoLeft:
+  
+  add ax, ( BYTESPERSCAN * PXB )
+  ;add ax, [ds:bp + SPRITE.pxw]
+  cmp ax, bx
+  jge %%NoRight
+
+  ret
+
+  %%NoRight:
+
+%endmacro
+
+
 drawmap:
   ; DX = Map data
   xor ax, ax	; AX = 0
@@ -26,6 +57,8 @@ drawmap:
 dibujasprite16:
   ; Parametros:
   ; BP: sprite
+
+  CHECKVISIBLE
 
   mov bx, [ds:bp + SPRITE.x]
 
@@ -76,8 +109,27 @@ dibujasprite16:
   mov cx, [ds:bp + SPRITE.h]  ; 4 .- Primero dibujamos mitad de renglones (en renglones par de patalla)
   shr cx, 1
 
+  mov dx, [hscroll]
+  %rep ilog2e( BYTESPERHSCROLL  * PXB )
+  shl dx, 1
+  %endrep
+  mov bx, [ds:bp + SPRITE.x]  ; TODO: Optimize this
+  sub bx, dx
+  js .prelooprenglon
+  xor bx, bx
+
+  .prelooprenglon:
+  ; mov bx, dx
+  neg bx
+  shr bx, 1
+  sub ax, bx
+
+  add di, bx   ; agregar diferencia con inicio de pantalla
 
   .looprenglon:
+
+  add si, bx
+
 
   mov dx, cx	; respaldar conteo de renglones
   mov cx, ax	; Bytes a copiar por renglon
@@ -87,14 +139,20 @@ dibujasprite16:
   add di, BYTESPERSCAN; Agregar suficientes bytes para que sea siguiente renglon
   sub di, ax
   add si, ax ; Saltar renglones de ssprite.mapa de bits
+  add si, bx ; Saltar renglones de ssprite.mapa de bits
+
   loop .looprenglon
+
+  sub di, bx
+  ;popf
+  ;ret
 
   ; 5 .- Después dibujamos otra mitad de renglones de sprite, ahora en renglones impar de pantalla
 
   mov cx, MEMCGAODD ; Dibujar en renglones impar de pantalla CGA 4 Col
   mov es, cx
 
-  mov bx, ax
+  add bx, ax
 
   mov al, [ds:bp + SPRITE.h]
   mov dl, al
@@ -117,17 +175,41 @@ dibujasprite16:
   mov cx, [ds:bp + SPRITE.h]
   shr cx, 1
 
+  mov ax, bx
+
+  mov dx, [hscroll]
+  %rep ilog2e( BYTESPERHSCROLL  * PXB )
+  shl dx, 1
+  %endrep
+  mov bx, [ds:bp + SPRITE.x]  ; TODO: Optimize this
+  sub bx, dx
+  js .prelooprenglon2
+  xor bx, bx
+
+  .prelooprenglon2:
+  ; mov bx, dx
+  neg bx
+  shr bx, 1
+  sub ax, bx
+
+  add di, bx   ; agregar diferencia con inicio de pantalla
+
   .looprenglon2:
 
+  add si, bx
+
   mov dx, cx	; respaldar conteo de renglones
-  mov cx, bx	; Bytes a copiar por renglon
+  mov cx, ax	; Bytes a copiar por renglon
   rep movsb
   mov cx, dx	; restaurar conteo de renglones
 
   add di, BYTESPERSCAN ; Agregar suficientes bytes para que sea siguiente renglon
-  sub di, bx
+  sub di, ax
+  add si, ax ; Saltar renglones de ssprite.mapa de bits
   add si, bx ; Saltar renglones de ssprite.mapa de bits
   loop .looprenglon2
+
+  .return:
 
   ret
 
@@ -304,6 +386,8 @@ dibujasprite16noalineado:
 borraspritemov:
   ; Optimized routine for erasing only the pixels that needs to be erased
   ; DS:BP => Sprite
+
+  CHECKVISIBLE
 
   ; 1.- Check if moved vertically
 
@@ -550,6 +634,8 @@ borrasprite16:
 
   ; Parametros:
   ; BP => sprite
+
+  CHECKVISIBLE
 
   ; 1.- Seleccionar banco de memoria
 
