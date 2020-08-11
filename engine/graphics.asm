@@ -109,6 +109,8 @@ dibujasprite16:
   mov cx, [ds:bp + SPRITE.h]  ; 4 .- Primero dibujamos mitad de renglones (en renglones par de patalla)
   shr cx, 1
 
+  ; Check screen scroll
+  .checkhscroll:
   mov dx, [hscroll]
   %rep ilog2e( BYTESPERHSCROLL  * PXB )
   shl dx, 1
@@ -219,16 +221,16 @@ dibujasprite16noalineado:
   ; 0.- Cargar direccion de mapa de bits
 
   mov ah, [ds:bp + SPRITE.bw]
-  mov dh, ah
+  mov dh, ah      ; dh = Sprite width in bytes
 
   mov al, [ds:bp + SPRITE.ssframe]
   mul ah
   mov ah, [ds:bp + SPRITE.h]
-  mov dl, ah
-  mul ah
+  mov dl, ah      ; dl = Sprite height in pixels
+  mul ah          ; ax = Sprite Frame offset inside Spritesheet, in bytes
 
   add ax, [ds:bp + SPRITE.gr1]
-  mov si, ax
+  mov si, ax      ; si = Sprite Frame address
 
 
   ; 1.- Seleccionar banco de memoria
@@ -236,21 +238,22 @@ dibujasprite16noalineado:
   mov cx, MEMCGAEVEN
   mov es, cx
 
-  mov ax, [ds:bp + SPRITE.y]
-  mov cl, al  ; Copiar / respaldar coordenada Y
-  shr ax, 1 ; Descartar el bit de selección de banco
+  mov ax, [ds:bp + SPRITE.y]  ; ax = Sprite Y coordinate
+  mov cl, al        ; Copy / backup Y coordinate
+  shr ax, 1         ; Descartar el bit de selección de banco
 
   ; 2.- Multiplicar
-  mov ch, dl
+  mov ch, dl        ; ch = Sprite height
   mov dl, BYTESPERSCAN
-  mul dl    ; multiplicar por ancho de pantalla en bytes
+  mul dl      ; multiplicar coordenada Y por ancho de pantalla en bytes
 
+              ; bx = Sprite.X
   shr bx, 1   ; Descartar ultimo bit
   add ax, bx  ; Desplazamiento del byte que vamos a manipular
   mov di, ax
 
   xor bx, bx
-  mov bl, dh
+  mov bl, dh  : ; bl = Sprite width in bytes (bh = 0)
 
   ; 3.- En caso de que coordenada Y sea impar, comenzar a dibujar sprite desde
   ; la segunda fila de pixeles del mapa de bits en coordenada par de pantalla.
@@ -267,11 +270,11 @@ dibujasprite16noalineado:
   shr cx, 1
 
   mov al, [colorbackground]
-  mov dh, al
+  mov dh, al    ; dh = al = background color
 
   .looprenglon:
 
-  mov dl, cl ; guardar contador de renglones
+  mov dl, cl ; Preserve row count (dl = row count)
 
   ; primer pixel del renglón
   ; Conservar el pixel de la izquierda, que pertenece al fondo?
@@ -283,13 +286,14 @@ dibujasprite16noalineado:
   or al, ah
   stosb
 
-  mov cx, bx	; numero de bytes a copiar
+  mov cx, bx	; Number of bytes to copy
   dec cx
 
-  ; ultimo pixel del renglón
-  ; Conservar el pixel de la derecha, que pertenece al fondo?
-
+  ; main copy pixels/bytes:
   rep movsb
+
+  ; Last pixel of row
+  ; Conservar el pixel de la derecha, que pertenece al fondo?
 
   mov ah, dh
   and ah, 00001111b
