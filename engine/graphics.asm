@@ -101,10 +101,11 @@ dibujasprite16:
   ; la segunda fila de pixeles del mapa de bits en coordenada par de pantalla.
   ; mov cx, [ds:bp + SPRITE.y]
   test cx, 00000001b
+  pushf
   jz .espar
   add si, ax
   add di, BYTESPERSCAN
-  .espar: pushf
+  .espar:
 
   mov cx, [ds:bp + SPRITE.h]  ; 4 .- Primero dibujamos mitad de renglones (en renglones par de patalla)
   shr cx, 1
@@ -115,15 +116,34 @@ dibujasprite16:
   %rep ilog2e( BYTESPERHSCROLL  * PXB )
   shl dx, 1
   %endrep
-  mov bx, [ds:bp + SPRITE.x]  ; TODO: Optimize this
-  sub bx, dx
-  js .prelooprenglon
-  xor bx, bx
+  ;mov bx, [ds:bp + SPRITE.x]  ; TODO: Optimize this
+  shl bx, 1         ; bx = Sprite.X
+  sub bx, dx        ; (SCroll.X > Sprite.X?)
+  js .prelooprenglonleft
+  ;xor bx, bx
 
-  .prelooprenglon:
+  ; Check scroll right
+  mov bx, [ds:bp + SPRITE.x]  ; TODO: Optimize this!
+  ;add bx, dx
+  add bx, [ds:bp + SPRITE.pxw]    ; TODO: Optimizar esto!
+  add dx, WIDTHPX         ; DX = Screen right limit
+  sub bx, dx
+  ja .prelooprenglonright
+  
+  xor bx, bx
+  jmp .looprenglon
+
+  .prelooprenglonright:
+
+  shr bx, 1
+  sub ax, bx
+  sub si, bx
+  jmp .looprenglon
+
+  .prelooprenglonleft:
   ; mov bx, dx
   neg bx
-  shr bx, 1
+  shr bx, 1     ; TODO: Optimizar esto
   sub ax, bx
 
   add di, bx   ; agregar diferencia con inicio de pantalla
@@ -131,7 +151,6 @@ dibujasprite16:
   .looprenglon:
 
   add si, bx
-
 
   mov dx, cx	; respaldar conteo de renglones
   mov cx, ax	; Bytes a copiar por renglon
@@ -149,7 +168,47 @@ dibujasprite16:
   ;popf
   ;ret
 
+  ;jmp .anterior
+
   ; 5 .- Después dibujamos otra mitad de renglones de sprite, ahora en renglones impar de pantalla
+  mov cx, es
+  cmp cx, MEMCGAODD
+  je .return
+
+  mov cx, MEMCGAODD ; Dibujar en renglones impar de pantalla CGA 4 Col
+  mov es, cx
+
+
+  popf
+  jz .espar3
+  sub si, bx
+  sub si, ax
+  sub si, bx
+  sub si, ax
+  sub di, BYTESPERSCAN
+  .espar3:
+
+  add di, bx
+
+  mov bh, al    ; bh + bl = Sprite.BW
+  mov al, BYTESPERSCAN
+  mov cx, [ds:bp + SPRITE.h]  ; 4 .- Primero dibujamos mitad de renglones (en renglones par de patalla)
+  mov dl, cl
+  shr cx, 1
+  mul cl
+  sub di, ax
+  dec dl
+  mov al, bl
+  add al, bh
+  mul dl
+  sub si, ax
+  xor ax, ax
+  mov al, bh
+  xor bh, bh
+  jmp .looprenglon
+
+  ; TODO: Delete .anterior subfunction
+  .anterior:
 
   mov cx, MEMCGAODD ; Dibujar en renglones impar de pantalla CGA 4 Col
   mov es, cx
@@ -218,6 +277,8 @@ dibujasprite16:
 
 dibujasprite16noalineado:
 
+  ; bx = SPRITE.x
+
   ; 0.- Cargar direccion de mapa de bits
 
   mov ah, [ds:bp + SPRITE.bw]
@@ -238,36 +299,48 @@ dibujasprite16noalineado:
   mov cx, MEMCGAEVEN
   mov es, cx
 
+  ; 2.- obtener coord Y
   mov ax, [ds:bp + SPRITE.y]  ; ax = Sprite Y coordinate
-  mov cl, al        ; Copy / backup Y coordinate
-  shr ax, 1         ; Descartar el bit de selección de banco
 
-  ; 2.- Multiplicar
-  mov ch, dl        ; ch = Sprite height
-  mov dl, BYTESPERSCAN
-  mul dl      ; multiplicar coordenada Y por ancho de pantalla en bytes
-
-              ; bx = Sprite.X
-  shr bx, 1   ; Descartar ultimo bit
-  add ax, bx  ; Desplazamiento del byte que vamos a manipular
-  mov di, ax
-
-  xor bx, bx
-  mov bl, dh  : ; bl = Sprite width in bytes (bh = 0)
-
-  ; 3.- En caso de que coordenada Y sea impar, comenzar a dibujar sprite desde
+  ; 2.1- En caso de que coordenada Y sea impar, comenzar a dibujar sprite desde
   ; la segunda fila de pixeles del mapa de bits en coordenada par de pantalla.
-  test cl, 00000001b
+
+  xor cx, cx
+  mov cl, dh  ; cl = cx = Sprite width in bytes (bh = 0)
+  xor di, di
+  test al, 00000001b
   jz .espar
-  add si, bx	; bx = SPRITE.bw
+  add si, cx	; cx = SPRITE.bw
   add di, BYTESPERSCAN
   .espar:
-
   pushf
+
+  shr ax, 1         ; Descartar el bit de selección de banco VRAM
+
+  ; 3.- Multiplicar
+  mov ch, dl        ; ch = Sprite height
+  mov dx, BYTESPERSCAN
+  mul dx      ; multiplicar coordenada Y por ancho de pantalla en bytes
+
+              ; bx = Sprite.X
+  ; mov dx, bx  ; dx = Sprite.x
+  shr bx, 1   ; Descartar ultimo bit
+  add ax, bx  ; Desplazamiento del byte que vamos a manipular
+  add di, ax
+
+  xor bx, bx
+  mov bl, cl  ; bl = bx = Sprite width in bytes (bh = 0)
+
+
 
   mov cl, ch  ; 4 .- Primero dibujamos mitad de renglones (en renglones par de patalla)
   xor ch, ch
   shr cx, 1
+
+  .checkscroll:   ; TODO
+  ; DX = Sprite.x
+  ; Registros libres: AX, DX
+
 
   mov al, [colorbackground]
   mov dh, al    ; dh = al = background color
@@ -286,7 +359,10 @@ dibujasprite16noalineado:
   or al, ah
   stosb
 
-  mov cx, bx	; Number of bytes to copy
+  .mainlooprow:
+
+  xor cx, cx
+  mov cl, bl	; Number of bytes to copy
   dec cx
 
   ; main copy pixels/bytes:
@@ -1004,6 +1080,7 @@ doscroll:
 
 
   ; Hacer el scroll por harware
+  ; TODO: Send two bytes instead of one
   mov dx, 03d4h
   mov al, 0dh
   out dx, al
