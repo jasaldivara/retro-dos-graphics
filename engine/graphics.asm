@@ -306,14 +306,14 @@ dibujasprite16noalineado:
   ; la segunda fila de pixeles del mapa de bits en coordenada par de pantalla.
 
   xor cx, cx
-  mov cl, dh  ; cl = cx = Sprite width in bytes (bh = 0)
+  mov cl, dh  ; cl = cx = Sprite width in bytes (ch = 0)
   xor di, di
   test al, 00000001b
+  pushf
   jz .espar
   add si, cx	; cx = SPRITE.bw
   add di, BYTESPERSCAN
   .espar:
-  pushf
 
   shr ax, 1         ; Descartar el bit de selección de banco VRAM
 
@@ -323,7 +323,7 @@ dibujasprite16noalineado:
   mul dx      ; multiplicar coordenada Y por ancho de pantalla en bytes
 
               ; bx = Sprite.X
-  ; mov dx, bx  ; dx = Sprite.x
+  mov dx, bx  ; dx = Sprite.x
   shr bx, 1   ; Descartar ultimo bit
   add ax, bx  ; Desplazamiento del byte que vamos a manipular
   add di, ax
@@ -335,12 +335,38 @@ dibujasprite16noalineado:
 
   mov cl, ch  ; 4 .- Primero dibujamos mitad de renglones (en renglones par de patalla)
   xor ch, ch
-  shr cx, 1
+  shr cx, 1   ; cl = cx = ( Sprite.Height / 2 )
 
   .checkscroll:   ; TODO
   ; DX = Sprite.x
   ; Registros libres: AX, DX
+  mov ax, [hscroll]
+  %rep ilog2e( BYTESPERHSCROLL  * PXB )
+  shl ax, 1
+  %endrep
+  dec dx
+  sub dx, ax
+  js .prelooprowleft
+  jmp .bgcolor
 
+
+  .prelooprowleft:
+  neg dx
+  shr dx, 1     ; TODO: Optimizar esto
+  ;sub ax, dx
+  ;jnc .nc
+  ;inc dx
+  ;.nc:
+
+  add di, dx   ; agregar diferencia con inicio de pantalla
+  sub bl, dl
+  mov bh, dl    ; bh = bytes a saltar
+
+  ; add si, dx  ; Adelantar posicion inicial a copiar
+  inc bl
+  inc si
+
+  .bgcolor:
 
   mov al, [colorbackground]
   mov dh, al    ; dh = al = background color
@@ -348,6 +374,17 @@ dibujasprite16noalineado:
   .looprenglon:
 
   mov dl, cl ; Preserve row count (dl = row count)
+
+  xor cx, cx  ; Adelantar posicion inicial a copiar
+  mov cl, bh
+  add si, cx
+
+  test bh, bh
+  jz .leftpx
+  dec si
+  jmp .mainlooprow
+
+  .leftpx:
 
   ; primer pixel del renglón
   ; Conservar el pixel de la izquierda, que pertenece al fondo?
@@ -362,11 +399,13 @@ dibujasprite16noalineado:
   .mainlooprow:
 
   xor cx, cx
-  mov cl, bl	; Number of bytes to copy
+  mov cl, bl	; Number of bytes to copy. ERROR: ¿qué pasa si bl es cero?
   dec cx
 
   ; main copy pixels/bytes:
   rep movsb
+
+  .rightpx:
 
   ; Last pixel of row
   ; Conservar el pixel de la derecha, que pertenece al fondo?
@@ -379,11 +418,19 @@ dibujasprite16noalineado:
   stosb
 
 
+  xor cx, cx
+  mov cl, bl
+  ;add cl, bh
+
   add di, BYTESPERSCAN ; Agregar suficientes bytes para que sea siguiente renglon
-  sub di, bx
+  sub di, cx
+  test bh, bh
+  jnz .siga
   dec di
-  add si, bx	; Saltar renglones de sprite.mapa de bits
+  .siga:
   dec si
+  add cl, bh
+  add si, cx	; Saltar renglones de sprite.mapa de bits
 
   xor cx, cx
   mov cl, dl  ; contador de renglones
@@ -405,11 +452,13 @@ dibujasprite16noalineado:
   sub di, ax	; Retroceder hasta posicion inicial en pantalla ? (pero ahora en renglon impar)
   dec dl
   mov al, bl
+  add al, bh
   mul dl
   sub si, ax	; retrocedemos hasta posicion inicial de sprite + un renglon
 
 
   popf ; ¿Necesario?
+  ret     ; TEMPORAL
   jz .espar2
   sub si, bx
   sub si, bx
@@ -433,6 +482,8 @@ dibujasprite16noalineado:
   or al, ah
   stosb
 
+  add bl, bh  ; TEMPORAL
+  xor bh, bh  ; TODO: Agregar recorte de pixeles
   mov cx, bx	; numero de bytes a copiar
   dec cx
   rep movsb
@@ -460,6 +511,7 @@ dibujasprite16noalineado:
 
 
   ; Fin. Retornar
+  .return:
   ret
 
 

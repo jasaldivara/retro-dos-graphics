@@ -242,6 +242,26 @@ section .data
     at SPRITE.ctrlcoll, dw iabasiccoll
     at SPRITE.ctrlout, dw spritephysout
     at SPRITE.iavars, dw LEFT
+    at SPRITE.x, dw 81d
+    at SPRITE.y, dw 80d
+    at SPRITE.nx, dw 0
+    at SPRITE.ny, dw 0
+    ; at SPRITE.h, dw 32
+    ; at SPRITE.pxw, dw 16
+    at SPRITE.next, dw playersprite3
+    at SPRITE.spritesheet, dw spritesheetgrande
+    at SPRITEPHYS.vuelox, dw 0
+    at SPRITEPHYS.deltay, dw 0
+    at SPRITEPHYS.saltoframes, db 0
+    at SPRITEPHYS.parado, db 0
+
+  playersprite3:
+    istruc SPRITEPHYS
+    at SPRITE.frame, dw sphysicsframe
+    at SPRITE.control, dw iabasiccontrol
+    at SPRITE.ctrlcoll, dw iabasiccoll
+    at SPRITE.ctrlout, dw spritephysout
+    at SPRITE.iavars, dw LEFT
     at SPRITE.x, dw 180d
     at SPRITE.y, dw 80d
     at SPRITE.nx, dw 0
