@@ -440,33 +440,60 @@ dibujasprite16noalineado:
   ;ret
   ; 5 .- Después dibujamos otra mitad de renglones de sprite, ahora en renglones impar de pantalla
 
+  mov cx, es
+  cmp cx, MEMCGAODD
+  je .return
+
   mov cx, MEMCGAODD ; Dibujar en renglones impar de pantalla CGA 4 Col
   mov es, cx
 
+
+
+  test bh, bh     ; TODO: Optimizar esto
+  jz .sigb
+  dec bl
+  .sigb:
+
   mov ax, [ds:bp + SPRITE.h]
-  mov cx, ax
+  ;mov cx, ax
   mov dl, al
   shr al,1
   mov ah, BYTESPERSCAN
   mul ah
   sub di, ax	; Retroceder hasta posicion inicial en pantalla ? (pero ahora en renglon impar)
   dec dl
-  mov al, bl
-  add al, bh
+  mov al, bh
+  add al, bl
+
+
   mul dl
   sub si, ax	; retrocedemos hasta posicion inicial de sprite + un renglon
 
 
   popf ; ¿Necesario?
-  ret     ; TEMPORAL
+  ;ret     ; TEMPORAL
   jz .espar2
-  sub si, bx
-  sub si, bx
+  xor cx, cx
+  mov cl, bl
+  add cl, bh
+  sub si, cx
+  sub si, cx
   sub di, BYTESPERSCAN
   .espar2:
 
   ; mov cx, [ds:bp + SPRITE.h]
+  inc dl
+  xor cx, cx
+  mov cl, dl
   shr cx, 1
+
+
+  test bh, bh   ; TODO: Optimizar esto
+  jz .sigc
+  inc bl
+  .sigc:
+
+  jmp .bgcolor
 
   .looprenglon2:
 
