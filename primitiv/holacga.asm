@@ -45,7 +45,7 @@ ponbyte:
 esperatecla:
 
   wl:             ; mark wl
-  mov ah,0        ; 0 - keyboard BIOS function to get keyboard scancode
+  mov ah, 1        ; 0 - keyboard BIOS function to get keyboard scancode
   int 16h         ; keyboard interrupt
   jz wl           ; if 0 (no button pressed) jump to wl
   ret
