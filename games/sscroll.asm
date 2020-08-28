@@ -262,7 +262,7 @@ section .data
     at SPRITE.ctrlcoll, dw iabasiccoll
     at SPRITE.ctrlout, dw spritephysout
     at SPRITE.iavars, dw LEFT
-    at SPRITE.x, dw 180d
+    at SPRITE.x, dw 181d
     at SPRITE.y, dw 80d
     at SPRITE.nx, dw 0
     at SPRITE.ny, dw 0
