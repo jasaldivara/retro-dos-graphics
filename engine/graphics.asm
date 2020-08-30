@@ -348,6 +348,15 @@ dibujasprite16noalineado:
   sub dx, ax
   js dwspunlfed
 
+
+  ; Check scroll right
+  mov dx, [ds:bp + SPRITE.x]  ; TODO: Optimize this!
+  ;add bx, ax
+  add dx, [ds:bp + SPRITE.pxw]    ; TODO: Optimizar esto!
+  add ax, WIDTHPX         ; DX = Screen right limit
+  sub dx, ax
+  ja dwspunrged
+
   .bgcolor:
 
   mov al, [colorbackground]
@@ -622,6 +631,157 @@ dwspunlfed:
 
   .return:
   ret
+
+
+dwspunrged:
+  ; Draw Sprite Unaligned Right Edge
+
+  ;popf
+  ;ret
+
+  .prelooprowright:
+  ;neg dx
+  shr dx, 1     ; TODO: Optimizar esto
+  ;sub ax, dx
+  ;jnc .nc
+  ;inc dx
+  ;.nc:
+
+  ;add di, dx   ; agregar diferencia con inicio de pantalla
+  sub bl, dl
+  mov bh, dl    ; bh = bytes a saltar
+
+  ; add si, dx  ; Adelantar posicion inicial a copiar
+  ;inc bl
+  ;inc si
+
+  ; ?
+  ;sub si, dx  ; Temporal?
+  ;inc si
+
+  .bgcolor:
+
+  mov al, [colorbackground]
+  mov dh, al    ; dh = al = background color
+
+  .looprenglon:
+
+  mov dl, cl ; Preserve row count (dl = row count)
+
+
+
+  .leftpx:
+
+  ; primer pixel del renglón
+  ; Conservar el pixel de la izquierda, que pertenece al fondo?
+
+  mov ah, dh
+  and ah, 11110000b
+  lodsb
+  and al, 00001111b
+  or al, ah
+  stosb
+
+  .mainlooprow:
+
+  xor cx, cx
+  mov cl, bl	; Number of bytes to copy. ERROR: ¿qué pasa si bl es cero?
+  dec cx
+
+  ; main copy pixels/bytes:
+  rep movsb
+
+
+  ;xor cx, cx
+
+  xor cx, cx  ; Adelantar posicion inicial a copiar
+  mov cl, bh
+  add si, cx
+
+  ;test bh, bh
+  ;jz .leftpx
+  ;dec si
+
+  mov cl, bl
+  ;add cl, bh
+
+  add di, BYTESPERSCAN ; Agregar suficientes bytes para que sea siguiente renglon
+  sub di, cx
+  ;test bh, bh
+  ;jnz .siga
+  ;dec di
+  ;.siga:
+  ;dec si
+  add cl, bh
+  add si, cx	; Saltar renglones de sprite.mapa de bits
+
+  xor cx, cx
+  mov cl, dl  ; contador de renglones
+  loop .looprenglon
+
+  ;popf	; Salir por mientras
+  ;ret
+  ; 5 .- Después dibujamos otra mitad de renglones de sprite, ahora en renglones impar de pantalla
+
+  mov cx, es
+  cmp cx, MEMCGAODD
+  je .return
+
+  mov cx, MEMCGAODD ; Dibujar en renglones impar de pantalla CGA 4 Col
+  mov es, cx
+
+
+  ;test bh, bh     ; TODO: Optimizar esto
+  ;jz .sigb
+  ;dec bl
+  ;.sigb:
+
+  mov ax, [ds:bp + SPRITE.h]
+  ;mov cx, ax
+  mov dl, al
+  shr al,1
+  mov ah, BYTESPERSCAN
+  mul ah
+  sub di, ax	; Retroceder hasta posicion inicial en pantalla ? (pero ahora en renglon impar)
+  dec dl
+  mov al, bh
+  add al, bl
+
+
+  mul dl
+  sub si, ax	; retrocedemos hasta posicion inicial de sprite + un renglon
+  ;dec si
+
+
+  popf ; ¿Necesario?
+  ;ret     ; TEMPORAL
+  jz .espar2
+  xor cx, cx
+  mov cl, bl
+  add cl, bh
+  sub si, cx
+  sub si, cx
+  sub di, BYTESPERSCAN
+  .espar2:
+
+  ; mov cx, [ds:bp + SPRITE.h]
+  inc dl
+  xor cx, cx
+  mov cl, dl
+  shr cx, 1
+
+
+  ;test bh, bh   ; TODO: Optimizar esto
+  ;jz .sigc
+  ;inc bl
+  .sigc:
+
+  jmp .bgcolor
+
+  .return:
+  ret
+
+
 
 borraspritemov:
   ; Optimized routine for erasing only the pixels that needs to be erased
