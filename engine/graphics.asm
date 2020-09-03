@@ -810,7 +810,7 @@ borraspritemov:
 
   .clearvertical:
   ; ax => c.y
-  ; bx => c.h
+  ; bx = bl => c.h
 
   ; mov ax, 3
   ; mov bx, 4
@@ -820,49 +820,59 @@ borraspritemov:
   mov cx, ax	; respaldar coordenada y
   shr ax, 1	; Descartar bit de seleccion de banco
   ; multiplicar
-  mov dx, BYTESPERSCAN
-  mul dl	; multiplicar por ancho de pantalla en bytes
+  mov dh, BYTESPERSCAN
+  mul dh	; multiplicar por ancho de pantalla en bytes
   mov dx, [ds:bp + SPRITE.x]
+  mov bh, dl  ; bh = sprite.x
   shr dx, 1	; Descartar ultimo bit (posicion de pixel dentro del byte)
   add ax, dx	; Direccion en memoria donde comenzamos a borrar
   mov di, ax
 
   ; En caso de que coordenada Y sea impar, comenzar a borrar desde
   ; la segunda fila de pixeles del mapa de bits en coordenada par de pantalla.
-  mov dx, bx
-  shr dx, 1
-  mov ax, bx
-  and ax, 00000001b
+  xor dx, dx
+  mov dl, bl
+  shr dl, 1     ; dl = ( c.h / 2 )
+  ;xor ax, ax
+  mov al, bl
+  and al, 00000001b
   test cx, 00000001b
   pushf
   jz .espar
   add di, BYTESPERSCAN
   jmp .sig1
   .espar:
-  add dx, ax
+  add dl, al
   .sig1:
-  .initlooprow:
-  mov cx, dx
-  mov al, [colorbackground]
-  mov ah, bl	; respaldar altura de area a borrar
+  .prelooprow:
+  mov ah, bl	; ah = c.h
 
-  mov bx, [ds:bp + SPRITE.x]
+  mov bl, bh
+  xor bh, bh    ; bX = BL = sprite.x
+  ;mov bx, [ds:bp + SPRITE.x]
   and bx, 00000001b
-  add bx, [ds:bp + SPRITE.bw]
+  add bx, [ds:bp + SPRITE.bw]   ; bx = cantidad de bytes a escribir
 
+  xor cx, cx
+  mov cl, dl
   test cx, cx
   jz .finlooprow
+
+  .initlooprow:
+
+  mov al, [colorbackground]
+  mov al, 12h
+
   .looprenglon:
-  mov dx, cx
+  mov dl, cl
   mov cx, bx
   rep stosb
-  mov cx, dx
+  xor cx, cx
+  mov cl, dl
   add di, BYTESPERSCAN
   sub di, bx
   loop .looprenglon
   .finlooprow:
-  xor bh, bh
-  mov bl, ah
 
   mov cx, es
   cmp cx, MEMCGAODD
@@ -870,27 +880,30 @@ borraspritemov:
 
   mov cx, MEMCGAODD
   mov es, cx
-  mov ax, bx
-  shr ax, 1
+
+  xor ch, ch
+  mov cl, ah    ; cx = cl = c.h
+
+  mov ax, cx
+  shr ax, 1     ; ax = ( c.h / 2 )
   mov ah, BYTESPERSCAN
   mul ah
   sub di, ax ; TODO: Ver como optimizar esto, junto con el siguiente 'jz .espar2'
   ; sub di, BYTESPERSCAN * ( ALTOSPRITE / 2 )
-  mov dx, bx
-  shr dx, 1
-  mov ax, bx
-  and ax, 00000001b
+  mov ch, cl
+  shr cl, 1
+  and ch, 00000001b
   popf
   jz .espar2
-  add dx, ax
+  add cl, ch
   sub di, BYTESPERSCAN
   jmp .sig2
   .espar2:
-  test ax, 00000001b
+  test ch, 00000001b
   jz .sig2
   sub di, BYTESPERSCAN
   .sig2:
-  test dx, dx
+  test cl, cl
   jnz .initlooprow
 
 
