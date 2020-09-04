@@ -817,16 +817,34 @@ borraspritemov:
 
   mov cx, MEMCGAEVEN
   mov es, cx
-  mov cx, ax	; respaldar coordenada y
+  mov cl, al	; respaldar coordenada y (solo necesitamos ultimo bit)
   shr ax, 1	; Descartar bit de seleccion de banco
   ; multiplicar
   mov dh, BYTESPERSCAN
   mul dh	; multiplicar por ancho de pantalla en bytes
-  mov dx, [ds:bp + SPRITE.x]
-  mov bh, dl  ; bh = sprite.x
-  shr dx, 1	; Descartar ultimo bit (posicion de pixel dentro del byte)
-  add ax, dx	; Direccion en memoria donde comenzamos a borrar
   mov di, ax
+
+  mov dx, [ds:bp + SPRITE.x]
+  mov bh, dl  ; bh = sprite.x (ultimo bit)
+  shr dx, 1	; Descartar ultimo bit (posicion de pixel dentro del byte)
+
+
+
+  add di, dx	; Direccion en memoria donde comenzamos a borrar
+  ;mov di, ax
+
+  .checktrimleft:
+  mov ax, [hscroll]
+  %rep ilog2e( BYTESPERHSCROLL )
+  shl ax, 1
+  %endrep
+
+  xor ch, ch  ; ch = reduccion en ancho a borrar
+  sub ax, dx
+  js .sigtrimleft
+  add di, ax
+  mov ch, al
+  .sigtrimleft:
 
   ; En caso de que coordenada Y sea impar, comenzar a borrar desde
   ; la segunda fila de pixeles del mapa de bits en coordenada par de pantalla.
@@ -836,7 +854,7 @@ borraspritemov:
   ;xor ax, ax
   mov al, bl
   and al, 00000001b
-  test cx, 00000001b
+  test cl, 00000001b
   pushf
   jz .espar
   add di, BYTESPERSCAN
@@ -851,7 +869,8 @@ borraspritemov:
   xor bh, bh    ; bX = BL = sprite.x
   ;mov bx, [ds:bp + SPRITE.x]
   and bx, 00000001b
-  add bx, [ds:bp + SPRITE.bw]   ; bx = cantidad de bytes a escribir
+  add bx, [ds:bp + SPRITE.bw]   ; bx = cantidad de bytes a escribir. TODO: Convertir en bl o bh
+  sub bl, ch
 
   xor cx, cx
   mov cl, dl
