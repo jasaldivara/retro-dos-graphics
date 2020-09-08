@@ -833,7 +833,7 @@ borraspritemov:
   add di, dx	; Direccion en memoria donde comenzamos a borrar
   ;mov di, ax
 
-  .checktrimleft:
+  .vchecktrimleft:
   mov ax, [hscroll]
   %rep ilog2e( BYTESPERHSCROLL )
   shl ax, 1
@@ -841,10 +841,22 @@ borraspritemov:
 
   xor ch, ch  ; ch = reduccion en ancho a borrar
   sub ax, dx
-  js .sigtrimleft
+  js .vchecktrimright
   add di, ax
   mov ch, al
-  .sigtrimleft:
+  jmp .vendtrim
+
+  .vchecktrimright:
+  add ax, dx
+  add ax, BYTESPERSCAN
+  sub ax, [ds:bp + SPRITE.bw]   ; TODO: Optimizar para acceder a este valor una sola vez
+  sub ax, dx
+  ja .vendtrim  ; ¿¿¿ JA o JNS ???
+  neg ax
+  xor bh, bh  ; No agregar byte en caso de estar en posicion x impar
+  mov ch, al
+  .vendtrim:
+
 
   ; En caso de que coordenada Y sea impar, comenzar a borrar desde
   ; la segunda fila de pixeles del mapa de bits en coordenada par de pantalla.
@@ -880,7 +892,7 @@ borraspritemov:
   .initlooprow:
 
   mov al, [colorbackground]
-  mov al, 12h
+  ;mov al, 12h
 
   .looprenglon:
   mov dl, cl

@@ -262,14 +262,14 @@ section .data
     at SPRITE.ctrlcoll, dw iabasiccoll
     at SPRITE.ctrlout, dw spritephysout
     at SPRITE.iavars, dw LEFT
-    at SPRITE.x, dw 181d
+    at SPRITE.x, dw 185d
     at SPRITE.y, dw 80d
     at SPRITE.nx, dw 0
     at SPRITE.ny, dw 0
     ; at SPRITE.h, dw 32
     ; at SPRITE.pxw, dw 16
     at SPRITE.next, dw 0
-    at SPRITE.spritesheet, dw spritesheetgrande
+    at SPRITE.spritesheet, dw spritesheetmonochico
     at SPRITEPHYS.vuelox, dw 0
     at SPRITEPHYS.deltay, dw 0
     at SPRITEPHYS.saltoframes, db 0
