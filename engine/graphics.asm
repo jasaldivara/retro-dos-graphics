@@ -207,71 +207,8 @@ dibujasprite16:
   xor bh, bh
   jmp .looprenglon
 
-  ; TODO: Delete .anterior subfunction
-  .anterior:
-
-  mov cx, MEMCGAODD ; Dibujar en renglones impar de pantalla CGA 4 Col
-  mov es, cx
-
-  add bx, ax
-
-  mov al, [ds:bp + SPRITE.h]
-  mov dl, al
-  shr al,1
-  mov ah, BYTESPERSCAN
-  mul ah
-  sub di, ax	; Retroceder hasta posicion inicial en pantalla ? (pero ahora en renglon impar)
-  dec dl
-  mov al, bl
-  mul dl
-  sub si, ax	; retrocedemos hasta posicion inicial de sprite + un renglon
-
-  popf ; ¿Necesario?
-  jz .espar2
-  sub si, bx
-  sub si, bx
-  sub di, BYTESPERSCAN
-  .espar2:
-
-  mov cx, [ds:bp + SPRITE.h]
-  shr cx, 1
-
-  mov ax, bx
-
-  mov dx, [hscroll]
-  %rep ilog2e( BYTESPERHSCROLL  * PXB )
-  shl dx, 1
-  %endrep
-  mov bx, [ds:bp + SPRITE.x]  ; TODO: Optimize this
-  sub bx, dx
-  js .prelooprenglon2
-  xor bx, bx
-
-  .prelooprenglon2:
-  ; mov bx, dx
-  neg bx
-  shr bx, 1
-  sub ax, bx
-
-  add di, bx   ; agregar diferencia con inicio de pantalla
-
-  .looprenglon2:
-
-  add si, bx
-
-  mov dx, cx	; respaldar conteo de renglones
-  mov cx, ax	; Bytes a copiar por renglon
-  rep movsb
-  mov cx, dx	; restaurar conteo de renglones
-
-  add di, BYTESPERSCAN ; Agregar suficientes bytes para que sea siguiente renglon
-  sub di, ax
-  add si, ax ; Saltar renglones de ssprite.mapa de bits
-  add si, bx ; Saltar renglones de ssprite.mapa de bits
-  loop .looprenglon2
 
   .return:
-
   ret
 
 
@@ -881,7 +818,7 @@ borraspritemov:
   xor bh, bh    ; bX = BL = sprite.x
   ;mov bx, [ds:bp + SPRITE.x]
   and bx, 00000001b
-  add bx, [ds:bp + SPRITE.bw]   ; bx = cantidad de bytes a escribir. TODO: Convertir en bl o bh
+  add bx, [ds:bp + SPRITE.bw]   ; bx = cantidad de bytes a escribir. Opción: ¿Convertir en bl o bh?
   sub bl, ch
 
   xor cx, cx
