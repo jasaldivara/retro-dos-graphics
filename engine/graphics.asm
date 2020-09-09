@@ -841,7 +841,7 @@ borraspritemov:
 
   xor ch, ch  ; ch = reduccion en ancho a borrar
   sub ax, dx
-  js .vchecktrimright
+  jb .vchecktrimright
   add di, ax
   mov ch, al
   jmp .vendtrim
@@ -850,7 +850,7 @@ borraspritemov:
   add ax, dx
   add ax, BYTESPERSCAN
   sub ax, [ds:bp + SPRITE.bw]   ; TODO: Optimizar para acceder a este valor una sola vez
-  sub ax, dx
+  sub ax, dx    ; TODO ¿Se puede optimizar eliminando esto? ¿funciona?
   ja .vendtrim  ; ¿¿¿ JA o JNS ???
   neg ax
   xor bh, bh  ; No agregar byte en caso de estar en posicion x impar
@@ -957,6 +957,31 @@ borraspritemov:
   ; dx => c.x
   ; bx => c.w
 
+ .hchecktrimleft:
+  mov ax, [hscroll]
+  %rep ilog2e( BYTESPERHSCROLL * PXB )
+  shl ax, 1
+  %endrep
+
+  sub ax, dx
+  jb .hchecktrimright
+  ;neg ax
+  add dx, ax
+  sub bx, ax
+  jb .salir
+  jmp .hcalcv
+
+  .hchecktrimright:
+  add ax, dx
+  add ax, WIDTHPX
+  sub ax, dx
+  jbe .salir
+  sub ax, bx
+  jae .hcalcv
+  neg ax
+  mov bx, ax
+
+  .hcalcv:
   ; Calcular movimiento vertical para borrado de seccion horizontal
   mov bh, [ds:bp + SPRITE.h]
   mov al, [ds:bp + SPRITE.y]
@@ -1005,7 +1030,7 @@ borraspritemov:
   inc cx
   .sig4:
   .initlooprowh:
-  ; push bx	; ¿Aun es necesario respaldar estas variables?
+  ; push bx	; TODO ¿Aun es necesario respaldar estas variables?
   push dx
   push bx
   mov al, [colorbackground]

@@ -251,7 +251,7 @@ spritephysout:
 
 iabasiccontrol:
   mov al, [ds:bp + SPRITE.iavars]
-  mov al, ABTN
+  ; or al, ABTN
 ret
 
 iabasiccoll:
