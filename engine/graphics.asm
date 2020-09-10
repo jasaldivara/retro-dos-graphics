@@ -113,20 +113,18 @@ dibujasprite16:
   ; Check screen scroll
   .checkhscroll:
   mov dx, [hscroll]
-  %rep ilog2e( BYTESPERHSCROLL  * PXB )
+  %rep ilog2e( BYTESPERHSCROLL )
   shl dx, 1
   %endrep
-  ;mov bx, [ds:bp + SPRITE.x]  ; TODO: Optimize this
-  shl bx, 1         ; bx = Sprite.X
+                  ; bx = Sprite.X en bytes
+                  ; dx = limite izquierdo de pantalla
   sub bx, dx        ; (SCroll.X > Sprite.X?)
-  js .prelooprenglonleft
-  ;xor bx, bx
+  jb .prelooprenglonleft
 
   ; Check scroll right
-  mov bx, [ds:bp + SPRITE.x]  ; TODO: Optimize this!
-  ;add bx, dx
-  add bx, [ds:bp + SPRITE.pxw]    ; TODO: Optimizar esto!
-  add dx, WIDTHPX         ; DX = Screen right limit
+  add bx, dx      ; bx = Sprite.X en bytes
+  add bx, ax      ; bx = sptite.x + sprite.w en bytes
+  add dx, BYTESPERSCAN         ; DX = Screen right limit
   sub bx, dx
   ja .prelooprenglonright
   
@@ -135,17 +133,13 @@ dibujasprite16:
 
   .prelooprenglonright:
 
-  shr bx, 1
   sub ax, bx
   sub si, bx
   jmp .looprenglon
 
   .prelooprenglonleft:
-  ; mov bx, dx
   neg bx
-  shr bx, 1     ; TODO: Optimizar esto
   sub ax, bx
-
   add di, bx   ; agregar diferencia con inicio de pantalla
 
   .looprenglon:
@@ -165,10 +159,6 @@ dibujasprite16:
   loop .looprenglon
 
   sub di, bx
-  ;popf
-  ;ret
-
-  ;jmp .anterior
 
   ; 5 .- Después dibujamos otra mitad de renglones de sprite, ahora en renglones impar de pantalla
   mov cx, es
