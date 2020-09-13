@@ -278,7 +278,7 @@ dibujasprite16noalineado:
 
   ; Check scroll right
   add dx, ax
-  add dx, [ds:bp + SPRITE.bw]    ; TODO: Optimizar esto!
+  add dx, bx    ; agregar ancho en bytes
   add ax, BYTESPERSCAN         ; DX = Screen right limit
   sub dx, ax
   jae dwspunrged
