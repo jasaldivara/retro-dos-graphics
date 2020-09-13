@@ -8,7 +8,8 @@ ASMFLAGS = -fbin
 PRIMITIVES = $(BINPRIM)/holacga.com $(BINPRIM)/pixelcga.com $(BINPRIM)/sprite4.com \
               $(BINPRIM)/rebota.com $(BINPRIM)/rebota2.com $(BINPRIM)/platform.com \
               $(BINPRIM)/compcol.com $(BINPRIM)/tdycol.com $(BINPRIM)/p16doble.com \
-              $(BINPRIM)/joystick.com $(BINPRIM)/jstick2.com $(BINPRIM)/jstick3.com
+              $(BINPRIM)/joystick.com $(BINPRIM)/jstick2.com $(BINPRIM)/jstick3.com \
+							$(BINPRIM)/ega.com
 
 
 MAIN =  $(BIN)/sscroll.com $(BIN)/platform.com $(BIN)/speaker.com \
@@ -21,6 +22,9 @@ ENGINE = engine/base.asm engine/graphics.asm engine/header.asm engine/collisions
 ALL : $(MAIN) $(PRIMITIVES)
 
 $(BINPRIM)/holacga.com : primitiv/holacga.asm
+	$(ASM) $< $(ASMFLAGS) -o $@
+
+$(BINPRIM)/ega.com : primitiv/ega.asm
 	$(ASM) $< $(ASMFLAGS) -o $@
 
 $(BINPRIM)/pixelcga.com : primitiv/pixelcga.asm
