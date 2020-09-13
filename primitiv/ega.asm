@@ -73,8 +73,8 @@ drawsprite:
   mov al, 2h         ; index of map mask register
   out dx, al
 
-  mov dx, 3C5h       ; address of sequencer data register
-  mov al, bh  ; turn on the 'red' and 'intense' planes
+  mov dx, 3C5h        ; address of sequencer data register
+  mov al, bh          ; Activar el plano actual
   out dx, al
 
   mov cx, 8
@@ -82,9 +82,8 @@ drawsprite:
   mov dx, cx
   mov cl, bl
   lodsb
-  mov ah, al
-  xor al, al
-  shr ax, cl
+  xor ah, ah
+  ror ax, cl
   stosw
   add di, WIDTHBYTES - 2
   mov cx, dx
@@ -104,7 +103,7 @@ section .data
   endstr db '$'
 
   spritex:
-  dw  40d
+  dw  42d
   spritey:
   dw 92d
 
