@@ -250,8 +250,8 @@ dibujasprite16noalineado:
   mul dx      ; multiplicar coordenada Y por ancho de pantalla en bytes
 
               ; bx = Sprite.X
-  mov dx, bx  ; dx = Sprite.x
   shr bx, 1   ; Descartar ultimo bit
+  mov dx, bx  ; dx = Sprite.xbyte
   add ax, bx  ; Desplazamiento del byte que vamos a manipular
   add di, ax
 
@@ -264,25 +264,24 @@ dibujasprite16noalineado:
   xor ch, ch
   shr cx, 1   ; cl = cx = ( Sprite.Height / 2 )
 
-  .checkscroll:   ; TODO
-  ; DX = Sprite.x
-  ; Registros libres: AX, DX
+  .checkscroll:
+  ; DX = Sprite.x / 2
+  ; Registros libres: AX
   mov ax, [hscroll]
-  %rep ilog2e( BYTESPERHSCROLL  * PXB )
+  %rep ilog2e( BYTESPERHSCROLL )
   shl ax, 1
   %endrep
-  dec dx
+  ; dec dx
   sub dx, ax
-  js dwspunlfed
+  jb dwspunlfed
 
 
   ; Check scroll right
-  mov dx, [ds:bp + SPRITE.x]  ; TODO: Optimize this!
-  ;add bx, ax
-  add dx, [ds:bp + SPRITE.pxw]    ; TODO: Optimizar esto!
-  add ax, WIDTHPX         ; DX = Screen right limit
+  add dx, ax
+  add dx, [ds:bp + SPRITE.bw]    ; TODO: Optimizar esto!
+  add ax, BYTESPERSCAN         ; DX = Screen right limit
   sub dx, ax
-  ja dwspunrged
+  jae dwspunrged
 
   .bgcolor:
 
@@ -367,11 +366,6 @@ dibujasprite16noalineado:
 
 
 
-  ;test bh, bh     ; TODO: Optimizar esto
-  ;jz .sigb
-  ;dec bl
-  ;.sigb:
-
   mov ax, [ds:bp + SPRITE.h]
   ;mov cx, ax
   mov dl, al
@@ -406,11 +400,6 @@ dibujasprite16noalineado:
   shr cx, 1
 
 
-  ;test bh, bh   ; TODO: Optimizar esto
-  ;jz .sigc
-  ;inc bl
-  ;.sigc:
-
   jmp .bgcolor
 
 
@@ -426,11 +415,6 @@ dwspunlfed:
 
   .prelooprowleft:
   neg dx
-  shr dx, 1     ; TODO: Optimizar esto
-  ;sub ax, dx
-  ;jnc .nc
-  ;inc dx
-  ;.nc:
 
   add di, dx   ; agregar diferencia con inicio de pantalla
   sub bl, dl
@@ -509,11 +493,7 @@ dwspunlfed:
   mov cx, MEMCGAODD ; Dibujar en renglones impar de pantalla CGA 4 Col
   mov es, cx
 
-
-  ;test bh, bh     ; TODO: Optimizar esto
-  ;jz .sigb
   dec bl
-  ;.sigb:
 
   mov ax, [ds:bp + SPRITE.h]
   ;mov cx, ax
@@ -549,8 +529,6 @@ dwspunlfed:
   shr cx, 1
 
 
-  ;test bh, bh   ; TODO: Optimizar esto
-  ;jz .sigc
   inc bl
   .sigc:
 
@@ -567,24 +545,12 @@ dwspunrged:
   ;ret
 
   .prelooprowright:
-  ;neg dx
-  shr dx, 1     ; TODO: Optimizar esto
-  ;sub ax, dx
-  ;jnc .nc
-  ;inc dx
-  ;.nc:
+
 
   ;add di, dx   ; agregar diferencia con inicio de pantalla
   sub bl, dl
   mov bh, dl    ; bh = bytes a saltar
 
-  ; add si, dx  ; Adelantar posicion inicial a copiar
-  ;inc bl
-  ;inc si
-
-  ; ?
-  ;sub si, dx  ; Temporal?
-  ;inc si
 
   .bgcolor:
 
@@ -658,11 +624,6 @@ dwspunrged:
   mov es, cx
 
 
-  ;test bh, bh     ; TODO: Optimizar esto
-  ;jz .sigb
-  ;dec bl
-  ;.sigb:
-
   mov ax, [ds:bp + SPRITE.h]
   ;mov cx, ax
   mov dl, al
@@ -698,9 +659,6 @@ dwspunrged:
   shr cx, 1
 
 
-  ;test bh, bh   ; TODO: Optimizar esto
-  ;jz .sigc
-  ;inc bl
   .sigc:
 
   jmp .bgcolor
