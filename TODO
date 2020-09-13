@@ -3,9 +3,15 @@ Side Scroller:
 
   Que no se muestren ni procesen los sprites que estén fuera del area visible en pantalla
 
+    Ya no se muestran, falta que no se procesen
+
 Nuevas características:
 
   Nueva rutina de borrado optimizada que copia graficos de tile y solo donde hay movimiento
+
+    Agregar tiles que funcionan como escaleras
+
+  Gráficos EGA
 
   Mejorar mecánica de velocidad y movimiento de jugador y sprites físicos
 
@@ -15,7 +21,6 @@ Nuevas características:
 
     Soporte para tandy sound
 
-  ¿Que los sprites puedan tener transparencias?
 
 Bugs:
 
