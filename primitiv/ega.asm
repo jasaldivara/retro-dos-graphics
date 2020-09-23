@@ -11,6 +11,30 @@
   %define MEMCGAEVEN 0xB800
   %define MEMCGAODD 0xBA00
 
+  ; Constantes del juego
+
+  %define VEL 2
+  %define ANCHO 8
+
+
+  ; vsync: Esperar retrazo vertical
+  %macro VSync 0
+
+  MOV	DX, 03DAH
+
+  %%Retrace1:
+	IN	AL,DX			; AL := Port[03DAH]
+	TEST	AL,8			; Is bit 3 set?
+	JZ	%%Retrace1		; No, continue waiting
+
+	%%Retrace2:				;	IN	AL,DX			
+	IN	AL,DX		; AL := Port[03DAH]
+	TEST	AL,8			; Is bit 3 unset?
+	JNZ	%%Retrace2		; No, continue waiting
+
+  %endmacro
+
+
   org 100h 
  
 section .text 
@@ -27,7 +51,75 @@ start:
 
   call drawsprite
 
-  call esperatecla
+  .frame:
+
+  ; 0 .- VSync
+
+  VSync
+
+  call clearsprite
+
+  ; 1.- calcular x
+  mov ax, [spritex]
+  mov dx, VEL
+  mov bh, [deltax]
+  test bh, bh
+  jz .sig1
+  add ax, dx
+  jmp .sig2
+  .sig1:
+  sub ax, dx
+  .sig2:
+  cmp ax, WIDTHPX - ANCHO
+  jng .sig3
+  mov ax, WIDTHPX - ANCHO
+  mov bh, 0
+  mov [deltax], bh
+  .sig3:
+  cmp ax, 0
+  jnl .sig4
+  mov ax, 0
+  mov bh, 1
+  mov [deltax], bh
+  .sig4:
+  mov [spritex], ax
+
+
+  ; 1.- calcular y
+  mov ax, [spritey]
+  mov dx, VEL
+  mov bh, [deltay]
+  test bh, bh
+  jz .sig5
+  add ax, dx
+  jmp .sig6
+  .sig5:
+  sub ax, dx
+  .sig6:
+  cmp ax, HEIGHTPX - ANCHO
+  jng .sig7
+  mov ax, HEIGHTPX - ANCHO
+  mov bh, 0
+  mov [deltay], bh
+  .sig7:
+  cmp ax, 0
+  jnl .sig8
+  mov ax, 0
+  mov bh, 1
+  mov [deltay], bh
+  .sig8:
+  mov [spritey], ax
+
+  call drawsprite
+
+  ; y.- Revisar teclado
+  mov ah, 1   ; "Get keystroke status"
+  int 16h
+  jz .frame
+
+  ;call esperatecla
+  mov ah, 0
+  int 16h
 
 fin:
   int 20h
@@ -95,6 +187,40 @@ drawsprite:
   ;jmp fin
   ret
 
+clearsprite:
+  mov al, [spritey]
+  mov ah, WIDTHBYTES
+  mul ah
+  mov bx, [spritex]
+  mov dl, bl
+  and dl, 00000111b
+  shr bx, 3
+  add ax, bx
+  mov bx, ax
+  mov di, ax
+
+  .planos:
+
+  mov dx, 3C4h       ; address of sequencer address register
+  mov al, 2h         ; index of map mask register
+  out dx, al
+
+  mov dx, 3C5h        ; address of sequencer data register
+  mov al, 00001111b   ; Activar los cuatro planos
+  out dx, al
+
+  mov cx, 8   ; 8 renglones
+  .rows:
+  mov dx, cx  ; dx = renglones restantes
+  xor ax, ax
+  stosw
+  add di, WIDTHBYTES - 2
+  mov cx, dx
+  loop .rows
+
+  ret
+
+
 section .data
   ; program data
  
@@ -106,6 +232,13 @@ section .data
   dw  42d
   spritey:
   dw 92d
+
+  deltax:
+  db 1
+  deltay:
+  db 1
+
+  align   8,db 0
 
   sprite:
 
