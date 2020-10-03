@@ -37,6 +37,7 @@
   %endmacro
 
 
+
   %macro SelectPlaneNumber 0
   ; Colocar en cl numero de plano
   ; Destruye DX y AL
@@ -330,13 +331,13 @@ section .data
 align   8,db 0
 
 tilesgraphics:
-incbin "../img/tile0.bin",0,64
-incbin "../img/tile1.bin",0,64
-incbin "../img/tile2.bin",0,64
-incbin "../img/tile3.bin",0,64
-incbin "../img/tile4.bin",0,64
-incbin "../img/tile5.bin",0,64
-incbin "../img/tile6.bin",0,64
+incbin "img/tile0.bin",0,64
+incbin "img/tile1.bin",0,64
+incbin "img/tile2.bin",0,64
+incbin "img/tile3.bin",0,64
+incbin "img/tile4.bin",0,64
+incbin "img/tile5.bin",0,64
+incbin "img/tile6.bin",0,64
 
 endtilesgraphics:
 
@@ -344,17 +345,18 @@ endtilesgraphics:
 spritesgraphics:
 spritedatamonigote:
 
-incbin	"../img/jugador-spritesheet-izq.bin",0,1152
-incbin	"../img/jugador-spritesheet.bin",0,1152
+incbin	"img/jugador-spritesheet-izq.bin",0,1152
+incbin	"img/jugador-spritesheet.bin",0,1152
 
 spritedatamona:
-incbin	"../img/mona-alta-8x32.bin",0,128
+incbin	"img/mona-alta-8x32.bin",0,128
 
 spritedatamonochico:
-incbin "../img/mono-comp-8x16.bin", 0, 64
+incbin "img/mono-comp-8x16.bin", 0, 64
 
 spritedatamonogrande:
-incbin "../img/enemigo-grande.bin", 0, 256
+incbin "img/enemigo-grande.bin", 0, 256
+
 
 endspritesgraphics:
 
