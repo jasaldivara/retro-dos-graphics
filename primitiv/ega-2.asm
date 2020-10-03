@@ -101,6 +101,11 @@ start:
   call dovscroll
   jmp .cicloteclado
   .noarriba:
+  cmp al, ' '
+  jne .nomodo
+  call cambiamodo
+  jmp .cicloteclado
+  .nomodo:
   cmp ah, KB_DOWN
   jne .cicloteclado
   mov al, [vscroll]
@@ -280,6 +285,36 @@ dovscroll:
   out dx, al
 ret
 
+cambiamodo:
+
+  mov al, [control_modo]
+  mov bl, al
+  test bl, bl
+  jz .no
+  .si:
+  xor bl, bl
+  mov bh, 0e3h
+  jmp .sig
+
+  .no:
+  mov bl, 1
+  mov bh, 11100010b
+
+  .sig:
+
+  mov [control_modo], bl
+
+  mov dx, 3D4h
+  mov al, 17h         ; index of offset
+  out dx, al
+
+  mov dx, 3D5h
+  mov al, bh         ; index of offset
+  out dx, al
+
+
+ret
+
 conviertecomposite2tandy:
   ; bx => graficos a convertir
   ; cx => cantidad de bytes a convertir
@@ -321,6 +356,9 @@ section .data
   ; program data
 
   vscroll:
+  db 0
+
+  control_modo:
   db 0
 
   ; Trabla de equivalencia entre paletas de colores Composite => Tandy (iRGB)
