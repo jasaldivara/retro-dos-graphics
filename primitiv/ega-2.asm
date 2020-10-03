@@ -11,6 +11,14 @@
   %define MEMCGAODD 0xBA00
 
 
+  %define KB_ESC 01
+  %define KB_UP 48h
+  %define KB_DOWN 50h
+  %define KB_LEFT 4Bh
+  %define KB_RIGHT 4Dh
+  %define KB_SALTA 44d
+  %define KB_ACCION 45d
+
     ; vsync: Esperar retrazo vertical
   %macro VSync 0
 
@@ -80,6 +88,26 @@ start:
   ; Borrar tecla presionada de buffer del teclado
   mov ah, 0
   int 16h
+
+  cmp ah, KB_ESC
+  je end
+  cmp ah, KB_UP
+  jne .noarriba
+  .siarriba:
+  mov al, [vscroll]
+  dec al
+  mov [vscroll], al
+  call dovscroll
+  jmp .cicloteclado
+  .noarriba:
+  cmp ah, KB_DOWN
+  jne .cicloteclado
+  mov al, [vscroll]
+  inc al
+  mov [vscroll], al
+  call dovscroll
+  jmp .cicloteclado
+
 
 
 end:
@@ -227,6 +255,30 @@ convierteabitplano:
 
   ret
 
+dovscroll:
+
+  mov al, [vscroll]
+  mov ah, WIDTHBYTES
+  mul ah
+  mov bx, ax
+
+  mov dx, 3D4h
+  mov al, 0Ch         ; index of offset
+  out dx, al
+
+  mov dx, 3D5h
+  mov al, bh
+  out dx, al
+
+  mov dx, 3D4h
+  mov al, 0Dh         ; index of offset
+  out dx, al
+
+  mov dx, 3D5h
+  mov al, bl
+  out dx, al
+ret
+
 conviertecomposite2tandy:
   ; bx => graficos a convertir
   ; cx => cantidad de bytes a convertir
@@ -266,6 +318,9 @@ conviertecomposite2tandy:
 
 section .data
   ; program data
+
+  vscroll:
+  db 0
 
   ; Trabla de equivalencia entre paletas de colores Composite => Tandy (iRGB)
   comp2tdy_table:
