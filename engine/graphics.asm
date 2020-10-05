@@ -1107,7 +1107,7 @@ drawtilesimple:
   lea si, [tilesgraphics]
   ; mov si, bx
   mov al, dl
-  mov ah, 64
+  mov ah, 64    ; TODO: Optimizar esto con logaritmo binario y shl
   mul ah
   add si, ax
   ; mov si, bx
