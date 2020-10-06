@@ -40,6 +40,8 @@
   ; Aritmetica de constantes gráficas
   %define ANCHOTILEBYTES    (ANCHOTILE / EGAPXPERBYTE)
 
+  %define IDSPRITE(s)   ((s - tilesgraphics) / 64)
+
     ; vsync: Esperar retrazo vertical
   %macro VSync 0
 
@@ -137,6 +139,12 @@ start:
   mov dx, map1
   call drawmap
 
+  ; y .- Dibujar sprite
+  mov cx, IDSPRITE(spritedatamonochico)
+  mov ax, [spritey]
+  mov bx, [spritex]
+  call drawtileEGA
+
   .cicloteclado:
   mov ah, 1   ; "Get keystroke status"
   int 16h
@@ -150,27 +158,40 @@ start:
   je end
   cmp ah, KB_UP
   jne .noarriba
-  .siarriba:
+  call movup
+  .noarriba:
+  cmp ah, KB_DOWN
+  jne .noabajo
+  call movdown
+  .noabajo:
+  cmp ah, KB_LEFT
+  jne .noizq
+  call movleft
+  .noizq:
+  cmp ah, KB_RIGHT
+  jne .noder
+  call movright
+  .noder:
+  cmp al, '-'
+  jne .noscrollarriba
   mov al, [vscroll]
   dec al
   mov [vscroll], al
   call dovscroll
   jmp .cicloteclado
-  .noarriba:
+  .noscrollarriba:
   cmp al, ' '
   jne .nomodo
   call cambiamodo
   jmp .cicloteclado
   .nomodo:
-  cmp ah, KB_DOWN
+  cmp al, '+'
   jne .cicloteclado
   mov al, [vscroll]
   inc al
   mov [vscroll], al
   call dovscroll
   jmp .cicloteclado
-
-
 
 end:
 
@@ -181,6 +202,75 @@ end:
 
   ;  Salir al sistema
   int 20h
+
+movup:
+mov ax, [spritey]
+cmp ax, 0
+jng .ret
+dec ax
+mov [spritey], ax
+call movsprite
+.ret:
+ret
+movdown:
+mov ax, [spritey]
+cmp ax, MAPHEIGHT - 1
+jnl .ret
+inc ax
+mov [spritey], ax
+call movsprite
+.ret:
+ret
+movleft:
+mov ax, [spritex]
+cmp ax, 0
+jng .ret
+dec ax
+mov [spritex], ax
+call movsprite
+.ret:
+ret
+movright:
+mov ax, [spritex]
+cmp ax, MAPWIDTH - 1
+jnl .ret
+inc ax
+mov [spritex], ax
+call movsprite
+.ret:
+ret
+
+movsprite:
+
+  VSync
+
+  ; 1.- Borrar anterior tile
+  mov dx, map1
+  mov si, dx
+  mov al, [spriteay]
+  mov ah, MAPWIDTH
+  mul ah
+  add ax, [spriteax]
+  add si, ax
+  lodsb
+  xor ah, ah
+  mov cx, ax
+  mov ax, [spriteay]
+  mov bx, [spriteax]
+  call drawtileEGA
+
+  ; 2.- Dibujar nuevo sprite
+  mov cx, IDSPRITE(spritedatamonochico)
+  mov ax, [spritey]
+  mov bx, [spritex]
+  call drawtileEGA
+
+  ; 3.- Actualizar coordenadas
+  mov [spriteay], ax
+  mov [spriteax], bx
+
+
+ret
 
 copiagraficos:
   
@@ -458,6 +548,11 @@ conviertecomposite2tandy:
 section .data
   ; program data
 
+  spritex:  dw 1
+  spritey:  dw 1
+  spriteax:  dw 1
+  spriteay:  dw 1
+
   vscroll:
   db 0
 
@@ -505,6 +600,10 @@ endtilesgraphics:
 
 
 spritesgraphics:
+
+spritedatamonochico:
+incbin "img/mono-comp-8x16.bin", 0, 64
+
 spritedatamonigote:
 
 incbin	"img/jugador-spritesheet-izq.bin",0,1152
@@ -513,8 +612,6 @@ incbin	"img/jugador-spritesheet.bin",0,1152
 spritedatamona:
 incbin	"img/mona-alta-8x32.bin",0,128
 
-spritedatamonochico:
-incbin "img/mono-comp-8x16.bin", 0, 64
 
 spritedatamonogrande:
 incbin "img/enemigo-grande.bin", 0, 256
