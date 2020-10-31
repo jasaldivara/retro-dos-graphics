@@ -9,7 +9,8 @@ PRIMITIVES = $(BINPRIM)/holacga.com $(BINPRIM)/pixelcga.com $(BINPRIM)/sprite4.c
               $(BINPRIM)/rebota.com $(BINPRIM)/rebota2.com $(BINPRIM)/platform.com \
               $(BINPRIM)/compcol.com $(BINPRIM)/tdycol.com $(BINPRIM)/p16doble.com \
               $(BINPRIM)/joystick.com $(BINPRIM)/jstick2.com $(BINPRIM)/jstick3.com \
-              $(BINPRIM)/ega.com $(BINPRIM)/ega2.com $(BINPRIM)/ega3.com
+              $(BINPRIM)/ega.com $(BINPRIM)/ega2.com $(BINPRIM)/ega3.com \
+							$(BINPRIM)/ega4.com
 
 
 MAIN =  $(BIN)/sscroll.com $(BIN)/platform.com $(BIN)/speaker.com \
@@ -31,6 +32,9 @@ $(BINPRIM)/ega2.com : primitiv/ega-2.asm
 	$(ASM) $< $(ASMFLAGS) -o $@
 
 $(BINPRIM)/ega3.com : primitiv/ega-3.asm
+	$(ASM) $< $(ASMFLAGS) -o $@
+
+$(BINPRIM)/ega4.com : primitiv/ega-4.asm
 	$(ASM) $< $(ASMFLAGS) -o $@
 
 $(BINPRIM)/pixelcga.com : primitiv/pixelcga.asm
