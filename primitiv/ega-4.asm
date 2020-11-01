@@ -303,12 +303,6 @@ copiagraficos:
   ; [bp] = saved bp
   ; [bp - 2] = local 1 (pixeles siguientes temporal)
 
-  ; bx = cantidad de palabras (2 bytes) a copiar
-  ; ax = direccion de origen a copiar
-
-  ;push bp
-  ;push ax
-  ;xor bp, bp
 
   mov cx, 3     ; dl = plano a copiar
 
@@ -318,44 +312,29 @@ copiagraficos:
   SelectPlaneNumber   ; Numero de plano en cl
 
   ; ciclo de copiado
-  mov dx, cx
-  ;push cx
-  mov cx, [bp + 8]
-  ;mov cx, 40h
+  mov dx, cx	; dx = plano a copiar
+  mov cx, [bp + 8]	; cx = cantidad de palabras a copiar
 
   ; Establecer direccion es origen y destino
   ; Origen = RAM, Destino = VRAM
   mov ax, [ega_alloc_end]
-  mov di, ax    ; ES:DI => Inicio de EGA Buffer
-  ;mov ax, tilesgraphics
-  ;pop ax
-  ;push ax
-  mov si, [bp + 6]    ; DS:SI => Tiles gráficos
+  mov di, ax    ; ES:DI => Inicio de EGA Buffer en VRAM
+  mov si, [bp + 6]    ; direccion de origen a copiar
 
   .ciclocopia:
-  ;push bx
   push cx
 
-  ;mov cl, dl
-
-  ;push bx
   call convierteabitplano
-  ;call convierteabitplano
-  ;pop bx
 
   ;add di, WIDTHBYTES - 2
   pop cx
-  ;pop bx
   loop .ciclocopia
 
   mov cx, dx
-  ;pop cx
 
   dec cx
   jge .cicloplanos
   ;loop .cicloplanos
-
-  mov cx, 3     ; dl = plano a copiar
 
 
   mov ax, [ega_alloc_end]
@@ -363,8 +342,6 @@ copiagraficos:
   mov [ega_alloc_end], ax
 
 
-
-  ;pop ax
 
   mov sp, bp
   pop bp
@@ -428,7 +405,7 @@ convierteabitplano:
 
   lodsw     ; AX = datos gráficos
 
-  mov cl, dl
+  mov cl, dl	; cl = plano a copiar
 
   mov bl, al
   shr bl, 4   ; Procesar primero 4 bits
@@ -474,7 +451,7 @@ convierteabitplano:
   mov ah, ch
   xor al, al
   mov cl, [bp + 4] ; Desplazamiento en px?
-  shr ax, cl  
+  shr ax, cl
   mov bx, [bp - 2]
   mov [bp - 2], ax
   or ah, bl
