@@ -313,6 +313,14 @@ copiagraficos:
 
   ; ciclo de copiado
   mov dx, cx	; dx = plano a copiar
+
+  ; Llenar espacio vacío de desplazamiento
+  mov al, 0ffh
+  mov cx, [bp + 4] ; cx = pixel offset
+  shr al, cl
+  not al
+  mov [bp - 2], al
+
   mov cx, [bp + 8]	; cx = cantidad de palabras a copiar
 
   ; Establecer direccion es origen y destino
@@ -320,6 +328,7 @@ copiagraficos:
   mov ax, [ega_alloc_end]
   mov di, ax    ; ES:DI => Inicio de EGA Buffer en VRAM
   mov si, [bp + 6]    ; direccion de origen a copiar
+
 
   .ciclocopia:
   push cx
@@ -348,58 +357,6 @@ copiagraficos:
 
   ret
 
-drawtileEGA:
-  ; AX = Y Coordinate of tile
-  ; BX = X Coordinate of tile
-  ; CX = Tile Code
-  push ds
-  push si
-  push ax	; Respaldar AX y BX
-  push bx
-
-  ; 1 .- Calcular DI (Destination Index)
-  ; 1.1 .- Multiplicar para calcular desplazamiento
-  mov dl, WIDTHBYTES    ; NOTA ¿usar 8 ó 16 bits?
-  mul dl
-  mov dx, cx
-  mov cx, ilog2e( ALTOTILE )
-  shl ax, cl
-
-
-  ; 1.2 .- Multiplicar X por ancho de TILE
-  mov cx, ilog2e(ANCHOTILEBYTES)
-  shl bx, cl
-
-
-  ; 1.3 .- Sumar
-  add ax, bx
-  mov di, ax	; Destination Index
-
-  ; 2 .- Calcular SI (Source Index)
-  mov cx, ilog2e(ALTOTILE * ANCHOTILEBYTES)
-  shl dx, cl
-  add dx, EGAIMGDATA
-  mov si, dx
-
-  ; 3 .- Copiar datos
-  mov ax, es
-  mov ds, ax
-
-  mov cx, ALTOTILE
-  .looprows:
-  mov dx, cx
-  mov cx, ANCHOTILEBYTES
-  rep movsb
-  mov cx, dx
-  add di, WIDTHBYTES - ANCHOTILEBYTES
-  loop .looprows
-
-  .salir:
-  pop bx	; Restaurar bx y ax
-  pop ax
-  pop si
-  pop ds
-  ret
 
 convierteabitplano:
 
@@ -452,13 +409,67 @@ convierteabitplano:
   xor al, al
   mov cl, [bp + 4] ; Desplazamiento en px?
   shr ax, cl
-  mov bx, [bp - 2]
+  mov bx, [bp - 2]	; Agregar pixeles desplazados
   mov [bp - 2], ax
   or ah, bl
   mov al, ah
 
   stosb       ; Almacenar byte en memoria de video
 
+  ret
+
+
+drawtileEGA:
+  ; AX = Y Coordinate of tile
+  ; BX = X Coordinate of tile
+  ; CX = Tile Code
+  push ds
+  push si
+  push ax	; Respaldar AX y BX
+  push bx
+
+  ; 1 .- Calcular DI (Destination Index)
+  ; 1.1 .- Multiplicar para calcular desplazamiento
+  mov dl, WIDTHBYTES    ; NOTA ¿usar 8 ó 16 bits?
+  mul dl
+  mov dx, cx
+  mov cx, ilog2e( ALTOTILE )
+  shl ax, cl
+
+
+  ; 1.2 .- Multiplicar X por ancho de TILE
+  mov cx, ilog2e(ANCHOTILEBYTES)
+  shl bx, cl
+
+
+  ; 1.3 .- Sumar
+  add ax, bx
+  mov di, ax	; Destination Index
+
+  ; 2 .- Calcular SI (Source Index)
+  mov cx, ilog2e(ALTOTILE * ANCHOTILEBYTES)
+  shl dx, cl
+  add dx, EGAIMGDATA
+  mov si, dx
+
+  ; 3 .- Copiar datos
+  mov ax, es
+  mov ds, ax
+
+  mov cx, ALTOTILE
+  .looprows:
+  mov dx, cx
+  mov cx, ANCHOTILEBYTES
+  rep movsb
+  mov cx, dx
+  add di, WIDTHBYTES - ANCHOTILEBYTES
+  loop .looprows
+
+  .salir:
+  pop bx	; Restaurar bx y ax
+  pop ax
+  pop si
+  pop ds
   ret
 
 dovscroll:
