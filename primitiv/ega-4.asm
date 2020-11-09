@@ -339,6 +339,15 @@ copiagraficos:
   pop cx
   loop .ciclocopia
 
+  mov bx, [bp + 4]  ; Pixel offset
+  test bx, bx
+  jz .sigpilon
+  mov al, [bp-2]  ; ultimo byte almacenado
+  ; TODO: Agregar color de relleno
+  mov al, 0ffh
+  ;mov ax, 0ffffh
+  stosb  ; Copiar a VRAM
+  .sigpilon:
   mov cx, dx
 
   dec cx
@@ -346,8 +355,15 @@ copiagraficos:
   ;loop .cicloplanos
 
 
-  mov ax, [ega_alloc_end]
-  add ax, [bp + 8]
+  ; TODO: ¿Cambiar por di?
+  ;mov ax, [ega_alloc_end]
+  ;add ax, [bp + 8]
+  ;mov bx, [bp + 4]  ; Pixel offset
+  ;test bx, bx
+  ;jz .sigpilon2
+  ;inc ax
+  .sigpilon2:
+  mov ax, di
   mov [ega_alloc_end], ax
 
 
