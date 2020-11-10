@@ -126,17 +126,22 @@ start:
   int  VIDEOBIOS   ; LLamar a la BIOS para servicios de video
 
 
-  push (endtilesgraphics - tilesgraphics) / 2
+  ; TODO: Convertir eswtas llamadas en un macro
+  push (endtilesgraphics - tilesgraphics) / 4
+  push 2
   push tilesgraphics
   push 0
   ;push ax
   call copiagraficos
+  add sp, 8	; Restablecer pila
 
-  push (endspritesgraphics - spritesgraphics) / 2
+  push (endspritesgraphics - spritesgraphics) / 4
+  push 2
   push spritesgraphics
-  push 4
+  push 2
   ;push ax
   call copiagraficos
+  add sp, 8	; Restablecer pila
 
   ; Activar todos los planos
   SelectAllPlanes
@@ -294,14 +299,16 @@ ret
 copiagraficos:
   push bp
   mov bp, sp
-  sub sp, 2   ; variables locales * 2
+  sub sp, 4   ; variables locales * 2
 
-  ; [bp + 8] = cantidad de palabras (2 bytes) a copiar
+  ; [bp + 10] = cantidad de ciclos
+  ; [bp + 8] = cantidad de palabras (2 bytes) de ancho
   ; [bp + 6] = direccion de origen a copiar
   ; [bp + 4] = pixel offset
   ; [bp + 2] = saved ip (return address)
   ; [bp] = saved bp
   ; [bp - 2] = local 1 (pixeles siguientes temporal)
+  ; [bp - 4] = Copia de cantidad dee ciclos, para conteo
 
 
   mov cx, 3     ; dl = plano a copiar
@@ -313,6 +320,20 @@ copiagraficos:
 
   ; ciclo de copiado
   mov dx, cx	; dx = plano a copiar
+  ;push cx
+  ;push dx
+
+  mov ax, [bp + 10]
+  mov [bp - 4], ax
+
+
+  ; Establecer direccion es origen y destino
+  ; Origen = RAM, Destino = VRAM
+  mov ax, [ega_alloc_end]
+  mov di, ax    ; ES:DI => Inicio de EGA Buffer en VRAM
+  mov si, [bp + 6]    ; direccion de origen a copiar
+
+  .cicloexterno:
 
   ; Llenar espacio vacío de desplazamiento
   mov al, 0ffh
@@ -323,11 +344,6 @@ copiagraficos:
 
   mov cx, [bp + 8]	; cx = cantidad de palabras a copiar
 
-  ; Establecer direccion es origen y destino
-  ; Origen = RAM, Destino = VRAM
-  mov ax, [ega_alloc_end]
-  mov di, ax    ; ES:DI => Inicio de EGA Buffer en VRAM
-  mov si, [bp + 6]    ; direccion de origen a copiar
 
 
   .ciclocopia:
@@ -344,15 +360,27 @@ copiagraficos:
   jz .sigpilon
   mov al, [bp-2]  ; ultimo byte almacenado
   ; TODO: Agregar color de relleno
-  mov al, 0ffh
+  ;mov al, 0ffh
   ;mov ax, 0ffffh
   stosb  ; Copiar a VRAM
   .sigpilon:
-  mov cx, dx
 
+
+  mov ax, [bp - 4]
+  dec ax
+  mov [bp - 4], ax
+  ;cmp ax, 0
+  test ax, ax
+  jnz .cicloexterno
+
+
+  ;pop dx
+  mov cx, dx
+  ;pop cx
   dec cx
   jge .cicloplanos
   ;loop .cicloplanos
+
 
 
   ; TODO: ¿Cambiar por di?
