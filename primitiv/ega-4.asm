@@ -41,6 +41,7 @@
   %define ANCHOTILEBYTES    (ANCHOTILE / EGAPXPERBYTE)
 
   %define IDSPRITE(s)   ((s - tilesgraphics) / 64)
+  %define OFFSETSPRITE(s)   ((s - tilesgraphics) / 2 )
 
     ; vsync: Esperar retrazo vertical
   %macro VSync 0
@@ -159,10 +160,10 @@ start:
   call drawmap
 
   ; y .- Dibujar sprite
-  mov cx, IDSPRITE(spritedatamonochico)
+  mov cx, OFFSETSPRITE(spritedatamonochico)
   mov ax, [spritey]
   mov bx, [spritex]
-  call drawtileEGA
+  call drawspriteEGA
 
   .cicloteclado:
   mov ah, 1   ; "Get keystroke status"
@@ -282,12 +283,14 @@ movsprite:
   mov ax, [spriteay]
   mov bx, [spriteax]
   call drawtileEGA
+  inc bx
+  call drawtileEGA
 
   ; 2.- Dibujar nuevo sprite
-  mov cx, IDSPRITE(spritedatamonochico)
+  mov cx, OFFSETSPRITE(spritedatamonochico)
   mov ax, [spritey]
   mov bx, [spritex]
-  call drawtileEGA
+  call drawspriteEGA
 
   ; 3.- Actualizar coordenadas
   mov [spriteay], ax
@@ -515,6 +518,65 @@ drawtileEGA:
   pop si
   pop ds
   ret
+
+
+
+drawspriteEGA:
+  ; AX = Y Coordinate of tile
+  ; BX = X Coordinate of tile
+  ; CX = Tile Code
+  push ds
+  push si
+  push ax	; Respaldar AX y BX
+  push bx
+
+  ; 1 .- Calcular DI (Destination Index)
+  ; 1.1 .- Multiplicar para calcular desplazamiento
+  mov dl, WIDTHBYTES    ; NOTA ¿usar 8 ó 16 bits?
+  mul dl
+  mov dx, cx
+  mov cx, ilog2e( ALTOTILE )
+  shl ax, cl
+  xchg bx, ax
+
+
+  ; 1.2 .- Multiplicar X por ancho de TILE
+  mov ah, ANCHOTILEBYTES ; + 1
+  mul ah
+
+
+  ; 1.3 .- Sumar
+  add ax, bx
+  mov di, ax	; Destination Index
+
+  ; 2 .- Calcular SI (Source Index)
+;  mov al, ALTOTILE * (ANCHOTILEBYTES + 1)
+;  mov al, dl
+;  mul dl 
+  add dx, EGAIMGDATA
+  mov si, dx
+
+  ; 3 .- Copiar datos
+  mov ax, es
+  mov ds, ax
+
+  mov cx, ALTOTILE
+  .looprows:
+  mov dx, cx
+  mov cx, ANCHOTILEBYTES + 1
+  rep movsb
+  mov cx, dx
+  add di, WIDTHBYTES - (ANCHOTILEBYTES + 1)
+  loop .looprows
+
+  .salir:
+  pop bx	; Restaurar bx y ax
+  pop ax
+  pop si
+  pop ds
+  ret
+
+
 
 dovscroll:
 
