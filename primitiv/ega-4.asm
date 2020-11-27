@@ -145,7 +145,7 @@ start:
 
   CopiaConvierteGraficosEGA (endtilesgraphics - tilesgraphics) / 4, 2, tilesgraphics, 0
 
-  CopiaConvierteGraficosEGA (endspritesgraphics - spritesgraphics) / 4, 2, spritesgraphics, 7
+  CopiaConvierteGraficosEGA (endspritesgraphics - spritesgraphics) / 4, 2, spritesgraphics, 3
 
 
   ; Activar todos los planos
@@ -366,8 +366,11 @@ copiagraficos:
   test bx, bx
   jz .sigpilon
   mov al, [bp-2]  ; ultimo byte almacenado
-  ; TODO: Agregar color de relleno
-  ;mov al, 0ffh
+  ; Agregar color de relleno
+  mov ah, 0ffh
+  mov cx, [bp + 4] ; cx = pixel offset
+  shr ah, cl
+  or al, ah
   ;mov ax, 0ffffh
   stosb  ; Copiar a VRAM
   .sigpilon:
