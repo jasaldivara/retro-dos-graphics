@@ -102,6 +102,22 @@
 
   %endmacro
 
+  %macro CopiaConvierteGraficosEGA 4
+
+  ; %1 = cantidad de ciclos
+  ; %2 = cantidad de palabras (2 bytes) de ancho
+  ; %3 = direccion de origen a copiar
+  ; %4 = pixel offset
+
+  push %1
+  push %2
+  push %3
+  push %4
+  call copiagraficos
+  add sp, 8	; Restablecer pila
+
+  %endmacro
+
 org 100h
 
 section .text
@@ -127,22 +143,10 @@ start:
   int  VIDEOBIOS   ; LLamar a la BIOS para servicios de video
 
 
-  ; TODO: Convertir eswtas llamadas en un macro
-  push (endtilesgraphics - tilesgraphics) / 4
-  push 2
-  push tilesgraphics
-  push 0
-  ;push ax
-  call copiagraficos
-  add sp, 8	; Restablecer pila
+  CopiaConvierteGraficosEGA (endtilesgraphics - tilesgraphics) / 4, 2, tilesgraphics, 0
 
-  push (endspritesgraphics - spritesgraphics) / 4
-  push 2
-  push spritesgraphics
-  push 2
-  ;push ax
-  call copiagraficos
-  add sp, 8	; Restablecer pila
+  CopiaConvierteGraficosEGA (endspritesgraphics - spritesgraphics) / 4, 2, spritesgraphics, 7
+
 
   ; Activar todos los planos
   SelectAllPlanes
