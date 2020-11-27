@@ -284,10 +284,13 @@ movsprite:
   lodsb
   xor ah, ah
   mov cx, ax
+  lodsb
+  push ax
   mov ax, [spriteay]
   mov bx, [spriteax]
   call drawtileEGA
   inc bx
+  pop cx
   call drawtileEGA
 
   ; 2.- Dibujar nuevo sprite
@@ -393,7 +396,8 @@ copiagraficos:
 
 
 
-  ; TODO: ¿Cambiar por di?
+  ; Mejor usar di para establecer limite [ega_alloc_end]
+  ; de esta forma es más simple.
   ;mov ax, [ega_alloc_end]
   ;add ax, [bp + 8]
   ;mov bx, [bp + 4]  ; Pixel offset
