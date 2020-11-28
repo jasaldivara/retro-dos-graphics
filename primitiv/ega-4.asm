@@ -26,6 +26,10 @@
   %define KB_DOWN 50h
   %define KB_LEFT 4Bh
   %define KB_RIGHT 4Dh
+  %define KB_REPG 73d
+  %define KB_AVPG 81d
+  %define KB_HOME 71d
+  %define KB_END 79d
   %define KB_SALTA 44d
   %define KB_ACCION 45d
 
@@ -97,6 +101,18 @@
   out dx, al
 
   mov dx, 3CFh
+  mov al, %2         ; value of register
+  out dx, al
+
+  %endmacro
+
+  %macro SetAttributeControllerRegister 2
+
+  mov dx, 3C0h       ; address of graphics controller register
+  mov al, %1         ; index of register
+  out dx, al
+
+  ;mov dx, 3C0h
   mov al, %2         ; value of register
   out dx, al
 
@@ -196,7 +212,7 @@ start:
   jne .noder
   call movright
   .noder:
-  cmp al, '-'
+  cmp ah, KB_HOME
   jne .noscrollarriba
   mov al, [vscroll]
   dec al
@@ -207,14 +223,32 @@ start:
   cmp al, ' '
   jne .nomodo
   call cambiamodo
-  jmp .cicloteclado
+  jmp .noscrollabajo
   .nomodo:
-  cmp al, '+'
-  jne .cicloteclado
+  cmp ah, KB_END 
+  jne .noscrollabajo
   mov al, [vscroll]
   inc al
   mov [vscroll], al
   call dovscroll
+  jmp .cicloteclado
+  .noscrollabajo:
+  cmp ah, KB_AVPG 
+  jne .noscrollderecha
+  mov al, [hscroll]
+  inc al
+  mov [hscroll], al
+  call dohscroll
+  ;SetAttributeControllerRegister (20h | 013h), [hscroll] 
+  jmp .cicloteclado
+  .noscrollderecha:
+  cmp ah, KB_REPG 
+  jne .cicloteclado
+  mov al, [hscroll]
+  dec al
+  mov [hscroll], al
+  call dohscroll
+  ;SetAttributeControllerRegister (20h | 013h), [hscroll] 
   jmp .cicloteclado
 
 end:
@@ -590,11 +624,22 @@ drawspriteEGA:
 
 
 dovscroll:
+dohscroll:
+  mov bx, [hscroll]
+  mov cx, bx
+  shr cx, 3
+  and bl, 00000111b
+  SetAttributeControllerRegister (20h | 013h), bl
+
+  ; TODO: Solo hacer segunda escritura en registros en caso de que cambien
+  ; dichos registros
 
   mov al, [vscroll]
   mov ah, WIDTHBYTES
   mul ah
   mov bx, ax
+
+  add bx, cx
 
   mov dx, 3D4h
   mov al, 0Ch         ; index of offset
@@ -611,6 +656,8 @@ dovscroll:
   mov dx, 3D5h
   mov al, bl
   out dx, al
+ret
+
 ret
 
 cambiamodo:
@@ -712,7 +759,10 @@ section .data
   spriteay:  dw 1
 
   vscroll:
-  db 0
+  dw 0
+
+  hscroll:
+  dw 0
 
   control_modo:
   db 0
