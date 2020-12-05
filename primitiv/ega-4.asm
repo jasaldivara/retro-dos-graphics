@@ -55,12 +55,12 @@
   %%Retrace1:
 	IN	AL,DX			; AL := Port[03DAH]
 	TEST	AL,8			; Is bit 3 set?
-	JZ	%%Retrace1		; No, continue waiting
+	JNZ	%%Retrace1		; No, continue waiting
 
 	%%Retrace2:				;	IN	AL,DX
 	IN	AL,DX		; AL := Port[03DAH]
 	TEST	AL,8			; Is bit 3 unset?
-	JNZ	%%Retrace2		; No, continue waiting
+	JZ	%%Retrace2		; No, continue waiting
 
   %endmacro
 
@@ -629,6 +629,9 @@ dohscroll:
   mov cx, bx
   shr cx, 3
   and bl, 00000111b
+
+  VSync
+
   SetAttributeControllerRegister (20h | 013h), bl
 
   ; TODO: Solo hacer segunda escritura en registros en caso de que cambien
