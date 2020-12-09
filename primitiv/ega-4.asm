@@ -6,7 +6,8 @@
   %define CGA4COLOR 0x04
   %define EGALORES  0x0D
   %define WIDTHPX 320d
-  %define WIDTHBYTES 40d
+  %define WIDTHWORDS 21d
+  %define WIDTHBYTES (WIDTHWORDS * 2)
   %define HEIGHTPX 200d
 
   %define MEMEGA      0xA000
@@ -14,7 +15,9 @@
   %define MEMCGAODD 0xBA00
   %define EGAPXPERBYTE  8d
 
-  %define EGAIMGDATA  0x2000
+  ; %define EGAIMGDATA  0x2000
+  ; %define EGAIMGDATA  (WIDTHBYTES * HEIGHTPX)
+  %define EGAIMGDATA  0x4000
 
   ; registros EGA
   %define GRAPHICS_MODE_REG 5
@@ -118,6 +121,18 @@
 
   %endmacro
 
+  %macro SetCRTControllerRegister 2
+
+  mov dx, 3D4h
+  mov al, %1	; Numero de registro a cambiar
+  out dx, al
+
+  mov dx, 3D5h
+  mov al, %2	; Nuevo valor del registro
+  out dx, al
+
+  %endmacro
+
   %macro CopiaConvierteGraficosEGA 4
 
   ; %1 = cantidad de ciclos
@@ -157,6 +172,9 @@ start:
   mov  ah, SETVIDEOMODE   ; Establecer modo de video
   mov  al, EGALORES      ; EGA 16 Colores 320 x 200
   int  VIDEOBIOS   ; LLamar a la BIOS para servicios de video
+
+  ; Establecer Offset del control de CRT
+  SetCRTControllerRegister 013h, WIDTHWORDS
 
 
   CopiaConvierteGraficosEGA (endtilesgraphics - tilesgraphics) / 4, 2, tilesgraphics, 0
@@ -627,7 +645,7 @@ dovscroll:
 dohscroll:
   mov bx, [hscroll]
   mov cx, bx
-  shr cx, 3
+  shr cx, 3		; TODO = ¿Esto no estaba prohibido en 8086?
   and bl, 00000111b
 
   VSync
@@ -671,24 +689,19 @@ cambiamodo:
   jz .no
   .si:
   xor bl, bl
-  mov bh, 0e3h
+  mov bh, 11100010b
   jmp .sig
 
   .no:
   mov bl, 1
-  mov bh, 11100010b
+  mov bh, 11100011b	; Valor por default
 
   .sig:
 
   mov [control_modo], bl
 
-  mov dx, 3D4h
-  mov al, 17h         ; index of offset
-  out dx, al
+  SetCRTControllerRegister 017h, bh
 
-  mov dx, 3D5h
-  mov al, bh         ; index of offset
-  out dx, al
 
 
 ret
