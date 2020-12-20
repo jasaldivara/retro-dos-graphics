@@ -67,7 +67,16 @@
 
   %endmacro
 
+  %macro WaitDisplayEnable 0
 
+  MOV	DX, 03DAH
+
+  %%WaitLoop:
+	in	al, dx
+	and	al, 1
+	jnz	%%WaitLoop
+
+  %endmacro
 
   %macro SelectPlaneNumber 0
   ; Colocar en cl numero de plano
@@ -175,6 +184,7 @@ start:
 
   ; Establecer Offset del control de CRT
   SetCRTControllerRegister 013h, WIDTHWORDS
+  ; SetCRTControllerRegister 1, 25h
 
 
   CopiaConvierteGraficosEGA (endtilesgraphics - tilesgraphics) / 4, 2, tilesgraphics, 0
@@ -643,14 +653,15 @@ drawspriteEGA:
 
 dovscroll:
 dohscroll:
+  push es
+
   mov bx, [hscroll]
   mov cx, bx
   shr cx, 3		; TODO = ¿Esto no estaba prohibido en 8086?
   and bl, 00000111b
 
-  VSync
+  mov es, bx
 
-  SetAttributeControllerRegister (20h | 013h), bl
 
   ; TODO: Solo hacer segunda escritura en registros en caso de que cambien
   ; dichos registros
@@ -662,21 +673,14 @@ dohscroll:
 
   add bx, cx
 
-  mov dx, 3D4h
-  mov al, 0Ch         ; index of offset
-  out dx, al
+  VSync
+  SetCRTControllerRegister 0ch, bh
+  SetCRTControllerRegister 0dh, bl
+  mov bx, es
+  WaitDisplayEnable
+  SetAttributeControllerRegister (20h | 013h), bl
 
-  mov dx, 3D5h
-  mov al, bh
-  out dx, al
-
-  mov dx, 3D4h
-  mov al, 0Dh         ; index of offset
-  out dx, al
-
-  mov dx, 3D5h
-  mov al, bl
-  out dx, al
+  pop es
 ret
 
 ret
