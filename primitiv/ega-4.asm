@@ -1,3 +1,4 @@
+CPU 8086
 
   %use ifunc
 
@@ -149,10 +150,14 @@
   ; %3 = direccion de origen a copiar
   ; %4 = pixel offset
 
-  push %1
-  push %2
-  push %3
-  push %4
+  mov ax, %1
+  push ax
+  mov ax, %2
+  push ax
+  mov ax, %3
+  push ax
+  mov ax, %4
+  push ax
   call copiagraficos
   add sp, 8	; Restablecer pila
 
@@ -485,7 +490,11 @@ convierteabitplano:
   mov cl, dl	; cl = plano a copiar
 
   mov bl, al
-  shr bl, 4   ; Procesar primero 4 bits
+  ;shr bl, 4   ; Procesar primero 4 bits
+  shr bl, 1
+  shr bl, 1
+  shr bl, 1
+  shr bl, 1
   shr bl, cl  ; Desplazamiento del plano actual
   and bl, 1   ; tomar solo ultimo bit
   mov bh, bl
@@ -506,7 +515,11 @@ convierteabitplano:
   shl ch, 1   ; recorrer ch, 2 bits
 
   mov bl, ah
-  shr bl, 4   ; Procesar primero 4 bits
+  ;shr bl, 4   ; Procesar primero 4 bits
+  shr bl, 1
+  shr bl, 1
+  shr bl, 1
+  shr bl, 1
   shr bl, cl  ; Desplazamiento del plano actual
   and bl, 1   ; tomar solo ultimo bit
   mov bh, bl
@@ -657,7 +670,10 @@ dohscroll:
 
   mov bx, [hscroll]
   mov cx, bx
-  shr cx, 3		; TODO = ¿Esto no estaba prohibido en 8086?
+  ;shr cx, 3		; TODO = ¿Esto no estaba prohibido en 8086?
+  shr cx, 1
+  shr cx, 1
+  shr cx, 1
   and bl, 00000111b
 
   mov es, bx
