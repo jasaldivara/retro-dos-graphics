@@ -44,12 +44,19 @@ sphysicsframe:
   .saltar:
   ; ¿está presionada esta tecla?
   test al, ABTN
-  jz .calcdy
+  jnz .cuentasaltoframes
 
-  ; mov al, [ds:bp + SPRITEPHYS.parado] ; Tiene que estar parado para poder saltar
-  ; test al, al
-  ; jnz .sisaltar
+  mov al, [ds:bp + SPRITEPHYS.parado] ; Tiene que estar parado para poder saltar
+  test al, al
+  ;jz .calcdy
 
+  ; Set to jumping frames to zero
+  xor al, al
+  mov [ds:bp + SPRITEPHYS.saltoframes], al
+
+  jmp .calcdy
+
+  .cuentasaltoframes:
 
   mov ah, [ds:bp + SPRITEPHYS.saltoframes] ; Si no está parado, pero aún tiene fuerza para saltar
   test ah, ah
