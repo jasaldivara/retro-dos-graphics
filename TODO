@@ -45,6 +45,8 @@ Text (console) interface for editors:
 
 Mecánica del juego:
 
+  Platformer: Que para poder saltar primero tenga que estar liberada la tecla de salto
+  cuando el personaje/sprite está en el suelo.
 
 Optimizaciones:
 
