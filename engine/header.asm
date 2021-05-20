@@ -3,7 +3,9 @@
 
   %define VIDEOBIOS 0x10
   %define SETVIDEOMODE 0
+  %define CGA4COLOR 0x04
   %define CGA6 0x06
+  %define EGALORES  0x0D
   %define WIDTHPX 160d
   %define HEIGHTPX 200d
   %define PXB 2   ; Pixeles por byte

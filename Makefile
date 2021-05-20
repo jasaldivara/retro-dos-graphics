@@ -18,7 +18,8 @@ MAIN =  $(BIN)/sscroll.com $(BIN)/platform.com $(BIN)/speaker.com \
 
 
 ENGINE = engine/base.asm engine/graphics.asm engine/header.asm engine/collisions.asm \
-         engine/platformer.asm engine/keyboard.asm engine/joystick.asm engine/util.asm
+         engine/platformer.asm engine/keyboard.asm engine/joystick.asm engine/util.asm \
+         engine/ega.asm
 
 ALL : $(MAIN) $(PRIMITIVES)
 
@@ -71,6 +72,9 @@ $(BINPRIM)/jstick3.com : primitiv/jstick3.asm
 	$(ASM) $< $(ASMFLAGS) -i 'primitiv/' -o $@
 
 $(BIN)/platform.com : games/platform.asm img/jugador-spritesheet.bin img/jugador-spritesheet-izq.bin img/enemigo-grande.bin $(ENGINE)
+	$(ASM) $< $(ASMFLAGS) -o $@
+
+$(BIN)/egagame.com : games/egagame.asm img/jugador-spritesheet.bin img/jugador-spritesheet-izq.bin img/enemigo-grande.bin $(ENGINE)
 	$(ASM) $< $(ASMFLAGS) -o $@
 
 $(BIN)/sscroll.com : games/sscroll.asm img/jugador-spritesheet.bin img/jugador-spritesheet-izq.bin img/enemigo-grande.bin $(ENGINE)
