@@ -10,7 +10,7 @@ PRIMITIVES = $(BINPRIM)/holacga.com $(BINPRIM)/pixelcga.com $(BINPRIM)/sprite4.c
               $(BINPRIM)/compcol.com $(BINPRIM)/tdycol.com $(BINPRIM)/p16doble.com \
               $(BINPRIM)/joystick.com $(BINPRIM)/jstick2.com $(BINPRIM)/jstick3.com \
               $(BINPRIM)/ega.com $(BINPRIM)/ega2.com $(BINPRIM)/ega3.com \
-							$(BINPRIM)/ega4.com
+              $(BINPRIM)/ega4.com $(BIN)/egagame.com
 
 
 MAIN =  $(BIN)/sscroll.com $(BIN)/platform.com $(BIN)/speaker.com \
