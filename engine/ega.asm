@@ -3,6 +3,25 @@
 
 
 drawmap.ega:
+  ; DX = Map data
+  xor ax, ax	; AX = 0
+  mov si, dx	; Load Map data on Source index
+
+  .looprows:
+
+  xor bx, bx	; BX = 0
+  .loopcols:
+  mov cx, ax
+  lodsb
+  xchg ax, cx
+  call drawtile.ega
+  inc bx
+  cmp bx, MAPSCREENWIDTH
+  jl .loopcols
+  inc ax
+  add si, MAPWIDTH - MAPSCREENWIDTH
+  cmp ax, MAPHEIGHT
+  jl .looprows
   ret
 
 drawsprite.ega:
@@ -12,6 +31,56 @@ borrasprite.ega:
   ret
 
 drawtile.ega:
+  ; AX = Y Coordinate of tile
+  ; BX = X Coordinate of tile
+  ; CX = Tile Code
+  push ds
+  push si
+  push ax	; Respaldar AX y BX
+  push bx
+
+  ; 1 .- Calcular DI (Destination Index)
+  ; 1.1 .- Multiplicar para calcular desplazamiento
+  mov dl, WIDTHBYTES    ; NOTA ¿usar 8 ó 16 bits?
+  mul dl
+  mov dx, cx
+  mov cx, ilog2e( ALTOTILE )
+  shl ax, cl
+
+
+  ; 1.2 .- Multiplicar X por ancho de TILE
+  mov cx, ilog2e(ANCHOTILEBYTES)
+  shl bx, cl
+
+
+  ; 1.3 .- Sumar
+  add ax, bx
+  mov di, ax	; Destination Index
+
+  ; 2 .- Calcular SI (Source Index)
+  mov cx, ilog2e(ALTOTILE * ANCHOTILEBYTES)
+  shl dx, cl
+  add dx, EGAIMGDATA
+  mov si, dx
+
+  ; 3 .- Copiar datos
+  mov ax, es
+  mov ds, ax
+
+  mov cx, ALTOTILE
+  .looprows:
+  mov dx, cx
+  mov cx, ANCHOTILEBYTES
+  rep movsb
+  mov cx, dx
+  add di, WIDTHBYTES - ANCHOTILEBYTES
+  loop .looprows
+
+  .salir:
+  pop bx	; Restaurar bx y ax
+  pop ax
+  pop si
+  pop ds
   ret
 
 initsprite.ega:

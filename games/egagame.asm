@@ -49,11 +49,13 @@ start:
   ;call videomenu
   mSetVideoMode EGALORES
 
+  ; jmp fin
+
 
   ; TODO: Usar esto para establecer ancho de pantalla virtual
   ; Establecer Offset del control de CRT
-  ; SetCRTControllerRegister 013h, WIDTHWORDS
-  ; SetCRTControllerRegister 1, 25h
+  SetCRTControllerRegister 013h, WIDTHWORDS
+  SetCRTControllerRegister 1, 25h
 
 
   ; TODO: Mover esto a engine/ega.asm
@@ -71,26 +73,30 @@ start:
   SetGraphicsControllerRegister GRAPHICS_MODE_REG, 1 ; MODO 1 para copia en bloque
 
 
-  SAVEINT 9h,kb_int_old	; Guardar Rutina de interrupcion del teclado del sistema (BIOS)
+  ; SAVEINT 9h,kb_int_old	; Guardar Rutina de interrupcion del teclado del sistema (BIOS)
 
-  REGISTERINT 9h,cs,kb_int_new	; Registrar nueva rutina de interrupción del teclado
+  ; REGISTERINT 9h,cs,kb_int_new	; Registrar nueva rutina de interrupción del teclado
 
+  ; jmp fin
 
   ; Inicializar gráficos
 
-  SPRITESHEETLOOP
-  call inicializaspritegrafico
-  SPRITESHEETLOOPEND
+  ; SPRITESHEETLOOP
+  ; call initsprite.ega
+  ; SPRITESHEETLOOPEND
 
 
-  SPRITELOOP
-  call conectaspritegraficos
-  SPRITELOOPEND
+  ; SPRITELOOP
+  ; call conectaspritegraficos
+  ; SPRITELOOPEND
 
   ; x .- Draw map
   mov dx, map1
-  call drawmap
+  call drawmap.ega
 
+  call esperatecla
+
+  jmp fin
   ; 4 .- Dibujar sprite en su posicion inicial
 
   SPRITELOOP
@@ -131,19 +137,28 @@ start:
   jmp frame
 
 
+esperatecla:
+
+  wl:             ; mark wl
+  mov ah, 1        ; 0 - keyboard BIOS function to get keyboard scancode
+  int 16h         ; keyboard interrupt
+  jz wl           ; if 0 (no button pressed) jump to wl
+  ret
+
+
 fin:
   ; 1 .- Reestablecer rutina original de manejo de teclado
 
-  REGISTERINTMEMORY 9h, kb_int_old
+  ; REGISTERINTMEMORY 9h, kb_int_old
 
   ; 2 .- Restablecer desplazamiento horizontal en registros CGA
 
-  mov dx, 03d4h
-  mov al, 0dh
-  out dx, al
-  mov al, 0
-  mov dx, 03d5h
-  out dx, al
+  ; mov dx, 03d4h
+  ; mov al, 0dh
+  ; out dx, al
+  ; mov al, 0
+  ; mov dx, 03d5h
+  ; out dx, al
 
   ; 3 .- Restablecer video modo de texto a color
 
