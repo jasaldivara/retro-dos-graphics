@@ -8,7 +8,7 @@ CPU 8086
   %define GRAVEDAD 1
   %define JUMPFRAMES 12
   %define FUERZASALTO 5
-  %define ANCHOTILE 8
+  %define ANCHOTILE 16
   %define ALTOTILE 16
   %define MAPWIDTH 20
   %define MAPSCREENWIDTH 20

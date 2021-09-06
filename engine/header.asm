@@ -17,17 +17,6 @@
   %define WIDTHWORDS 21d
   %define WIDTHBYTES (WIDTHWORDS * 2)
 
-  ; Constantes del juego
-  ; TODO: Mover constantes del juego fuera de este archivo fuente
-
-  %define ANCHOTILE 16
-  %define ALTOTILE 16
-  %define MAPWIDTH 20
-  %define MAPSCREENWIDTH 20
-  %define MAPHEIGHT 12
-
-  ; Aritmetica de constantes gráficas
-  %define ANCHOTILEBYTES    (ANCHOTILE / EGAPXPERBYTE)
 
   %define MEMEGA      0xA000
   %define MEMCGAEVEN 0xB800

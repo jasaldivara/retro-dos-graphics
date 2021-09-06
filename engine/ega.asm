@@ -1,6 +1,8 @@
 ; Copyright 2021 Jesús Abelardo Saldívar Aguilar
 
 
+  ; Aritmetica de constantes gráficas
+  %define ANCHOTILEBYTES    (ANCHOTILE / EGAPXPERBYTE)
 
 drawmap.ega:
   ; DX = Map data
